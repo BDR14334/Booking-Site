@@ -1,48 +1,231 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login/Register Page</title>
-  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+    <title>Login & Registration</title>
 </head>
 <body>
+  <!-- Main wrapper that centers content and applies background overlay -->
   <div class="wrapper">
-    <nav class="nav">
-      <div class="nav-logo">
-        <p> Zephyrs </p>
+      
+      <!-- Navigation bar at the top -->
+      <nav class="nav">
+          
+          <!-- Logo section -->
+          <div class="nav-logo">
+              <p>Zephyrs</p>
+          </div>
+
+          <!-- Navigation menu links -->
+          <div class="nav-menu" id="navMenu">
+              <ul>
+                  <li><a href="#" class="link">Home</a></li>
+                  <li><a href="#" class="link">About</a></li>
+                  <li><a href="#" class="link">Services</a></li>
+                  <li><a href="#" class="link">Contact</a></li>
+              </ul>
+          </div>
+
+          <!-- Login and register buttons in the nav -->
+          <div class="nav-button">
+              <button class="btn white-btn" id="loginBtn" onclick="login()">Login</button>
+              <button class="btn" id="registerBtn" onclick="register()">Register</button>
+          </div>
+
+          <!-- Hamburger menu icon for mobile -->
+          <div class="nav-menu-btn">
+              <i class="bx bx-menu" onclick="myMenuFunction()"></i>
+          </div>
+      </nav>
+
+      <!-- -------------------- Form Box Container --------------------- -->
+      <div class="form-box">
+          
+          <!-- -------------------- Login Form --------------------------- -->
+          <div class="login-container" id="login">
+              
+              <!-- Text and header for login -->
+              <div class="top">
+                  <span>Don't have an account? <a href="#" onclick="register()">Register</a></span>
+                  <header>Login</header>
+              </div>
+
+              <!-- Dropdown for user role selection -->
+              <div class="input-box">
+                <select class="input-field" id="loginRoleSelect">
+                    <option value="" disabled selected>Select Role</option>
+                    <option value="admin">Admin</option>
+                    <option value="coach">Coach</option>
+                    <option value="athlete">Athlete</option>
+                </select>
+                <i class='bx bx-user-check'></i>
+            </div>
+            
+            <!-- Admin ID input will be added here when "Admin" is selected -->
+            <div class="input-box" id="loginAdminIdContainer" style="display: none;">
+                <input type="password" class="input-field" id="adminId" placeholder="Admin ID">
+                <i class="bx bx-lock-alt"></i>
+            </div>
+
+              <!-- Username/email input -->
+              <div class="input-box">
+                  <input type="text" class="input-field" placeholder="Username or Email">
+                  <i class="bx bx-user"></i>
+              </div>
+
+              <!-- Password input -->
+              <div class="input-box">
+                  <input type="password" class="input-field" placeholder="Password">
+                  <i class="bx bx-lock-alt"></i>
+              </div>
+
+              <!-- Login button -->
+              <div class="input-box">
+                  <input type="submit" class="submit" value="Login">
+              </div>
+
+              <!-- Remember me and forgot password section -->
+              <div class="two-col">
+                  <div class="one">
+                      <input type="checkbox" id="login-check">
+                      <label for="login-check"> Remember Me</label>
+                  </div>
+                  <div class="two">
+                      <label><a href="#">Forgot password?</a></label>
+                  </div>
+              </div>
+          </div>
+
+          <!-- -------------------- Registration Form -------------------- -->
+          <div class="register-container" id="register">
+              
+              <!-- Text and header for registration -->
+              <div class="top">
+                  <span>Have an account? <a href="#" onclick="login()">Login</a></span>
+                  <header>Register</header>
+              </div>
+
+              <div class="input-box">
+                <select class="input-field" id="registerRoleSelect">
+                    <option value="" disabled selected>Select Role</option>
+                    <option value="admin">Admin</option>
+                    <option value="coach">Coach</option>
+                    <option value="athlete">Athlete</option>
+                </select>
+                <i class='bx bx-user-check'></i>
+              </div>
+              
+              <!-- Admin ID input will be added here when "Admin" is selected -->
+              <div class="input-box" id="registerAdminIdContainer" style="display: none;">
+                  <input type="password" class="input-field" id="adminId" placeholder="Admin ID">
+                  <i class="bx bx-lock-alt"></i>
+              </div>
+
+              <!-- Two-column input for first and last name -->
+              <div class="two-forms">
+                  <div class="input-box">
+                      <input type="text" class="input-field" placeholder="First Name">
+                      <i class="bx bx-user"></i>
+                  </div>
+                  <div class="input-box">
+                      <input type="text" class="input-field" placeholder="Last Name">
+                      <i class="bx bx-user"></i>
+                  </div>
+              </div>
+
+              <!-- Email input -->
+              <div class="input-box">
+                  <input type="text" class="input-field" placeholder="Email">
+                  <i class="bx bx-envelope"></i>
+              </div>
+
+              <!-- Password input -->
+              <div class="input-box">
+                  <input type="password" class="input-field" placeholder="Password">
+                  <i class="bx bx-lock-alt"></i>
+              </div>
+
+              <!-- Register button -->
+              <div class="input-box">
+                  <input type="submit" class="submit" value="Register">
+              </div>
+
+              <!-- Remember me and terms and conditions section -->
+              <div class="two-col">
+                  <div class="one">
+                      <input type="checkbox" id="register-check">
+                      <label for="register-check"> Remember Me</label>
+                  </div>
+                  <div class="two">
+                      <label><a href="#">Terms & conditions</a></label>
+                  </div>
+              </div>
+          </div>
       </div>
-      <div class="nav-menu">
-        <ul>
-          <li><a href="#" class="link">Home</a></li>
-          <li><a href="#" class="link">About</a></li>
-          <li><a href="#" class="link">Services</a></li>
-          <li><a href="#" class="link">Contact</a></li>
-        </ul>
-      </div>
-      <div class="nav-button">
-        <button class="btn" id="loginBtn">Login</button>
-        <button class="btn" id="registerBtn">Register</button>
-      </div>
-      <div class="nav-menu-btn">
-        <i class="bx bx-menu"></i>
-      </div>
-    </nav>
   </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      // Login form admin toggle
+      const loginRoleSelect = document.getElementById("loginRoleSelect");
+      const loginAdminIdContainer = document.getElementById("loginAdminIdContainer");
+  
+      loginRoleSelect.addEventListener("change", function () {
+        loginAdminIdContainer.style.display = (this.value === "admin") ? "block" : "none";
+      });
+  
+      // Register form admin toggle
+      const registerRoleSelect = document.getElementById("registerRoleSelect");
+      const registerAdminIdContainer = document.getElementById("registerAdminIdContainer");
+  
+      registerRoleSelect.addEventListener("change", function () {
+        registerAdminIdContainer.style.display = (this.value === "admin") ? "block" : "none";
+      });
+    });
+  </script>
   
 
-  <div class="container">
+  <!-- ------------------- Mobile Menu Toggle Script ------------------ -->
+  <script>
+      function myMenuFunction() {
+          var i = document.getElementById("navMenu");
+          if(i.className === "nav-menu") {
+              i.className += " responsive";
+          } else {
+              i.className = "nav-menu";
+          }
+      }
+  </script>
 
-    <!--<h2>Login</h2>
-    <label for="username_email">Username/Email:</label>
-    <input type="text" id="username_email" placeholder="Username/Email:">
-    <label for="password">Password:</label>
-    <input type="text" id="password" placeholder="Password">
-    <button class="btn-login" onclick="window.location.href='login.html'">Login</button>
-    <button class="btn-register" onclick="window.location.href='register.html'">Register</button> -->
-  </div>
+  <!-- ------------------- Form Switcher Script ----------------------- -->
+  <script>
+      var a = document.getElementById("loginBtn");
+      var b = document.getElementById("registerBtn");
+      var x = document.getElementById("login");
+      var y = document.getElementById("register");
 
+      // Show login form and style button
+      function login() {
+          x.style.left = "4px";
+          y.style.right = "-520px";
+          a.className += " white-btn";
+          b.className = "btn";
+          x.style.opacity = 1;
+          y.style.opacity = 0;
+      }
+
+      // Show register form and style button
+      function register() {
+          x.style.left = "-510px";
+          y.style.right = "5px";
+          a.className = "btn";
+          b.className += " white-btn";
+          x.style.opacity = 0;
+          y.style.opacity = 1;
+      }
+  </script>
 </body>
-
-</html>

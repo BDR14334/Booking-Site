@@ -1,21 +1,369 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins%3Awght%40100%3B200%3B300%3B400%3B500%3B600&display=swap%27%29%3B');
+/* ------------------ GLOBAL STYLES ------------------ */
 
-*{
-    margin: 0; 
-    padding: 0; 
+/* Importing the Poppins font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+/* Reset margin and padding, set box sizing and base font */
+*{  
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
-    font-family: 'Poppins', sans-serif; 
+    font-family: 'Poppins', sans-serif;
 }
+
+/* Body background styling with fixed full-page image */
 body{
     background: url("img/Background.jpg");
     background-size: cover;
     background-repeat: no-repeat;
     background-attachment: fixed;
+    overflow: hidden;
 }
+
+/* ------------------ WRAPPER STYLES ------------------ */
+
+/* Centers the entire content with a semi-transparent background overlay */
 .wrapper{
-    display:flex;
-    justify-content:center;
-    align-items:center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     min-height: 110vh;
-    background: rgba(39,39,39,0.4)
+    background: rgba(39, 39, 39, 0.4);
+}
+
+/* ------------------ NAVIGATION BAR ------------------ */
+
+/* Styles the navigation bar: fixed at top, spaced elements */
+.nav{
+    position: fixed;
+    top: 0;
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    height: 100px;
+    line-height: 100px;
+    background: linear-gradient(rgba(39,39,39, 0.6), transparent);
+    z-index: 100;
+}
+
+/* Logo styling (left side of navbar) */
+.nav-logo p{
+    color: white;
+    font-size: 25px;
+    font-weight: 600;
+}
+
+/* Navigation menu (ul container) */
+.nav-menu ul{
+    display: flex;
+}
+
+/* Individual nav items */
+.nav-menu ul li{
+    list-style-type: none;
+}
+
+/* Links inside nav items */
+.nav-menu ul li .link{
+    text-decoration: none;
+    font-weight: 500;
+    color: #fff;
+    padding-bottom: 15px;
+    margin: 0 25px;
+}
+
+/* Underline effect on hover or active nav item */
+.link:hover, .active{
+    border-bottom: 2px solid #fff;
+}
+
+/* ------------------ NAV BUTTONS ------------------ */
+
+/* Base style for "Sign In" and "Sign Up" buttons */
+.nav-button .btn{
+    width: 130px;
+    height: 40px;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.4);
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: .3s ease;
+}
+
+/* Hover effect for nav buttons */
+.btn:hover{
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Add spacing between buttons */
+#registerBtn{
+    margin-left: 15px;
+}
+
+/* White background button variant */
+.btn.white-btn{
+    background: rgba(255, 255, 255, 0.7);
+}
+
+/* Hover effect for white button */
+.btn.btn.white-btn:hover{
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Menu button (hamburger icon) hidden by default */
+.nav-menu-btn{
+    display: none;
+}
+
+/* ------------------ FORM CONTAINER ------------------ */
+
+/* Holds both login and register forms side-by-side */
+.form-box{
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 512px;
+    height: 575px;
+    overflow: hidden;
+    z-index: 2;
+}
+
+/* ------------------ LOGIN FORM ------------------ */
+
+/* Styles for the login form container */
+.login-container{
+    position: absolute;
+    left: 4px;
+    width: 500px;
+    display: flex;
+    flex-direction: column;
+    transition: .5s ease-in-out;
+}
+
+/* ------------------ REGISTER FORM ------------------ */
+
+/* Styles for the registration form container */
+.register-container{
+    position: absolute;
+    right: -520px;
+    width: 500px;
+    display: flex;
+    flex-direction: column;
+    transition: .5s ease-in-out;
+}
+
+/* ------------------ SHARED FORM CONTENT ------------------ */
+
+/* Text link above form prompting switch to login/register */
+.top span{
+    color: #fff;
+    font-size: small;
+    padding: 10px 0;
+    display: flex;
+    justify-content: center;
+}
+
+/* Link inside the switch message */
+.top span a{
+    font-weight: 500;
+    color: #fff;
+    margin-left: 5px;
+}
+
+/* Main form title */
+header{
+    color: #fff;
+    font-size: 30px;
+    text-align: center;
+    padding: 10px 0 30px 0;
+}
+
+/* Container for first and last name fields (register only) */
+.two-forms{
+    display: flex;
+    gap: 10px;
+}
+
+/* General input field styling */
+.input-field{
+    font-size: 15px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    height: 50px;
+    width: 100%;
+    padding: 0 10px 0 45px;
+    border: none;
+    border-radius: 30px;
+    outline: none;
+    transition: .2s ease;
+}
+
+/* Input hover and focus effect */
+.input-field:hover, .input-field:focus{
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* Placeholder text color */
+::-webkit-input-placeholder{
+    color: #fff;
+}
+
+/* Icons inside input boxes */
+.input-box i{
+    position: relative;
+    top: -35px;
+    left: 17px;
+    color: #fff;
+}
+
+/* ------------------ SELECT DROPDOWN STYLING ------------------ */
+
+/* Dropdown styling for role selection (login form) */
+.input-box select.input-field {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-size: 15px;
+    height: 50px;
+    width: 100%;
+    padding: 0 10px 0 45px;
+    border: none;
+    border-radius: 30px;
+    outline: none;
+    transition: .2s ease;
+    cursor: pointer;
+}
+
+/* Hover and focus effect for select box */
+.input-box select.input-field:focus,
+.input-box select.input-field:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* Options inside the select box */
+.input-box select.input-field option {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #000; /* You can change to #fff if needed */
+    font-weight: 500;
+}
+
+/* Disabled option style */
+.input-box select.input-field option[disabled] {
+    color: #ccc;
+}
+
+/* ------------------ SUBMIT BUTTON ------------------ */
+
+/* Style for form submit buttons */
+.submit{
+    font-size: 15px;
+    font-weight: 500;
+    color: black;
+    height: 45px;
+    width: 100%;
+    border: none;
+    border-radius: 30px;
+    outline: none;
+    background: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: .3s ease-in-out;
+}
+
+/* Hover effect for submit button */
+.submit:hover{
+    background: rgba(255, 255, 255, 0.5);
+    box-shadow: 1px 5px 7px 1px rgba(0, 0, 0, 0.2);
+}
+
+/* ------------------ REMEMBER ME / LINKS ------------------ */
+
+/* Container for remember me and terms links */
+.two-col{
+    display: flex;
+    justify-content: space-between;
+    color: #fff;
+    font-size: small;
+    margin-top: 10px;
+}
+
+/* Style for remember me checkbox section */
+.two-col .one{
+    display: flex;
+    gap: 5px;
+}
+
+/* Style for "Forgot password" / "Terms & conditions" links */
+.two label a{
+    text-decoration: none;
+    color: #fff;
+}
+
+/* Hover effect for links */
+.two label a:hover{
+    text-decoration: underline;
+}
+
+/* ------------------ RESPONSIVE STYLING ------------------ */
+
+/* Styles for screens smaller than 786px (tablets) */
+@media only screen and (max-width: 786px){
+    .nav-button{
+        display: none;
+    }
+    .nav-menu.responsive{
+        top: 100px;
+    }
+    .nav-menu{
+        position: absolute;
+        top: -800px;
+        display: flex;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.2);
+        width: 100%;
+        height: 90vh;
+        backdrop-filter: blur(20px);
+        transition: .3s;
+    }
+    .nav-menu ul{
+        flex-direction: column;
+        text-align: center;
+    }
+    .nav-menu-btn{
+        display: block;
+    }
+    .nav-menu-btn i{
+        font-size: 25px;
+        color: #fff;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        cursor: pointer;
+        transition: .3s;
+    }
+    .nav-menu-btn i:hover{
+        background: rgba(255, 255, 255, 0.15);
+    }
+}
+
+/* Styles for very small screens (phones) */
+@media only screen and (max-width: 540px) {
+    .wrapper{
+        min-height: 100vh;
+    }
+    .form-box{
+        width: 100%;
+        height: 500px;
+    }
+    .register-container, .login-container{
+        width: 100%;
+        padding: 0 20px;
+    }
+    .register-container .two-forms{
+        flex-direction: column;
+        gap: 0;
+    }
 }
