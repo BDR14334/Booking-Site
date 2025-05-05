@@ -13,11 +13,7 @@
 
 /* Body background styling with fixed full-page image */
 body{
-    background: url("img/Background.jpg");
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    overflow: hidden;
+    background: black;
 }
 
 /* ------------------ WRAPPER STYLES ------------------ */
@@ -30,6 +26,25 @@ body{
     min-height: 110vh;
     background: rgba(39, 39, 39, 0.4);
 }
+
+/* Custom Scroll Bar CSS */
+::-webkit-scrollbar{
+    width: 10px;
+}
+
+::-webkit-scrollbar-track{
+    background: white;
+}
+
+::-webkit-scrollbar-thumb{
+    background: #91908b;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover{
+    background: #91908b;
+} 
 
 /* ------------------ NAVIGATION BAR ------------------ */
 

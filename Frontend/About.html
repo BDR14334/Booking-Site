@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="style.css">
+  <title>Homepage</title>
+</head>
+<body>
+  <!-- Main wrapper that centers content and applies background overlay -->
+  <div class="wrapper">
+    
+    <!-- Navigation bar at the top -->
+    <nav class="nav">
+      
+      <!-- Logo section -->
+      <div class="nav-logo">
+        <p>ZSP</p>
+      </div>
+
+      <!-- Navigation menu links -->
+      <div class="nav-menu" id="navMenu">
+        <ul>
+          <li><a href="Home.html" class="link">Home</a></li>
+          <li><a href="About.html" class="link">About</a></li>
+          <li><a href="Booking.html" class="link">Book</a></li>
+          <li><a href="Contact.html" class="link">Contact</a></li>
+        </ul>
+      </div>
+
+      <!-- Profile button or login/register buttons -->
+      <div class="nav-button" id="authButtons">
+        <!-- These buttons will be toggled based on login status -->
+        <button class="btn white-btn" id="loginBtn" onclick="login()">Login</button>
+        <button class="btn" id="registerBtn" onclick="register()">Register</button>
+      </div> 
+
+      <!-- Hamburger menu icon for mobile -->
+      <div class="nav-menu-btn">
+        <i class="bx bx-menu" onclick="myMenuFunction()"></i>
+      </div>
+    </nav>
+
+    <!-- Profile Dropdown Sidebar (Initially Hidden) -->
+    <div id="profileSidebar" class="profile-sidebar">
+      <div class="profile-dropdown">
+        <button class="btn profile-btn" id="profileBtn">Profile</button>
+        <div class="dropdown-content" id="dropdownMenu">
+          <!-- Dropdown content will be dynamically inserted by JS -->
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Profile dropdown logic + login/register redirection -->
+  <script src="authStatus.js"></script>
+  <script>
+    // Login and register redirection functions
+    function login() {
+      window.location.href = "login.html";  // Redirect to login page
+    }
+
+    function register() {
+      window.location.href = "login.html?register=true";  // Redirect to register page
+    }
+
+    // Hamburger menu toggle function
+    function myMenuFunction() {
+      var nav = document.getElementById("navMenu");
+      nav.classList.toggle("responsive");
+    }
+  </script>
+
+  <style>
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      background: #fff;
+      padding: 10px;
+      border: 1px solid #ccc;
+    }
+
+    .dropdown-menu.show {
+      display: block;
+    }
+
+    /* Profile Sidebar Styling */
+    .profile-sidebar {
+      display: none;
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 250px;
+      height: 100%;
+      background-color: #fff;
+      box-shadow: -2px 0 5px rgba(0, 0, 0, 0.3);
+      padding: 20px;
+      z-index: 100;
+    }
+
+    .profile-btn {
+      background-color: #007bff;
+      color: white;
+      padding: 10px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .profile-btn:hover {
+      background-color: #0056b3;
+    }
+
+    .dropdown-content a {
+      display: block;
+      padding: 10px;
+      text-decoration: none;
+      color: #333;
+    }
+
+    .dropdown-content a:hover {
+      background-color: #f0f0f0;
+    }
+
+    .profile-sidebar.show {
+      display: block;
+    }
+  </style>
+</body>
+</html>

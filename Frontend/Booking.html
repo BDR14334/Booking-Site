@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link rel="stylesheet" href="style.css" />
+  <title>Packages</title>
+  <style>
+    .wrapper-homepage{
+       justify-content: center;
+       align-items: center;
+       min-height: 110vh;
+       background: rgba(39, 39, 39, 0.4);
+    }
+
+    /* Booking */
+    .booking {
+        padding: 50px 0;
+        background: #343a40;
+        color: white;
+        width: 100%;
+        height: 100%;
+    }
+    
+    .booking .title {
+        font-size: 36px;
+        font-weight: bold;
+        text-align: center;
+        color: white;
+        margin-bottom: 50px;
+        margin-top: 50px;
+     
+    }
+    .booking .boxes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 30px; /* Space between boxes */
+        justify-content: center;
+        max-width: 1200px;
+        margin: 0 auto;
+        margin-bottom: 50px;
+        padding: 0 20px; /* Side padding */
+    }
+    .booking .box {
+        text-decoration: none;
+        background: #343a40;
+        padding: 25px;
+        border-radius: 20px; /* Rounded corners */
+        box-shadow: 0 5px 15px black;
+        transition: transform 0.3s ease, background 0.3s ease;
+        flex: 1 1 calc(45% - 30px); /* Wraps nicely with spacing */
+        min-width: 300px;
+        max-width: 500px;
+        box-sizing: border-box;
+    }
+    
+    .booking .box:hover {
+        transform: scale(1.05);
+        background: rgba(255, 72, 0); 
+    }
+    
+    .booking .box .icon {
+        height: 50px;
+        width: 50px;
+        background: #333;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 50px;
+        font-size: 24px;
+        color: white;
+        margin: 0 auto 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .booking .box:hover .icon {
+        background: white;
+        color: black;
+    }
+    
+    .booking .box .topic {
+        font-size: 18px;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 10px;
+        color: white;
+    }
+
+    .booking .box p {
+        padding-top: 10px;
+        font-size: 16px;
+        text-align: left;
+        /* margin-bottom: 10px; */
+        color: white;
+    }
+    
+    .booking .box ul {
+        text-align: left;
+        padding-left: 20px;
+        font-size: 12px;
+    }
+
+    .booking a ul, .booking a ul li {
+        color: white;  /* Keeps the text color the same as the surrounding text */
+        text-decoration: none;
+    }
+    
+    .booking .box h3 {
+        font-size: 16px;
+        font-style: italic;
+        margin-bottom: 10px;
+        color: white;
+    }
+    
+    /* Assigning grid positions */
+    .booking .boxes .box:nth-child(1) {
+        grid-area: box1;
+        
+    }
+    
+    .booking .boxes .box:nth-child(2) {
+        grid-area: box2;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 992px) {
+        .booking .boxes {
+        grid-template-areas: 
+            "box1"
+            "box2";
+        }
+        .booking .boxes .box {
+        max-width: 100%;
+        }
+    }
+
+    .view-more {
+        text-align: center;
+        margin-top: 20px;
+        display: block;
+    }
+    
+    .bouncy-text {
+        font-size: 14px;
+        font-weight: bold;
+        color: white;
+        cursor: pointer;
+        animation: bounce 1.5s infinite;
+        display: inline-block;
+        transition: color 0.3s ease;
+    }
+    
+    .bouncy-text:hover {
+        color: #333; /* Change color on hover */
+    }
+    
+    @keyframes bounce {
+        0%, 100% {
+        transform: translateY(0);
+        }
+        50% {
+        transform: translateY(-3px);
+        }
+    }
+    /*mobile*/
+    @media (max-width: 800px){
+        .view-more {
+            display: block;
+        }
+    }
+
+    .footer {
+      background-color: #222;
+      color: white;
+      padding: 20px 0;
+      text-align: center;
+    }
+
+    .close-btn{
+      background-color: #ff4800;
+      color: white;
+      position: absolute; /* Position it relative to the sidebar */
+      top: 1rem; /* Position from the top */
+      right: -5px; /* Position from the right */
+      padding: 2.5px 5px; /* Adjust padding for smaller size */
+      border-radius: 50px;
+      border: none; /* Remove the default border */
+      /* margin: 10px 10px 10px; */
+      
+    }
+    .close-btn:hover{
+      background-color:#e03e00;
+      color: white;
+      
+    }
+
+    #userRole {
+      color: white;
+      padding-left: 20px; /* Tab Affect */
+      padding-bottom: 10px;
+      padding-top: 5px;
+    }
+
+    .user-name {
+      color: #ff4800;
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    /* Sidebar styling */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 275px;
+      height: 100%;
+      background-color: #343a40;
+      box-shadow: -10px 0 20px #24282c;
+      padding-top: 1rem;
+      display: none;
+      z-index: 999;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .sidebar a {
+      padding: 10px 20px;
+      color: white;
+      display: block;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+    }
+
+    .sidebar a:hover {
+      background-color: #495057;
+    }
+
+    .sidebar .btn {
+      margin-left: auto;
+      margin-right: 1rem;
+    }
+
+    .profile-btn {
+      background-color: rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 10px;
+      border: none;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+
+    .profile-btn:hover {
+      background-color: rgba(255, 72, 0);
+    }
+  </style>
+</head>
+<body>
+  <!-- Main wrapper -->
+  <div class="wrapper-homepage">
+    <!-- Navigation bar -->
+    <nav class="nav">
+      <div class="nav-logo">
+        <p>ZSP</p>
+      </div>
+
+      <div class="nav-menu" id="navMenu">
+        <ul>
+          <li><a href="Home.html" class="link">Home</a></li>
+          <li><a href="About.html" class="link">About</a></li>
+          <li><a href="Booking.html" class="link">Book</a></li>
+          <li><a href="Contact.html" class="link">Contact</a></li>
+        </ul>
+      </div>
+
+      <!-- Dynamic buttons area -->
+      <div class="nav-button" id="authButtons">
+        <button class="btn white-btn" id="loginBtn" onclick="login()">Login</button>
+        <button class="btn" id="registerBtn" onclick="register()">Register</button>
+      </div>
+
+      <!-- Hamburger menu -->
+      <div class="nav-menu-btn">
+        <i class="bx bx-menu" onclick="myMenuFunction()"></i>
+      </div>
+    </nav>
+
+    <!--Booking Section-->
+    <section class="booking" id="booking">
+        <div class="content">
+            <div class="title"><span>Package Choices</span></div>
+            <div class="boxes">
+                <a href="#"  class="box">
+                    <div class="icon">
+                        <i class="fa-solid fa-dumbbell"></i>
+                    </div>
+                    <div class="topic">Strength Training</div>
+                    <h3 class="sub-heading">Description:</h3>
+                    <ul>
+                        <li>Build muscle mass and core stability</li>
+                        <li>Progressive overload techniques</li>
+                        <li>Compound and isolation exercises</li>
+                        <li>Customized programs for all fitness levels</li>
+                    </ul>
+                    <p>Sessions: 5</p>
+                    <p>Price: $50 </p> <!--{$price}-->
+
+                    <div class="view-more">
+                        <span class="bouncy-text">Click to Choose Coach</span>
+                    </div>
+
+                </a>
+                <a href="#" class="box">
+                    <div class="icon">
+                        <i class="fa-solid fa-running"></i>
+                    </div>
+                    <div class="topic">Performance Training</div>
+                    <h3 class="sub-heading">Description:</h3>
+                    <ul>
+                        <li>High-intensity interval workouts</li>
+                        <li>Strength and endurance development</li>
+                        <li>Focus on agility and speed</li>
+                        <li>Tailored training plans for athletes</li>
+                    </ul>
+                    <p>Sessions: 10</p>
+                    <p>Price: $100 </p> <!--{$price}-->
+                    
+                    <div class="view-more">
+                        <span class="bouncy-text">Click to Choose Coach</span>
+                    </div>
+
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>&copy; 2025 Zephyrs. All rights reserved.</p>
+    </footer>
+  </div>
+
+  <!-- Right-Aligned Sidebar -->
+  <div id="profileSidebar" class="sidebar bg-dark text-white">
+    <button class="btn btn-sm btn-outline-light ms-2 mt-2 close-btn" onclick="toggleSidebar()">× Close</button>
+    <div class="mt-4 d-flex flex-column">
+      <p id="userRole" class="px-3 text-white">👤 Loading...</p>
+      <div id="sidebarLinksContainer"></div> <!-- Empty div to hold the dynamic links -->
+      <a href="#" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none">🚪 Logout</a>
+    </div>
+  </div>
+  
+
+  <!-- Scripts -->
+  <script src="authStatus.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function login() {
+      window.location.href = "login.html";
+    }
+
+    function register() {
+      window.location.href = "login.html?register=true";
+    }
+
+    function myMenuFunction() {
+      var nav = document.getElementById("navMenu");
+      nav.classList.toggle("responsive");
+    }
+
+    // Optional click-outside-to-close behavior
+    document.addEventListener("click", function(event) {
+      const sidebar = document.getElementById("profileSidebar");
+      const profileBtn = document.getElementById("profileBtn");
+
+      if (sidebar.style.display === "block" &&
+          !sidebar.contains(event.target) &&
+          !(profileBtn && profileBtn.contains(event.target))) {
+        sidebar.style.display = "none";
+      }
+    });
+  </script>
+
+
+</body>
+</html>

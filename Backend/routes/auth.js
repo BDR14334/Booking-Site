@@ -35,7 +35,7 @@ router.post('/register', async (req, res) => {
   }
 
   try {
-    const existingUser = await pool.query(`SELECT * FROM public.users WHERE email = $1`, [email]);
+    const existingUser = await pool.query(`SELECT * FROM public.users WHERE LOWER(email) = LOWER($1)`, [email]);
     if (existingUser.rows.length > 0) {
       return res.status(400).json({ error: 'An account with this email already exists.' });
     }
@@ -79,7 +79,7 @@ router.post('/login', async (req, res) => {
   }
 
   try {
-    const userQuery = await pool.query(`SELECT * FROM public.users WHERE email = $1 AND role = $2`, [email, role]);
+    const userQuery = await pool.query(`SELECT * FROM public.users WHERE LOWER(email) = LOWER($1) AND role = $2`, [email, role]);
     if (userQuery.rows.length === 0) {
       return res.status(401).json({ error: 'User not found or role mismatch.' });
     }
@@ -108,7 +108,7 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
+      { id: user.id, email: user.email, role: user.role, first_name: user.first_name },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
@@ -144,6 +144,19 @@ router.get('/verify', (req, res) => {
     } catch (err) {
       res.status(401).json({ loggedIn: false });
     }
+});
+
+// GET current logged-in user
+router.get('/me', (req, res) => {
+  try {
+    const token = req.cookies.token;
+    if (!token) return res.status(401).json({ error: 'Not logged in' });
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+    res.status(200).json({ user: decoded });
+  } catch (err) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
 });
 
 module.exports = router;
