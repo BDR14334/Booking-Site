@@ -4,11 +4,23 @@
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- External Icon Libraries -->
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+  <!-- FullCalendar CSS for the booking calendar -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.4/index.global.min.css" rel="stylesheet" />
+
   <link rel="stylesheet" href="style.css" />
-  <title>Packages</title>
+  <title>Booking</title>
   <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+
     .wrapper-homepage{
        justify-content: center;
        align-items: center;
@@ -22,8 +34,44 @@
         background: #343a40;
         color: white;
         width: 100%;
-        height: 100%;
+        height: auto;
     }
+
+
+    .booking-slider {
+      display: flex;
+      width: 100%; 
+      transition: transform 0.6s ease;
+      flex-direction: row;
+      height: auto; /* full screen height */
+    }
+
+    .booking-slider > section {
+      position: relative;
+      flex: 1 0 100%;
+      height: auto;
+      overflow: visible;
+    }
+
+    .back-btn {
+      display: none;
+      font-family: Arial, Helvetica, sans-serif;
+      position: fixed;
+      top: 115px;
+      left: 90px;
+      font-size: 28px;
+      color: white;
+      cursor: pointer;
+      z-index: 9999;
+    }
+
+    /* Show back button ONLY in these sections */
+    #athleteSection .back-btn,
+    #calendarSection .back-btn,
+    #paymentSection .back-btn {
+      display: block;
+    }
+
     
     .booking .title {
         font-size: 36px;
@@ -248,15 +296,103 @@
       border: none;
       cursor: pointer;
       margin-left: 10px;
+      /* margin-top: 2rem; 
+      display: none; */
     }
 
     .profile-btn:hover {
       background-color: rgba(255, 72, 0);
     }
+
+    #packageContainer .box.selected {
+      border: 2px solid #ff4800;
+      background: rgba(167, 99, 40, 0.444);
+    }
+
+
+    #athleteContainer .box.selected {
+      border: 2px solid #ff4800;
+      background: rgba(167, 99, 40, 0.444);
+    }
+
+    #calendar {
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      color: black;
+    }
+
+    .fc-toolbar-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #000;
+    }
+
+    .fc-day-today {
+      background-color: #ffa16291 !important;
+    }
+
+    .fc-today-button {
+      background-color: #ff4800 !important;
+      color: white !important;
+      border: none !important;
+      padding: 5px 10px !important;
+      border-radius: 5px !important;
+    }
+
+    .fc-today-button:hover:not(:disabled) {
+      background-color: #ff4800 !important;
+    }
+
+    .fc-prev-button,
+    .fc-next-button {
+      background-color: #ff4800 !important;
+      color: white !important;
+      border: none !important;
+      padding: 5px 10px !important;
+      border-radius: 5px !important;
+    }
+
+    .fc-prev-button:hover:not(:disabled),
+    .fc-next-button:hover:not(:disabled) {
+      background-color: #e03e00 !important;
+    }
+
+    #nextToCalendarBtn {
+      background-color: #ff4800;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    #nextToCalendarBtn:hover {
+      background-color: #e03e00;
+    }
+
+    #confirmTimeslotsBtn {
+      background-color: #ff4800;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    #confirmTimeslotsBtn:hover {
+      background-color: #e03e00;
+    }
+
+
   </style>
 </head>
 <body>
-  <!-- Main wrapper -->
+  <!-- Main Content wrapper -->
   <div class="wrapper-homepage">
     <!-- Navigation bar -->
     <nav class="nav">
@@ -285,60 +421,109 @@
       </div>
     </nav>
 
-    <!--Booking Section-->
-    <section class="booking" id="booking">
+    <div id="globalBackBtn" class="back-btn" onclick="handleBackClick()">
+      <i class="fas fa-arrow-left"></i>
+    </div>
+
+    <div id="bookingFlow" class="booking-slider">
+      <!--Package Booking Section-->
+      <section class="booking" id="booking">
         <div class="content">
             <div class="title"><span>Package Choices</span></div>
-            <div class="boxes">
-                <a href="#"  class="box">
-                    <div class="icon">
-                        <i class="fa-solid fa-dumbbell"></i>
-                    </div>
-                    <div class="topic">Strength Training</div>
-                    <h3 class="sub-heading">Description:</h3>
-                    <ul>
-                        <li>Build muscle mass and core stability</li>
-                        <li>Progressive overload techniques</li>
-                        <li>Compound and isolation exercises</li>
-                        <li>Customized programs for all fitness levels</li>
-                    </ul>
-                    <p>Sessions: 5</p>
-                    <p>Price: $50 </p> <!--{$price}-->
-
-                    <div class="view-more">
-                        <span class="bouncy-text">Click to Choose Coach</span>
-                    </div>
-
-                </a>
-                <a href="#" class="box">
-                    <div class="icon">
-                        <i class="fa-solid fa-running"></i>
-                    </div>
-                    <div class="topic">Performance Training</div>
-                    <h3 class="sub-heading">Description:</h3>
-                    <ul>
-                        <li>High-intensity interval workouts</li>
-                        <li>Strength and endurance development</li>
-                        <li>Focus on agility and speed</li>
-                        <li>Tailored training plans for athletes</li>
-                    </ul>
-                    <p>Sessions: 10</p>
-                    <p>Price: $100 </p> <!--{$price}-->
-                    
-                    <div class="view-more">
-                        <span class="bouncy-text">Click to Choose Coach</span>
-                    </div>
-
-                </a>
-            </div>
+            <div id="packageContainer" class="boxes"></div>
         </div>
-    </section>
+      </section>
 
+      <!-- Athlete Selection Section -->
+      <section class="booking" id="athleteSection">
+        <!-- <div class="back-btn" onclick="goToStep(0)"><i class="fas fa-arrow-left"></i></div> -->
+        <div class="content">
+          <div class="title"><span>Choose an Athlete</span></div>
+          <div id="athleteContainer" class="boxes"></div>
+          <div style="text-align:center; margin-top: 20px;">
+            <button id="nextToCalendarBtn" onclick="goToStep(2)" style="display: none;">Next</button>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Calendar Section -->
+      <section class="booking" id="calendarSection">
+        <!-- <div class="back-btn" onclick="goToStep(1)"><i class="fas fa-arrow-left"></i></div> -->
+        <div class="content">
+          <div class="title"><span>Select Available Sessions</span></div>
+          <div id="sessionTracker" style="text-align:center; font-size:16px; margin-bottom: 30px; margin-top: -30px; color:white;">
+            Choose number of sessions based on package:<br> 
+            <span id="chosenSessions">0</span> / <span id="maxSessions">0</span><br>
+            <span style="font-size: 14px; color: #28a745;"> click available timeslot in green </span>
+          </div>
+          <div id="calendar" style="max-width: 600px; max-height: 500px; margin: 0 auto;"></div>
+          <div style="text-align: center; margin-top: 20px;">
+            <button id="confirmTimeslotsBtn" style="display: none;">Confirm Selected Sessions</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Payment Section -->
+      <section class="booking" id="paymentSection">
+        <!-- <div class="back-btn" onclick="goToStep(2)"><i class="fas fa-arrow-left"></i></div> -->
+        <div class="content">
+          <div class="title"><span>Payment</span></div>
+          
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h3 id="checkoutPackageTitle"></h3>
+            <p id="checkoutPackagePrice" style="font-size: 18px; color: #ffa162;"></p>
+          </div>
+
+          <div style="max-width: 500px; margin: 0 auto;">
+            <label for="cardholder-name" style="color: white;">Cardholder Name</label>
+            <input id="cardholder-name" type="text" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: none;" placeholder="Jane Doe" required>
+
+            <div id="card-element" style="padding: 15px; background: white; border-radius: 10px; margin-bottom: 15px;"></div>
+
+            <label for="billing-country" style="color: white;">Country</label>
+            <select id="billing-country" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: none;">
+              <option value="US" selected>United States</option>
+              <option value="CA">Canada</option>
+              <!-- Add more as needed -->
+            </select>
+
+            <label for="postal-code" style="color: white;">ZIP / Postal Code</label>
+            <input id="postal-code" type="text" style="width: 100%; padding: 10px; margin-bottom: 20px; border-radius: 8px; border: none;" placeholder="12345">
+
+            <button id="payNowBtn" style="width: 100%; background-color: #ff4800; color: white; padding: 12px; font-size: 16px; border-radius: 10px; border: none;">Pay $<span id="payNowAmountText"></span></button>
+          </div>
+        </div>
+      </section>
+
+
+
+    </div>
+    
     <!-- Footer -->
     <footer class="footer">
       <p>&copy; 2025 Zephyrs. All rights reserved.</p>
     </footer>
   </div>
+
+  <div id="noAthleteNotice" style="
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #343a40;
+    color: white;
+    padding: 20px 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+    z-index: 9999;
+    font-size: 18px;
+    text-align: center;
+  ">
+    No athletes found.<br>Redirecting you to your dashboard to add one...
+  </div>
+
+
 
   <!-- Right-Aligned Sidebar -->
   <div id="profileSidebar" class="sidebar bg-dark text-white">
@@ -354,32 +539,495 @@
   <!-- Scripts -->
   <script src="authStatus.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.4/index.global.min.js"></script>
+  <script src="https://js.stripe.com/v3/"></script>
+
   <script>
+    let currentStep = 0;
+    let customerId = null;
+    let selectedPackage = null;
+    let selectedPackageId = null;
+    let selectedCoachId = null;
+    let selectedAthleteIds = [];
+    let maxSessions = 0;
+    let selectedTimeslots = [];
+    let calendar = null;
+  
+    function goToStep(step) {
+      const slider = document.getElementById('bookingFlow');
+      currentStep = step;
+      slider.style.transform = `translateX(-${step * 100}%)`;
+
+      // Scroll the wrapper to the top so the user sees the start of the next section
+      document.querySelector('.wrapper-homepage').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      // Toggle back button visibility
+      const backBtn = document.getElementById('globalBackBtn');
+      backBtn.style.display = step > 0 ? 'block' : 'none';
+    }
+
+    function handleBackClick() {
+      if (currentStep > 0) {
+        goToStep(currentStep - 1);
+      }
+    }
+  
     function login() {
       window.location.href = "login.html";
     }
-
+  
     function register() {
       window.location.href = "login.html?register=true";
     }
-
+  
     function myMenuFunction() {
       var nav = document.getElementById("navMenu");
       nav.classList.toggle("responsive");
     }
 
-    // Optional click-outside-to-close behavior
+    function closeNotAthletePopup() {
+      document.getElementById("notAthletePopup").style.display = "none";
+      window.location.href = "Login.html";
+    }
+
+    function closeGuardianAthletePopup() {
+      document.getElementById("guardianAthletePopup").style.display = "none";
+      window.location.href = "AthleteDashboard.html#editInfo";
+    }
+
+    function showMaxSessionPopup(message) {
+      document.getElementById('maxSessionMessage').innerText = message;
+      document.getElementById('maxSessionPopup').style.display = 'block';
+    }
+
+    function closeMaxSessionPopup() {
+      document.getElementById('maxSessionPopup').style.display = 'none';
+    }
+  
+    // Click-outside to close profile sidebar
     document.addEventListener("click", function(event) {
       const sidebar = document.getElementById("profileSidebar");
       const profileBtn = document.getElementById("profileBtn");
-
       if (sidebar.style.display === "block" &&
           !sidebar.contains(event.target) &&
           !(profileBtn && profileBtn.contains(event.target))) {
         sidebar.style.display = "none";
       }
     });
+  
+    // Package Selection
+    document.addEventListener('DOMContentLoaded', async () => {
+
+      try {
+        const response = await fetch('http://localhost:5000/admin/get-packages');
+        const packages = await response.json();
+        const container = document.getElementById('packageContainer');
+        container.innerHTML = '';
+  
+        packages.forEach(pkg => {
+          const box = document.createElement('a');
+          box.className = 'box';
+          box.innerHTML = `
+            <div class="icon"><i class="fa-solid fa-dumbbell"></i></div>
+            <div class="topic">${pkg.title}</div>
+            <h3 class="sub-heading">Description:</h3>
+            <ul>${pkg.description.map(item => `<li>${item}</li>`).join('')}</ul>
+            <p>Sessions: ${pkg.sessions}</p>
+            <p>Price: $${pkg.price}</p>
+            <div class="view-more"><span class="bouncy-text">Click to Choose Sessions</span></div>
+          `;
+  
+          box.addEventListener('click', async (e) => {
+            e.preventDefault();
+  
+            // Highlight selected
+            document.querySelectorAll('#packageContainer .box').forEach(b => b.classList.remove('selected'));
+            box.classList.add('selected');
+  
+            selectedPackage = pkg;
+            selectedPackageId = pkg.id;
+            maxSessions = pkg.sessions;
+
+            document.getElementById("maxSessions").innerText = maxSessions;
+            document.getElementById("chosenSessions").innerText = 0;
+  
+            // Ensure authenticated
+            if (!customerId) {
+              try {
+                const userRes = await fetch('http://localhost:5000/auth/verify', {
+                  credentials: 'include'
+                });
+                const userData = await userRes.json();
+                const user = userData.user;
+
+                // Not an athlete
+                if (!user || user.role !== "athlete") {
+                  document.getElementById("notAthletePopup").style.display = "block";
+                  return;
+                }
+
+                // Retrieve athlete customer data
+                const customerRes = await fetch(`http://localhost:5000/athlete/by-user/${user.id}`, {
+                  credentials: 'include'
+                });
+                const customerData = await customerRes.json();
+
+                if (!customerData.customer || !customerData.customer.id) {
+                  document.getElementById("guardianAthletePopup").style.display = "block";
+                  return;
+                }
+
+                customerId = customerData.customer.id;
+
+              } catch (authErr) {
+                console.error('Failed to retrieve customer ID:', authErr);
+                document.getElementById("notAthletePopup").style.display = "block";
+                return;
+              }
+            }
+
+            // Show & populate athlete section
+            document.getElementById('athleteSection').style.display = 'block';
+            goToStep(1);
+  
+            try {
+              const res = await fetch(`http://localhost:5000/athlete/${customerId}`);
+              const data = await res.json();
+              const athletes = Array.isArray(data) ? data : data.athletes || [];
+              const athleteContainer = document.getElementById('athleteContainer');
+              athleteContainer.innerHTML = '';
+  
+              if (athletes.length > 0) {
+                athletes.forEach(athlete => {
+                  const athleteBox = document.createElement('a');
+                  athleteBox.className = 'box';
+                  athleteBox.innerHTML = `
+                    <div class="icon"><i class="fa-solid fa-user"></i></div>
+                    <div class="topic">${athlete.first_name} ${athlete.last_name}</div>
+                    <p>Age: ${athlete.age_group}</p>
+                    <p>Sport: ${athlete.sport}</p>
+                  `;
+
+                  // Restore selection if previously selected
+                  if (selectedAthleteIds.includes(athlete.id)) {
+                    athleteBox.classList.add('selected');
+                  }
+                    
+                  athleteBox.addEventListener('click', () => {
+                    // Toggle selection
+                    const id = athlete.id;
+                    if (selectedAthleteIds.includes(id)) {
+                      selectedAthleteIds = selectedAthleteIds.filter(aid => aid !== id);
+                      athleteBox.classList.remove('selected');
+                    } else {
+                      selectedAthleteIds.push(id);
+                      athleteBox.classList.add('selected');
+                    }
+  
+                    // Enable next button and load calendar
+                    const nextBtn = document.getElementById('nextToCalendarBtn');
+                    nextBtn.style.display = selectedAthleteIds.length > 0 ? 'inline-block' : 'none';
+                  });
+  
+                  athleteContainer.appendChild(athleteBox);
+                });
+              } else {
+                document.getElementById("noAthleteNotice").style.display = "block";
+
+                setTimeout(() => {
+                  window.location.href = "AthleteDashboard.html#athleteInfo";
+                }, 5000); // 5 seconds delay
+              }
+            } catch (err) {
+              console.error('Error loading athletes:', err);
+            }
+          });
+  
+          container.appendChild(box);
+        });
+      } catch (err) {
+        console.error('Failed to load packages:', err);
+      }
+    });
+  
+    // "Next" button to calendar
+    document.getElementById("nextToCalendarBtn").addEventListener("click", () => {
+      goToStep(2);
+      loadCalendar();
+    });
+  
+    function loadCalendar() {
+      document.getElementById("calendarSection").style.display = "block";
+  
+      fetch(`http://localhost:5000/booking/availability/by-package/${selectedPackageId}`)
+        .then(res => res.json())
+        .then(({ timeslots }) => {
+          const calendarEl = document.getElementById("calendar");
+          calendarEl.innerHTML = ""; // Clear previous calendar
+  
+          calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+              start: 'prev,next',
+              center: 'title',
+              end: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            events: (timeslots || []).map(slot => ({
+              id: slot.id,
+              title: `Available - ${slot.first_name} ${slot.last_name}`,  // Include coach name
+              start: slot.start_datetime,
+              end: slot.end_datetime,
+              backgroundColor: "#28a745",
+              extendedProps: {
+                coachName: `${slot.first_name} ${slot.last_name}`,
+                maxCapacity: slot.max_capacity,
+                currentBookings: slot.current_bookings || 0,
+                remainingCapacity: slot.remaining_capacity || slot.max_capacity
+              }
+            })),
+            eventClick: function (info) {
+              const selectedDate = new Date(info.event.start).toDateString();
+              const index = selectedTimeslots.indexOf(info.event.id);
+              const remainingCapacity = info.event.extendedProps.remainingCapacity;
+
+              if (index > -1) {
+                // Deselect slot
+                selectedTimeslots.splice(index, 1);
+                info.el.style.border = "";
+                info.el.style.backgroundColor = "transparent";
+              } else {
+                // Check remaining capacity
+                if (remainingCapacity < selectedAthleteIds.length) {
+                  alert(`This timeslot only has ${remainingCapacity} spot(s) left.`);
+                  return;
+                }
+
+                // Check if max sessions reached
+                if (selectedTimeslots.length >= maxSessions) {
+                   showMaxSessionPopup(`${maxSessions}-session limit reached.`);
+                  return;
+                }
+
+                // Check for same-day selection
+                const alreadySelectedDates = calendar.getEvents()
+                  .filter(ev => selectedTimeslots.includes(ev.id))
+                  .map(ev => new Date(ev.start).toDateString());
+
+                if (alreadySelectedDates.includes(selectedDate)) {
+                  alert("You can't book more than one session on the same day.");
+                  return;
+                }
+
+                // Add slot
+                selectedTimeslots.push(info.event.id);
+                info.el.style.border = "2px solid #ff4800";
+                info.el.style.backgroundColor = "#ff4800";
+              }
+
+              // Update session tracker
+              document.getElementById("chosenSessions").innerText = selectedTimeslots.length;
+
+              // Toggle Confirm button visibility
+              const confirmBtn = document.getElementById("confirmTimeslotsBtn");
+              if (selectedTimeslots.length === maxSessions) {
+                confirmBtn.style.display = "inline-block";
+
+                // Scroll to the button smoothly
+                confirmBtn.scrollIntoView({ behavior: "smooth", block: "center" });
+              } else {
+                confirmBtn.style.display = "none";
+              }
+           }
+          });
+  
+          calendar.render();
+        })
+        .catch(err => {
+          console.error("Failed to load timeslots:", err);
+          alert("Could not load calendar. Try again later.");
+        });
+    }
+  
+    // Confirm Timeslots
+   document.getElementById("confirmTimeslotsBtn").addEventListener("click", async () => {
+      goToStep(3); // Show payment section
+
+      // Populate package info
+      document.getElementById("checkoutPackageTitle").innerText = selectedPackage.title;
+      document.getElementById("checkoutPackagePrice").innerText = `$${selectedPackage.price}`;
+      document.getElementById("payNowAmountText").innerText = selectedPackage.price;
+
+      const stripe = Stripe("pk_test_51RT8WoGI7tqbKPuizpKrkJK05SCf4kY7DrUBWIzh953MG53TtawtUwI5laWY0Wq6MfPoHo9yydwEbWyQWuQcUEW800JFWeLm0j");
+      const elements = stripe.elements();
+      const card = elements.create("card");
+      card.mount("#card-element");
+
+      const payNowBtn = document.getElementById("payNowBtn");
+
+      payNowBtn.disabled = false;
+
+      payNowBtn.addEventListener("click", async () => {
+        const cardholderName = document.getElementById("cardholder-name").value;
+        const country = document.getElementById("billing-country").value;
+        const postalCode = document.getElementById("postal-code").value;
+
+        if (!cardholderName) {
+          alert("Please enter the cardholder name.");
+          return;
+        }
+
+        payNowBtn.disabled = true;
+
+        try {
+          const intentRes = await fetch("http://localhost:5000/booking/create-payment-intent", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              customerId,
+              packageId: selectedPackageId
+            })
+          });
+
+          const { clientSecret } = await intentRes.json();
+
+          const result = await stripe.confirmCardPayment(clientSecret, {
+            payment_method: {
+              card: card,
+              billing_details: {
+                name: cardholderName,
+                address: {
+                  country: country,
+                  postal_code: postalCode
+                }
+              }
+            }
+          });
+
+          if (result.error) {
+            alert("Payment failed: " + result.error.message);
+            payNowBtn.disabled = false;
+          } else if (result.paymentIntent.status === "succeeded") {
+            alert("✅ Payment successful. Finalizing booking...");
+
+            const bookingRes = await fetch("http://localhost:5000/booking/booking", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                customer_id: customerId,
+                package_id: selectedPackageId,
+                timeslot_ids: selectedTimeslots,
+                athleteIds: selectedAthleteIds
+              })
+            });
+
+            const result = await bookingRes.json();
+            if (bookingRes.ok) {
+              alert("🎉 Booking confirmed!");
+              window.location.href = "ThankYou.html";
+            } else {
+              alert("Booking error: " + result.error);
+              payNowBtn.disabled = false;
+            }
+          }
+        } catch (err) {
+          console.error("Error during payment/booking:", err);
+          alert("Something went wrong. Try again.");
+          payNowBtn.disabled = false;
+        }
+      }, { once: true });
+    });
   </script>
+
+  <!-- Not an athlete popup -->
+  <div id="notAthletePopup" style="
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #343a40;
+    color: white;
+    padding: 25px 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+    z-index: 9999;
+    font-size: 18px;
+    text-align: center;
+    max-width: 400px;
+  ">
+    <p>You must be <strong>logged</strong> in as an <strong>athlete</strong> to book sessions.</p>
+    <button onclick="closeNotAthletePopup()" style="
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #ff4800;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    ">OK</button>
+  </div>
+
+  <!-- Missing guardian/athlete info popup -->
+  <div id="guardianAthletePopup" style="
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #343a40;
+    color: white;
+    padding: 25px 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+    z-index: 9999;
+    font-size: 18px;
+    text-align: center;
+    max-width: 400px;
+  ">
+    <p>Please complete your Parental/Guardian info and add an athlete before booking.</p>
+    <button onclick="closeGuardianAthletePopup()" style="
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #ff4800;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    ">OK</button>
+  </div>
+
+  <!-- Max session limit popup -->
+  <div id="maxSessionPopup" style="
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #343a40;
+    color: white;
+    padding: 25px 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+    z-index: 9999;
+    font-size: 18px;
+    text-align: center;
+    max-width: 400px;
+  ">
+    <p id="maxSessionMessage">5-session limit reached.</p>
+    <button onclick="closeMaxSessionPopup()" style="
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #ff4800;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    ">OK</button>
+  </div>
+
 
 
 </body>

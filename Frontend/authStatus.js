@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Replace login/register buttons with profile button
       navButton.innerHTML = `
-        <button class="btn profile-btn" id="profileBtn">${role.charAt(0).toUpperCase() + role.slice(1)}</button>
+        <button class="btn profile-btn" id="profileBtn">${role.charAt(0).toUpperCase() + role.slice(1)}</button><!--<br>Dashboard-->
       `;
 
       // Fill sidebar user info

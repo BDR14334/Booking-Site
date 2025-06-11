@@ -4,6 +4,8 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('../db');
 require('dotenv').config();
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -14,6 +16,11 @@ const ADMIN_SECRET_ID = process.env.ADMIN_SECRET_ID;
 function isValidPassword(password) {
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()\-_=+\[\]{}|;:'",.<>?/])[A-Za-z\d!@#$%^&*()\-_=+\[\]{}|;:'",.<>?/]{8,64}$/;
   return passwordRegex.test(password) && !password.includes(' ');
+}
+
+function isValidEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
 }
 
 // REGISTER
@@ -28,6 +35,10 @@ router.post('/register', async (req, res) => {
     return res.status(400).json({
       error: 'Password must be 8–64 characters and include at least one uppercase, lowercase, number, and special character. No spaces.'
     });
+  }
+
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ error: 'Invalid email format.' });
   }
 
   if (role === 'admin' && admin_id !== ADMIN_SECRET_ID) {
@@ -108,7 +119,7 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role, first_name: user.first_name },
+      { id: user.id, email: user.email, role: user.role, first_name: user.first_name, last_name: user.last_name },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
@@ -120,7 +131,11 @@ router.post('/login', async (req, res) => {
         sameSite: 'strict',
       })
       .status(200)
-      .json({ message: 'Login successful', user: { id: user.id, email: user.email, role: user.role } });
+      .json({ message: 'Login successful', user: { id: user.id, email: user.email, role: user.role, is_first_login: user.is_first_login } });
+      // Update the user's first login status to false
+      if (user.is_first_login) {
+        await pool.query(`UPDATE users SET is_first_login = false WHERE id = $1`, [user.id]);
+      }
 
   } catch (err) {
     console.error('Login error:', err.message);
@@ -158,5 +173,82 @@ router.get('/me', (req, res) => {
     res.status(401).json({ error: 'Invalid token' });
   }
 });
+
+
+router.post('/forgot-password', async (req, res) => {
+  const { email, role } = req.body;
+
+  try {
+    const userRes = await pool.query(`SELECT * FROM users WHERE email = $1 AND role = $2`, [email, role]);
+    if (userRes.rows.length === 0) {
+      return res.status(200).json({ message: 'If your email exists, a reset link has been sent.' }); // Don't leak info
+    }
+
+    const user = userRes.rows[0];
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 15); // 15 minutes
+
+    await pool.query(`
+      INSERT INTO password_resets (user_id, token, expires_at)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (user_id) DO UPDATE SET token = EXCLUDED.token, expires_at = EXCLUDED.expires_at
+    `, [user.id, token, expiresAt]);
+
+    const resetLink = `http://localhost:5500/Booking-Site/Frontend/ResetPassword.html?token=${token}`;
+
+    // Replace with real email service (e.g., SendGrid or SMTP)
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: 'robinsontech30@gmail.com',
+        pass: process.env.GMAIL_APP_PASSWORD
+      }
+    });
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Password Reset',
+      html: `<p>Click <a href="${resetLink}">here</a> to reset your password. The link expires in 15 minutes.</p>`
+    });
+
+    res.json({ message: 'If your email exists, a reset link has been sent.' });
+  } catch (err) {
+    console.error('Forgot password error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.post('/reset-password', async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  if (!isValidPassword(newPassword)) {
+    return res.status(400).json({
+      error: 'Password must be 8–64 characters and include uppercase, lowercase, number, special character. No spaces.'
+    });
+  }
+
+  try {
+    const resetRes = await pool.query(`
+      SELECT * FROM password_resets WHERE token = $1 AND expires_at > NOW()
+    `, [token]);
+
+    if (resetRes.rows.length === 0) {
+      return res.status(400).json({ error: 'Invalid or expired token.' });
+    }
+
+    const userId = resetRes.rows[0].user_id;
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await pool.query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [hashedPassword, userId]);
+    await pool.query(`DELETE FROM password_resets WHERE user_id = $1`, [userId]);
+
+    res.json({ message: 'Password successfully updated.' });
+  } catch (err) {
+    console.error('Reset password error:', err.message);
+    res.status(500).json({ error: 'Server error during password reset.' });
+  }
+});
+
 
 module.exports = router;

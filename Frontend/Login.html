@@ -9,19 +9,23 @@
     <title>Login & Registration</title>
 </head>
 <style>
-    body{
+    body {
         background: url("img/Background.jpg");
         background-size: cover;
         background-repeat: no-repeat;
         background-attachment: fixed;
-        /* overflow: hidden; */
-        overflow-y: auto;
+        overflow-y: auto; /* Allows vertical scroll if needed */
     }
 </style>
+
 <body>
 <div class="wrapper">
+    <!-- Navigation bar -->
     <nav class="nav">
+        <!-- Logo -->
         <div class="nav-logo"><p>ZSP</p></div>
+
+        <!-- Navigation links -->
         <div class="nav-menu" id="navMenu">
             <ul>
                 <li><a href="Home.html" class="link">Home</a></li>
@@ -30,23 +34,29 @@
                 <li><a href="Contact.html" class="link">Contact</a></li>
             </ul>
         </div>
+
+        <!-- Login/Register buttons -->
         <div class="nav-button">
             <button class="btn white-btn" id="loginBtn" onclick="login()">Login</button>
             <button class="btn" id="registerBtn" onclick="register()">Register</button>
         </div>
+
+        <!-- Hamburger icon for mobile nav -->
         <div class="nav-menu-btn">
             <i class="bx bx-menu" onclick="myMenuFunction()"></i>
         </div>
     </nav>
 
+    <!-- Container for forms -->
     <div class="form-box">
         <!-- Login Form -->
-        <div class="login-container" id="login">
+        <div class="login-container active" id="login">
             <div class="top">
                 <span>Don't have an account? <a href="#" onclick="register()">Register</a></span>
                 <header>Login</header>
             </div>
 
+            <!-- Role selection dropdown -->
             <div class="input-box">
                 <select class="input-field" id="loginRoleSelect" required>
                     <option value="" disabled selected>Select Role</option>
@@ -57,11 +67,19 @@
                 <i class='bx bx-user-check'></i>
             </div>
 
+            <!-- Admin ID input (shown only if 'admin' is selected) -->
             <div class="input-box" id="loginAdminIdContainer" style="display: none;">
                 <input type="password" class="input-field" id="loginAdminId" placeholder="Admin ID">
                 <i class="bx bx-lock-alt"></i>
             </div>
 
+            <!-- Coach ID input (shown only if 'coach' is selected) -->
+            <div class="input-box" id="loginCoachIdContainer" style="display: none;">
+                <input type="text" class="input-field" id="loginCoachId" placeholder="Coach ID">
+                <i class="bx bx-id-card"></i>
+            </div>
+
+            <!-- Login credentials -->
             <div class="input-box">
                 <input type="text" class="input-field" placeholder="Username or Email">
                 <i class="bx bx-user"></i>
@@ -72,17 +90,19 @@
                 <i class="bx bx-lock-alt"></i>
             </div>
 
+            <!-- Submit button -->
             <div class="input-box">
                 <input type="submit" class="submit" value="Login">
             </div>
 
+            <!-- Remember Me and Forgot Password -->
             <div class="two-col">
                 <div class="one">
                     <input type="checkbox" id="login-check">
                     <label for="login-check"> Remember Me</label>
                 </div>
                 <div class="two">
-                    <label><a href="#">Forgot password?</a></label>
+                    <label><a href="ForgotPassword.html">Forgot password?</a></label>
                 </div>
             </div>
         </div>
@@ -94,6 +114,7 @@
                 <header>Register</header>
             </div>
 
+            <!-- Role selection dropdown -->
             <div class="input-box">
                 <select class="input-field" id="registerRoleSelect">
                     <option value="" disabled selected>Select Role</option>
@@ -104,11 +125,13 @@
                 <i class='bx bx-user-check'></i>
             </div>
 
+            <!-- Admin ID field for admin registration -->
             <div class="input-box" id="registerAdminIdContainer" style="display: none;">
                 <input type="password" class="input-field" id="registerAdminId" placeholder="Admin ID">
                 <i class="bx bx-lock-alt"></i>
             </div>
 
+            <!-- First and Last name inputs -->
             <div class="two-forms">
                 <div class="input-box">
                     <input type="text" class="input-field" placeholder="First Name">
@@ -120,6 +143,7 @@
                 </div>
             </div>
 
+            <!-- Email and password -->
             <div class="input-box">
                 <input type="text" class="input-field" placeholder="Email">
                 <i class="bx bx-envelope"></i>
@@ -130,10 +154,12 @@
                 <i class="bx bx-lock-alt"></i>
             </div>
 
+            <!-- Submit button -->
             <div class="input-box">
                 <input type="submit" class="submit" value="Register">
             </div>
 
+            <!-- Remember Me and Terms -->
             <div class="two-col">
                 <div class="one">
                     <input type="checkbox" id="register-check">
@@ -147,15 +173,29 @@
     </div>
 </div>
 
+<!-- JavaScript logic -->
 <script>
+    function showCustomAlert(message) {
+        document.getElementById('customAlertMessage').innerText = message;
+        document.getElementById('customAlertPopup').style.display = 'block';
+    }
+
+    function closeCustomAlertPopup() {
+        document.getElementById('customAlertPopup').style.display = 'none';
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
+        // Login role-dependent input visibility
         const loginRoleSelect = document.getElementById("loginRoleSelect");
         const loginAdminIdContainer = document.getElementById("loginAdminIdContainer");
+        const loginCoachIdContainer = document.getElementById("loginCoachIdContainer");
 
         loginRoleSelect.addEventListener("change", function () {
             loginAdminIdContainer.style.display = (this.value === "admin") ? "block" : "none";
+            loginCoachIdContainer.style.display = (this.value === "coach") ? "block" : "none";
         });
 
+        // Register role-dependent input visibility
         const registerRoleSelect = document.getElementById("registerRoleSelect");
         const registerAdminIdContainer = document.getElementById("registerAdminIdContainer");
 
@@ -163,45 +203,58 @@
             registerAdminIdContainer.style.display = (this.value === "admin") ? "block" : "none";
         });
 
-        // LOGIN submission
+        // LOGIN form submission logic
         document.querySelector('#login .submit').addEventListener('click', async (e) => {
             e.preventDefault();
+
+            // Gather form input values
             const email = document.querySelector('#login input[placeholder="Username or Email"]').value;
             const password = document.querySelector('#login input[placeholder="Password"]').value;
             const role = document.getElementById("loginRoleSelect").value;
             const adminId = document.getElementById("loginAdminId")?.value;
+            const coachId = document.getElementById("loginCoachId")?.value;
 
             try {
                 const body = { email, password, role };
-                if (role === "admin" && adminId) {
-                    body.admin_id = adminId;
-                }
+                if (role === "admin" && adminId) body.admin_id = adminId;
+                else if (role === "coach" && coachId) body.coach_id = coachId;
 
+                // Send login request
                 const res = await fetch('http://localhost:5000/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include', // ✅ Add this line!
+                    credentials: 'include', // Include cookies if any
                     body: JSON.stringify(body)
                 });
 
                 const data = await res.json();
                 if (res.ok) {
-                    alert("Login successful!");
-                    // localStorage.setItem("token", data.token); // Store JWT
-                    window.location.href = "home.html";
-                    console.log(data);
+                      const { user } = data;
+
+                    // Save this in sessionStorage to read on dashboard
+                    sessionStorage.setItem("isFirstLogin", user.is_first_login);
+                    
+                    if (role === "athlete") {
+                        window.location.href = "AthleteDashboard.html";
+                    } else if (role === "coach") {
+                        window.location.href = "CoachDashboard.html";
+                    } else {
+                        window.location.href = "Home.html"; // fallback or admin
+                    }
                 } else {
-                    alert(data.error || "Login failed.");
+                    showCustomAlert(data.error || "Login failed.");
                 }
             } catch (err) {
-                alert("Error logging in.");
+                showCustomAlert("Error logging in.");
                 console.error(err);
             }
         });
 
-        // REGISTER submission
+        // REGISTER form submission logic
         document.querySelector('#register .submit').addEventListener('click', async (e) => {
             e.preventDefault();
+
+            // Gather form input values
             const first_name = document.querySelector('#register input[placeholder="First Name"]').value;
             const last_name = document.querySelector('#register input[placeholder="Last Name"]').value;
             const email = document.querySelector('#register input[placeholder="Email"]').value;
@@ -211,15 +264,15 @@
 
             try {
                 const body = { first_name, last_name, email, password, role };
-
                 if (role === "admin") {
                     if (!adminId) {
-                        alert("Admin ID is required for admin registration.");
+                        showCustomAlert("Admin ID is required for admin registration.");
                         return;
                     }
                     body.admin_id = adminId;
                 }
 
+                // Send registration request
                 const res = await fetch('http://localhost:5000/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -228,45 +281,69 @@
 
                 const data = await res.json();
                 if (res.ok) {
-                    alert("Registration successful!");
-                    console.log(data);
+                    showCustomAlert("Registration successful! You can now log in.");
+                    login(); // Switch to login form visually
                 } else {
-                    alert(data.error || "Registration failed.");
+                    showCustomAlert(data.error || "Registration failed.");
                 }
             } catch (err) {
-                alert("Error registering.");
+                showCustomAlert("Error registering.");
                 console.error(err);
             }
         });
     });
 
+    // Mobile navigation menu toggle
     function myMenuFunction() {
         var i = document.getElementById("navMenu");
-        if (i.className === "nav-menu") {
-            i.className += " responsive";
-        } else {
-            i.className = "nav-menu";
-        }
+        i.className = (i.className === "nav-menu") ? "nav-menu responsive" : "nav-menu";
     }
 
+    // Switch to login form
     function login() {
-        document.getElementById("login").style.left = "4px";
-        document.getElementById("register").style.right = "-520px";
+        document.getElementById("login").classList.add("active");
+        document.getElementById("register").classList.remove("active");
         document.getElementById("loginBtn").className += " white-btn";
         document.getElementById("registerBtn").className = "btn";
-        document.getElementById("login").style.opacity = 1;
-        document.getElementById("register").style.opacity = 0;
     }
 
     function register() {
-        document.getElementById("login").style.left = "-510px";
-        document.getElementById("register").style.right = "5px";
+        document.getElementById("login").classList.remove("active");
+        document.getElementById("register").classList.add("active");
         document.getElementById("loginBtn").className = "btn";
         document.getElementById("registerBtn").className += " white-btn";
-        document.getElementById("login").style.opacity = 0;
-        document.getElementById("register").style.opacity = 1;
     }
+
 </script>
+    <!-- Styled Alert Popup -->
+    <div id="customAlertPopup" style="
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #343a40;
+        color: white;
+        padding: 25px 30px;
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+        z-index: 9999;
+        font-size: 18px;
+        text-align: center;
+        max-width: 400px;
+        ">
+        <p id="customAlertMessage">Placeholder message</p>
+        <button onclick="closeCustomAlertPopup()" style="
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #ff4800;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        ">OK</button>
+    </div>
 
 </body>
 </html>

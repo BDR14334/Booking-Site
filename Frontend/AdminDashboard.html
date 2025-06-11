@@ -5,17 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Dashboard</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
+    <!-- Poppins & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
   <style>
     .sidebar {
       position: fixed;
-      top: 56px; /* below navbar */
+      top: 0;
       left: 0;
       width: 220px;
       height: 100%;
       background-color: #343a40;
+      color: white;
       padding-top: 1rem;
       display: none;
       z-index: 999;
+    }
+
+    #sidebarcontainer{
+       margin-top: 36px;
     }
 
     .sidebar a {
@@ -23,6 +32,7 @@
       display: block;
       color: white;
       text-decoration: none;
+      cursor: pointer;
     }
 
     .sidebar a:hover {
@@ -32,13 +42,231 @@
     .profile-dropdown {
       position: relative;
     }
+
+    #mainContent {
+      margin-left: 240px;
+      padding: 20px;
+    }
+
+    .page-section {
+      display: none;
+    }
+
+    .page-section.active {
+      display: block;
+    }
+
+    form label {
+      display: block;
+      margin: 10px 0 5px;
+    }
+
+    form input, form textarea {
+      width: 100%;
+      padding: 8px;
+      border-radius: 5px;
+      border: none;
+      margin-bottom: 15px;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #ff4800;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    /* Athlete Box Styles */
+    .package-box-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .package-box {
+      position: relative;
+      background-color: #2a2f36;
+      border: 2px solid #ff4800;
+      border-radius: 12px;
+      padding: 20px;
+      width: 700px;
+      box-sizing: border-box;
+      color: white;
+    }
+
+    .package-box input[name="athleteName"] {
+      width: 95%; /* or any smaller value you want */
+    }
+
+    .add-package-box {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 300px;
+      height: 500px;
+      border: 2px dashed #ff4800;
+      border-radius: 12px;
+      font-size: 200px;
+      font-weight: 50px;
+      color: #ff4800;
+      cursor: pointer;
+      background-color: transparent;
+    }
+
+    .add-package-box:hover{
+      background-color: #ff4800;
+      color: #2a2f36;
+    }
+
+    /* Coach Assignment Box Styling */
+    .assign-box {
+      position: relative;
+      background-color: #2a2f36;
+      border: 2px solid #ff4800;
+      border-radius: 12px;
+      padding: 20px;
+      width: 300px;
+      color: white;
+      box-sizing: border-box;
+      margin-bottom: 20px;
+    }
+
+    .package-selectable {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0;
+    }
+
+    .package-tag {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin: 5px 0;
+      cursor: pointer;
+    }
+    .package-tag span:last-child {
+      margin-left: 8px;
+    }
+
+    .package-tag.selected {
+      background-color: #4caf50;
+      color: white;
+      border-color: #4caf50;
+    }
+
+    #calendar {
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      color: black !important;
+    }
+
+    /* Day numbers in month grid */
+    #calendar .fc-daygrid-day-number {
+      color: black !important;
+    }
+
+    /* Day names like Sun, Mon in headers */
+    #calendar .fc-col-header-cell-cushion {
+      color: black !important;
+    }
+
+    .fc-toolbar-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #000;
+    }
+
+    .fc-day-today {
+      background-color: #ffa16291 !important;
+    }
+
+    /* Month view title color */
+    .fc-daygrid-event .fc-event-title {
+      color: black !important;
+    }
+
+    .fc-daygrid-event .fc-event-time {
+      color: black;
+    }
+
+    /* Optional: layout similar to .package-box-container */
+    #coachAssignmentsContainer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+
+    select[multiple] {
+      height: 100px;
+      width: 100%;
+    }
+
+    .story-box-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .story-box {
+      position: relative;
+      background-color: #2a2f36;
+      border: 2px solid #ff4800;
+      border-radius: 12px;
+      padding: 20px;
+      width: 340px;
+      box-sizing: border-box;
+      color: white;
+    }
+
+    .add-story-box {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 340px; 
+      border: 2px dashed #ff4800;
+      border-radius: 12px;
+      font-size: 100px;
+      font-weight: bold;
+      color: #ff4800;
+      cursor: pointer;
+      background-color: transparent;
+    }
+
+    .add-story-box:hover {
+      background-color: #ff4800;
+      color: #2a2f36;
+    }
+
+    .delete-story-btn {
+      position: absolute;
+      top: -5px;
+      right: -12.5px;
+      background: none;
+      border: none;
+      font-size: 30px;
+      color: #ff4800;
+      cursor: pointer;
+    }
+
+    .delete-story-btn:hover {
+      color: red;
+    }
+
   </style>
 </head>
-<body>
+<body onload="showSection('dashboard')" >
   <!-- Navbar -->
-  <nav class="navbar navbar-dark bg-dark px-3">
+  <nav class="navbar navbar-dark bg-dark px-3" style="z-index: 1000; ">
     <a class="navbar-brand" href="#">Admin Panel</a>
-    
+   
     <!-- Profile Dropdown -->
     <div class="dropdown profile-dropdown">
       <button class="btn btn-outline-light dropdown-toggle" id="profileBtn" data-bs-toggle="dropdown">
@@ -46,32 +274,1333 @@
       </button>
       <ul class="dropdown-menu dropdown-menu-end">
         <li><a class="dropdown-item" href="#" id="toggleSidebar">Menu</a></li>
-        <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
+        <li><a class="dropdown-item" href="/Booking-Site/Frontend/Home.html" id="toggleSidebar">Website</a></li>
+        <li><a class="dropdown-item text-danger" href="#" onclick="logout()">Logout</a></li>
+
       </ul>
     </div>
   </nav>
 
+
   <!-- Sidebar -->
   <div class="sidebar bg-dark" id="sidebarMenu">
-    <a href="/admin-dashboard">🏠 Dashboard</a>
-    <a href="/coach-registry">📋 Coach Registry</a>
+    <div id="sidebarcontainer"> 
+      <a onclick="showSection('dashboard')">🏠 Dashboard</a>
+      <a onclick="showSection('coachRegistry')">📋 Coach Registry</a>
+      <a onclick="showSection('addPackages')">📦 Add Packages</a>
+      <a onclick="showSection('timeslotCreation')">⏰ Create Timeslots</a>
+      <a onclick="showSection('assignCoaches')">🧑‍🏫 Assign Coaches</a>
+      <a onclick="showSection('manageStories')">🏅 Manage Success Stories</a>
+  </div>
+   
   </div>
 
-  <!-- Page Content -->
-  <div class="container mt-4">
-    <h1>Welcome, Admin</h1>
-    <p>This is your dashboard. Use the menu to navigate through admin functions. Such as coach registry, add packages, ---</p>
+  <!-- Main Content -->
+  <div id="mainContent">
+    <section id="dashboard" class="page-section">
+      <h1>Welcome, Admin</h1>
+      <p>This is your dashboard. Use the menu to navigate through admin functions like coach registry, adding packages, and assigning coaches.</p>
+    </section>
+
+
+    <section id="coachRegistry" class="page-section">
+      <h2>Coach Registry</h2>
+      <p>Here you can manage and view all registered coaches.</p>
+      <div id="pendingCoachesContainer">
+        <div class="pending-coaches-list"></div>
+      </div>
+      <div id="approvedCoachesContainer">
+        <h4>Approved Coaches</h4>
+        <div class="approved-coaches-list"></div>
+      </div>
+    </section>
+
+    <section id="addPackages" class="page-section">
+      <h2>Add Packages</h2>
+      <p>Create new training or service packages for athletes and customers.</p>
+      <div class="package-box-container">
+        <!-- First Package Form -->
+        <div class="package-box">
+          <form class="packageInfoForm">
+            <label for="packageTitle">Package Title</label>
+            <input type="text" id="packageTitle" name="packageTitle" />
+   
+            <label for="description">Description</label>
+            <div class="description-list">
+              <div class="feature-item d-flex mb-2">
+                <input type="text" class="form-control me-2" name="description[]" placeholder="Enter a feature..." />
+                <button type="button" class="btn btn-danger btn-sm" onclick="removeFeature(this)">−</button>
+              </div>
+              <button type="button" class="btn btn-outline-primary btn-sm" onclick="addFeature(this)">+ Add Feature</button>
+            </div>
+           
+            <label for="sessionNumber">Number of Sessions</label>
+            <input type="text" id="sessionNumber" name="sessionNumber" />
+
+
+            <label for="price">Price</label>
+            <input type="text" id="price" name="price" />
+           
+   
+            <button type="submit">Save Package</button>
+          </form>
+        </div>
+   
+        <!-- Add Package Button -->
+        <div class="add-package-box" onclick="addPackageBox()">+</div>
+      </div>
+    </section>
+
+    <section id="timeslotCreation" class="page-section">
+      <h2>Create Timeslots for Packages</h2>
+      <p>Assign specific date and time slots to packages with linked coaches.</p>
+   
+      <select id="packageSelect" class="form-select mb-3">
+        <option value="" disabled selected>-- Select a Package --</option>
+      </select>      
+   
+      <div id="calendar-container" style="display: none;">
+        <h4 id="calendar-title"></h4>
+        <div id="calendar"></div>
+      </div>
+    </section>
+
+    <section id="assignCoaches" class="page-section">
+      <h2>Assign Coaches</h2>
+      <p>Assign available coaches to timeslots or training packages.</p>
+      <!-- Container for all coach assignment boxes -->
+      <div class="package-box-container" id="coachAssignmentsContainer"></div>
+      <!-- Calendar display container -->
+      <div id="assign-calendar-container" style="display: none; margin-top: 30px;">
+        <h4 id="assign-calendar-title" style="margin-bottom: 10px; font-weight: bold;"></h4>
+        <div id="assign-calendar"></div>
+      </div>
+    </section>
+
+    <section id="manageStories" class="page-section">
+      <h2>Manage Success Stories</h2>
+      <p>Click the add button to add athlete success stories to the homepage.</p>
+
+      <div class="story-box-container">
+        <div class="story-box">
+          <button class="delete-story-btn material-symbols-outlined" onclick="this.closest('.story-box').remove()">close</button>
+          <form class="storyForm" enctype="multipart/form-data" onsubmit="return false;">
+            <label>Athlete Name</label>
+            <input type="text" name="athleteName" required />
+
+            <label>Success Story</label>
+            <textarea name="storyText" rows="4" required></textarea>
+
+            <label>Image</label>
+            <input type="file" name="athleteImage" accept="image/*" required />
+
+            <button type="submit">Save Story</button>
+          </form>
+        </div>
+        <div class="add-story-box" onclick="addStoryBox()">+</div>
+      </div>
+
+      <div id="storyList" style="margin-top: 20px;"></div>
+    </section>
+
+
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar/index.global.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const res = await fetch("http://localhost:5000/auth/verify", {
+          credentials: "include"
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.loggedIn || data.user.role !== 'admin') {
+          window.location.href = "/Booking-Site/Frontend/Home.html"; // redirect non-admins or unauthenticated users
+        }
+      } catch (err) {
+        console.error("Access check failed", err);
+        window.location.href = "/Booking-Site/Frontend/Home.html"; // fallback redirect
+      }
+    });
+
+    async function logout() {
+      try {
+        const res = await fetch("http://localhost:5000/auth/logout", {
+          method: "POST",
+          credentials: "include"
+        });
+
+        if (res.ok) {
+          // Redirect to Home.html after successful logout
+          window.location.href = "/Booking-Site/Frontend/Home.html";
+        } else {
+          alert("Logout failed.");
+        }
+      } catch (err) {
+        console.error("Logout error:", err);
+        alert("Server error during logout.");
+      }
+    }
+
     const sidebar = document.getElementById("sidebarMenu");
     const toggleSidebar = document.getElementById("toggleSidebar");
-
+ 
     toggleSidebar.addEventListener("click", () => {
       sidebar.style.display = sidebar.style.display === "block" ? "none" : "block";
     });
+ 
+    function showSection(sectionId) {
+      const sections = document.querySelectorAll('.page-section');
+      sections.forEach(sec => sec.classList.remove('active'));
+      const target = document.getElementById(sectionId);
+      if (target) {
+        target.classList.add('active');
+
+        // Trigger coach loading if viewing coach registry
+        if (sectionId === 'coachRegistry') {
+          loadPendingCoaches();
+        }
+      }
+    }
+    // Accept Registered Coaches
+    async function loadPendingCoaches() {
+      try {
+        const res = await fetch("http://localhost:5000/admin/pending-coaches", {
+          credentials: 'include'
+        });
+
+        const coaches = await res.json();
+        const list = document.querySelector(".pending-coaches-list");
+        list.innerHTML = '';
+
+        console.log("Pending Coaches Response:", coaches); // Optional debug
+
+        coaches.forEach(coach => {
+          if (!coach.coach_id) {  // Coach not yet approved
+            const card = document.createElement("div");
+            card.className = "assign-box";
+            card.innerHTML = `
+              <h5>${coach.first_name} ${coach.last_name}</h5>
+              <p>Email: ${coach.email}</p>
+              <button onclick="approveCoach(${coach.user_id}, '${coach.email}')">Approve Coach</button>
+
+            `;
+            list.appendChild(card);
+          }
+        });
+      } catch (err) {
+        console.error("Failed to load pending coaches", err);
+      }
+    }
+
+    async function approveCoach(coachId, email) {
+      const coachCode = Math.floor(1000 + Math.random() * 9000); // 4-digit ID
+
+      const res = await fetch("http://localhost:5000/admin/approve-coach", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ coachId, email, coachCode })
+      });
+
+      const result = await res.json();
+      if (res.ok) {
+        alert(`Coach approved. Login ID ${coachCode} sent to ${email}`);
+        loadPendingCoaches(); // Refresh list
+      } else {
+        alert(result.error || "Approval failed.");
+      }
+    }
+
+    async function loadApprovedCoaches() {
+      try {
+        const res = await fetch("http://localhost:5000/admin/approved-coaches", {
+          credentials: 'include'
+        });
+        const coaches = await res.json();
+        const list = document.querySelector(".approved-coaches-list");
+        list.innerHTML = '';
+
+        coaches.forEach(coach => {
+          const card = document.createElement("div");
+          card.className = "assign-box";
+          card.innerHTML = `
+            <h5>${coach.first_name} ${coach.last_name}</h5>
+            <p>Email: ${coach.email}</p>
+            <p>Coach ID: ${coach.coach_id}</p>
+            <button onclick="fireCoach(${coach.id})" class="btn btn-danger">Fire Coach</button>
+          `;
+          list.appendChild(card);
+        });
+      } catch (err) {
+        console.error("Failed to load approved coaches", err);
+      }
+    }
+
+    async function fireCoach(coachId) {
+      if (!confirm("Are you sure you want to fire this coach?")) return;
+
+      try {
+        const res = await fetch(`http://localhost:5000/admin/fire-coach/${coachId}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+
+        const result = await res.json();
+        if (res.ok) {
+          alert("Coach successfully fired.");
+          loadApprovedCoaches();
+        } else {
+          alert(result.error || "Failed to fire coach.");
+        }
+      } catch (err) {
+        console.error("Error firing coach", err);
+      }
+    }
+
+
+    // Add Package Section
+    function addFeature(button) {
+      const container = button.parentElement;
+      const featureItem = document.createElement('div');
+      featureItem.className = 'feature-item d-flex mb-2';
+      featureItem.innerHTML = `
+        <input type="text" class="form-control me-2" name="description[]" placeholder="Enter a feature..." />
+        <button type="button" class="btn btn-danger btn-sm" onclick="removeFeature(this)">−</button>
+      `;
+      container.insertBefore(featureItem, button);
+    }
+ 
+    function removeFeature(button) {
+      const featureItem = button.parentElement;
+      featureItem.remove();
+    }
+ 
+    function createPackageForm(pkg = {}) {
+      const box = document.createElement('div');
+      box.className = 'package-box';
+ 
+      const form = document.createElement('form');
+      form.className = 'packageInfoForm';
+ 
+      const descriptionArray = Array.isArray(pkg.description) ? pkg.description : [];
+ 
+      form.innerHTML = `
+        <label for="packageTitle">Package Title</label>
+        <input type="text" name="packageTitle" value="${pkg.title || ''}" />
+ 
+        <label for="description">Description</label>
+        <div class="description-list">
+          ${(descriptionArray.length > 0 ? descriptionArray : ['']).map(desc => `
+            <div class="feature-item d-flex mb-2">
+              <input type="text" class="form-control me-2" name="description[]" value="${desc}" placeholder="Enter a feature..." />
+              <button type="button" class="btn btn-danger btn-sm" onclick="removeFeature(this)">−</button>
+            </div>
+          `).join('')}
+          <button type="button" class="btn btn-outline-primary btn-sm" onclick="addFeature(this)">+ Add Feature</button>
+        </div>
+ 
+        <label for="sessionNumber">Number of Sessions</label>
+        <input type="text" name="sessionNumber" value="${pkg.sessions || ''}" />
+ 
+        <label for="price">Price</label>
+        <input type="text" name="price" value="${pkg.price || ''}" />
+ 
+        <button type="submit">Save Package</button>
+      `;
+ 
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+ 
+        const formData = new FormData(form);
+        const packageTitle = formData.get('packageTitle');
+        const sessionNumber = formData.get('sessionNumber');
+        const price = formData.get('price');
+        const description = formData.getAll('description[]').filter(item => item.trim() !== '');
+ 
+        if (!description.length) {
+          alert("Please add at least one feature description.");
+          return;
+        }
+ 
+        const payload = {
+          packageTitle,
+          sessionNumber,
+          price,
+          description
+        };
+ 
+        const method = pkg.id ? 'PUT' : 'POST';
+        const endpoint = pkg.id
+          ? `http://localhost:5000/admin/update-package/${pkg.id}`
+          : 'http://localhost:5000/admin/create-package';
+
+
+        try {
+          const response = await fetch(endpoint, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(payload)
+          });
+ 
+          const result = await response.json();
+          if (response.ok) {
+            alert('Package saved!');
+            console.log(result);
+
+            if (!pkg.id && result.id) {
+              // Store the returned ID in the pkg object and update form reference
+              pkg.id = result.id;
+
+              // Optionally update the submit handler so the form switches to PUT mode now
+              form.removeEventListener('submit', arguments.callee); // remove current handler
+              const newForm = createPackageForm(pkg); // re-render with ID
+              box.replaceWith(newForm); // swap the box so it updates behavior
+            }
+          } else {
+            alert('Failed to save package: ' + result.error);
+          }
+        } catch (error) {
+          console.error('Error submitting package:', error);
+          alert('An error occurred. Check console for details.');
+        }
+      });
+ 
+      const deleteBtn = document.createElement('button');
+      deleteBtn.innerHTML = '<span class="material-symbols-outlined">close</span>';
+      deleteBtn.className = 'delete-package-btn';
+      deleteBtn.style = `
+        position: absolute;
+        top: -5px;
+        right: -12.5px;
+        background: none;
+        border: none;
+        font-size: 30px;
+        color: #ff4800;
+        cursor: pointer;
+      `;
+      deleteBtn.onmouseover = () => deleteBtn.style.color = 'red';
+      deleteBtn.onmouseout = () => deleteBtn.style.color = '#ff4800';
+ 
+      if (pkg.id) {
+        deleteBtn.addEventListener('click', async () => {
+          if (confirm('Are you sure you want to delete this package?')) {
+            try {
+              const res = await fetch(`http://localhost:5000/admin/delete-package/${pkg.id}`, {
+                method: 'DELETE',
+                credentials: 'include'
+              });
+              if (res.ok) {
+                alert('Package deleted.');
+                box.remove();
+              } else {
+                const result = await res.json();
+                alert('Failed to delete package: ' + result.error);
+              }
+            } catch (err) {
+              console.error('Error deleting package:', err);
+              alert('An error occurred. Check console for details.');
+            }
+          }
+        });
+      } else {
+        deleteBtn.addEventListener('click', () => box.remove());
+      }
+ 
+      box.appendChild(deleteBtn);
+      box.appendChild(form);
+      return box;
+    }
+ 
+    function addPackageBox() {
+      const container = document.querySelector('.package-box-container');
+      const addButton = document.querySelector('.add-package-box');
+      const newBox = createPackageForm();
+      container.insertBefore(newBox, addButton);
+    }
+ 
+    async function loadExistingPackages() {
+      try {
+        const response = await fetch('http://localhost:5000/admin/get-packages', {
+          credentials: 'include'
+        });
+ 
+        const packages = await response.json();
+        if (response.ok) {
+          const container = document.querySelector('.package-box-container');
+          const addButton = document.querySelector('.add-package-box');
+          container.innerHTML = '';
+          packages.forEach(pkg => {
+            const box = createPackageForm(pkg);
+            container.appendChild(box);
+          });
+          container.appendChild(addButton);
+        } else {
+          alert('Failed to load packages: ' + packages.error);
+        }
+      } catch (err) {
+        console.error('Error loading packages:', err);
+      }
+    }
+ 
+    window.addEventListener('DOMContentLoaded', () => {
+      loadExistingPackages();
+    });
+
+
+    //Create Timeslot for Packages
+    document.addEventListener('DOMContentLoaded', () => {
+      const packageSelect = document.getElementById('packageSelect');
+      const calendarTitle = document.getElementById('calendar-title');
+      const calendarContainer = document.getElementById('calendar-container');
+      let calendar = null;
+
+
+      async function loadTimeslots(packageId) {
+        try {
+          const res = await fetch(`http://localhost:5000/timeslot/by-package/${packageId}`, {
+            credentials: 'include'
+          });
+          const data = await res.json();
+
+
+          if (!res.ok) {
+            alert(data.error || 'Failed to load timeslots');
+            return;
+          }
+
+
+          if (!Array.isArray(data.timeslots)) {
+            alert('Invalid timeslot data received');
+            return;
+          }
+
+
+          // Clear existing events from calendar before adding new ones
+          calendar.getEvents().forEach(event => event.remove());
+
+
+          // Add new events
+          data.timeslots.forEach(slot => {
+            const dateObj = new Date(slot.date);
+            const y = dateObj.getFullYear();
+            const m = dateObj.getMonth() + 1; // zero-based months
+            const d = dateObj.getDate();
+
+
+            const [sh, sm, ss] = slot.start_time.split(':').map(Number);
+            const [eh, em, es] = slot.end_time.split(':').map(Number);
+
+
+            calendar.addEvent({
+              id: slot.id,
+              title: `Available (${slot.max_capacity || 1} ${slot.max_capacity === 1 ? 'slot' : 'slots'})`,
+              start: new Date(y, m - 1, d, sh, sm, ss),
+              end: new Date(y, m - 1, d, eh, em, es),
+              backgroundColor: '#ff4800',
+              borderColor: '#ff4800',
+              extendedProps: {
+                recurrence_id: slot.recurrence_id
+              }
+            });
+          });
+        } catch (err) {
+          console.error('Error loading timeslots:', err);
+          alert('Error loading timeslots from server.');
+        }
+      }
+
+
+
+
+      // Load all packages
+      fetch('http://localhost:5000/admin/get-packages')
+        .then(res => res.json())
+        .then(packages => {
+          packages.forEach(pkg => {
+            const option = document.createElement('option');
+            option.value = pkg.id;
+            option.textContent = pkg.title;
+            packageSelect.appendChild(option);
+          });
+        });
+
+
+      packageSelect.addEventListener('change', async (e) => {
+        const packageId = e.target.value;
+        const packageText = e.target.options[e.target.selectedIndex].text;
+
+
+        if (!packageId) {
+          calendarTitle.textContent = '';
+          calendarContainer.style.display = 'none';
+          if (calendar) calendar.destroy();
+          return;
+        }
+
+
+        calendarTitle.textContent = `${packageText} Calendar`;
+        calendarContainer.style.display = 'block';
+
+
+        const calendarEl = document.getElementById('calendar');
+        if (calendar) calendar.destroy();
+
+
+        calendar = new FullCalendar.Calendar(calendarEl, {
+          initialView: 'dayGridMonth',
+          headerToolbar: {
+            start: 'prev,next',
+            center: 'title',
+            end: 'dayGridMonth,timeGridWeek,timeGridDay'
+          },
+          selectable: true,
+          editable: true,
+          eventStartEditable: false,     // ✅ disable drag/move to other time/day
+          eventDurationEditable: true,   // ✅ allow resizing duration
+          droppable: false,  
+          navLinks: true,
+          slotDuration: '01:00:00',
+          slotMinTime: '06:00:00',
+          slotMaxTime: '23:59:59',
+          height: 'auto',
+          views: {
+            timeGridDay: { slotDuration: '01:00:00' },
+            timeGridWeek: { slotDuration: '01:00:00' }
+          },
+
+
+          events: [],
+
+
+          select: async (info) => {
+            const start = new Date(info.startStr);
+            const end = new Date(info.endStr);
+            if (info.allDay || end <= start) {
+              alert('Invalid time range.');
+              return;
+            }
+
+
+            const capacity = prompt('Enter number of athletes for this slot:', '1');
+            const cap = parseInt(capacity, 10);
+            if (!cap || cap <= 0) {
+              alert('Invalid capacity.');
+              return;
+            }
+
+
+            const recurrence = prompt('Recurrence? (none/daily/weekly)', 'none').toLowerCase();
+            const count = recurrence !== 'none' ? parseInt(prompt('Repeat how many times?', '5'), 10) : 1;
+            if (recurrence !== 'none' && (!count || count <= 0)) {
+              alert('Invalid recurrence count.');
+              return;
+            }
+
+
+            try {
+              const res = await fetch('http://localhost:5000/timeslot/create-timeslot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                  package_id: packageId,
+                  date: start.toISOString().split('T')[0],
+                  start_time: start.toTimeString().split(' ')[0],
+                  end_time: end.toTimeString().split(' ')[0],
+                  capacity: cap,
+                  recurrence_type: recurrence !== 'none' ? recurrence : null,
+                  recurrence_count: count
+                }),
+              });
+
+
+              const data = await res.json();
+              if (res.ok && Array.isArray(data.timeslots)) {
+                data.timeslots.forEach(slot => {
+                  const dateObj = new Date(slot.date);
+                  const y = dateObj.getFullYear();
+                  const m = dateObj.getMonth() + 1;
+                  const d = dateObj.getDate();
+
+
+                  const [sh, sm, ss] = slot.start_time.split(':').map(Number);
+                  const [eh, em, es] = slot.end_time.split(':').map(Number);
+
+
+                  calendar.addEvent({
+                    id: slot.id,
+                    title: `Available (${slot.max_capacity || 1} ${slot.max_capacity === 1 ? 'slot' : 'slots'})`,
+                    start: new Date(y, m - 1, d, sh, sm, ss),
+                    end: new Date(y, m - 1, d, eh, em, es),
+                    backgroundColor: '#ff4800',
+                    borderColor: '#ff4800',
+                    extendedProps: {
+                      recurrence_id: slot.recurrence_id
+                    },
+                    editable: false
+                  });
+                });
+              } else {
+                alert(data.error || 'Error saving timeslot');
+              }
+            } catch (err) {
+              console.error('Error creating timeslot:', err);
+              alert('Server error');
+            }
+          },
+
+
+          eventClick: async (info) => {
+            const event = info.event;
+            const recurrenceId = event.extendedProps.recurrence_id;
+            const eventDate = event.start.toISOString().split('T')[0];
+
+
+            if (!recurrenceId) {
+              if (confirm('Delete this timeslot?')) {
+                try {
+                  const res = await fetch(`http://localhost:5000/timeslot/delete-timeslot/${event.id}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                  });
+                  if (res.ok) event.remove();
+                  else alert('Error deleting timeslot.');
+                } catch (err) {
+                  console.error(err);
+                  alert('Error deleting timeslot.');
+                }
+              }
+              return;
+            }
+
+
+            const modal = document.getElementById('deleteModal');
+            modal.style.display = 'block';
+
+
+            const deleteOneBtn = document.getElementById('deleteOneBtn');
+            const deleteAllBtn = document.getElementById('deleteAllBtn');
+            const cancelBtn = document.getElementById('cancelDeleteBtn');
+
+
+            deleteOneBtn.onclick = async () => {
+              modal.style.display = 'none';
+              try {
+                const res = await fetch(`http://localhost:5000/timeslot/delete-timeslot/${event.id}`, {
+                  method: 'DELETE',
+                  credentials: 'include'
+                });
+                if (res.ok) event.remove();
+                else alert('Error deleting timeslot.');
+              } catch (err) {
+                console.error(err);
+                alert('Error deleting timeslot.');
+              }
+            };
+
+
+            deleteAllBtn.onclick = async () => {
+              modal.style.display = 'none';
+              try {
+                const res = await fetch(`http://localhost:5000/timeslot/delete-future-timeslots/${recurrenceId}/${eventDate}`, {
+                  method: 'DELETE',
+                  credentials: 'include'
+                });
+                if (res.ok) {
+                  calendar.getEvents().forEach(ev => {
+                    if (ev.extendedProps.recurrence_id === recurrenceId && ev.start >= event.start) {
+                      ev.remove();
+                    }
+                  });
+                } else {
+                  alert('Error deleting future timeslots.');
+                }
+              } catch (err) {
+                console.error(err);
+                alert('Error deleting future timeslots.');
+              }
+            };
+
+
+            cancelBtn.onclick = () => {
+              modal.style.display = 'none';
+            };
+          },
+
+
+          eventResize: async (info) => {
+            const event = info.event;
+            try {
+              const res = await fetch(`http://localhost:5000/timeslot/update-timeslot/${event.id}`, {
+                method: 'PUT',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  start_time: event.start.toTimeString().split(' ')[0],
+                  end_time: event.end.toTimeString().split(' ')[0],
+                  date: event.start.toISOString().split('T')[0]
+                })
+              });
+              if (!res.ok) {
+                alert('Failed to update timeslot.');
+                info.revert();
+              }
+            } catch (err) {
+              console.error('Error updating timeslot:', err);
+              alert('Error updating timeslot.');
+              info.revert();
+            }
+          }
+        });
+
+
+        calendar.render();
+        await loadTimeslots(packageId);
+      });
+    });
+
+
+    //Assign Coaches
+    async function loadCoachAssignments() {
+      const container = document.getElementById('coachAssignmentsContainer');
+      container.innerHTML = ''; // Clear previous content
+
+
+      try {
+        const [coachesRes, packagesRes] = await Promise.all([
+          fetch('http://localhost:5000/admin/coaches'),
+          fetch('http://localhost:5000/admin/get-packages')
+        ]);
+
+
+        const coaches = await coachesRes.json();
+        const packages = await packagesRes.json();
+
+
+        for (const coach of coaches) {
+          // Get currently assigned packages
+          const assignedRes = await fetch(`http://localhost:5000/admin/coach-packages/${coach.id}`);
+          const assigned = await assignedRes.json();
+          const assignedIds = assigned.map(pkg => pkg.id);
+
+
+          const box = document.createElement('div');
+          box.className = 'assign-box';
+
+
+          const title = document.createElement('h5');
+          title.textContent = coach.name;
+          box.appendChild(title);
+
+
+          const spec = document.createElement('p');
+          spec.textContent = `Specialty: ${coach.specialization || "N/A"}`;
+          box.appendChild(spec);
+
+
+          const describ = document.createElement('h5');
+          describ.textContent = 'Package Assignment:';
+          box.appendChild(describ);
+
+
+          const packageList = document.createElement('div');
+          packageList.className = 'package-selectable';
+
+
+          packages.forEach(pkg => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'package-wrapper';
+            wrapper.style.display = 'flex';
+            wrapper.style.alignItems = 'center';
+            wrapper.style.marginBottom = '6px';
+
+
+            // Create package tag (selectable)
+            const tag = document.createElement('div');
+            tag.className = 'package-tag';
+            tag.textContent = pkg.title;
+            tag.dataset.packageId = pkg.id;
+            tag.style.cursor = 'pointer';
+
+
+            // Create calendar icon (initially hidden)
+            const icon = document.createElement('span');
+            icon.innerHTML = '📅';
+            icon.style.marginLeft = '10px';
+            icon.style.cursor = 'pointer';
+            icon.title = 'Edit availability';
+            icon.style.display = 'none'; // Hidden by default
+
+
+            async function getCoachName(coachId) {
+              const res = await fetch(`http://localhost:5000/admin/coaches`);
+              const coaches = await res.json();
+              const coach = coaches.find(c => c.id == coachId);
+
+
+              //split name for firstname
+              const fullName = coach.name || '';
+              const firstname = fullName.split(' ')[0];
+             
+              return `${firstname}'s`  || 'Unknown Coach'; // or use `firstname` if available
+            }
+
+
+            async function getPackageTitle(packageId) {
+              const res = await fetch(`http://localhost:5000/admin/get-packages`);
+              const packages = await res.json();
+              const pkg = packages.find(p => p.id == packageId);
+              return pkg.title || 'Unknown Package';
+            }
+
+
+            async function setCalendarTitle(coachId, packageId) {
+              const coachName = await getCoachName(coachId);
+              const packageTitle = await getPackageTitle(packageId);
+
+
+              const title = `${coachName} Calendar for ${packageTitle}`;
+              document.getElementById('assign-calendar-title').textContent = title;
+            }
+
+
+            // Add this helper function to load timeslots for a specific coach/package combo
+            async function loadCoachTimeslots(calendar, packageId, coachId) {
+              try {
+                const res = await fetch(`http://localhost:5000/timeslot/by-package-with-coaches/${packageId}?coachId=${coachId}`, {
+                  credentials: 'include'
+                });
+
+                const data = await res.json();
+
+                if (!res.ok || !Array.isArray(data.timeslots)) {
+                  alert(data.error || 'Failed to load timeslots');
+                  return;
+                }
+
+                calendar.getEvents().forEach(event => event.remove()); // Clear existing
+
+                data.timeslots.forEach(slot => {
+                  const dateObj = new Date(slot.date);
+                  const [sh, sm, ss] = slot.start_time.split(':').map(Number);
+                  const [eh, em, es] = slot.end_time.split(':').map(Number);
+
+                  const assignedCoaches = slot.assigned_coaches || []; // This is now an array of objects with coach info
+
+                  const assignedCoachObj = assignedCoaches.find(c => c.coach_id === coach.id);
+
+                  let isAssigned = false;
+                  let isPending = false;
+                  let status = 'unassigned';
+
+                  if (assignedCoachObj) {
+                    status = assignedCoachObj.status || 'assigned';
+
+                    if (status === 'pending') {
+                      isPending = true;
+                    } else if (status === 'assigned') {
+                      isAssigned = true;
+                    }
+                  }
+
+                  // Use coach name from assignedCoachObj if assigned, else fallback
+                  const coachName = assignedCoachObj
+                    ? `${assignedCoachObj.first_name} ${assignedCoachObj.last_name}`
+                    : "Unknown Coach";
+
+                  calendar.addEvent({
+                    id: slot.id,
+                    title: isPending
+                      ? `Pending Request of ${slot.package_title}`
+                      : isAssigned
+                        ? `Assigned (to ${coachName})`
+                        : `Available`,
+                    start: new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate(), sh, sm, ss),
+                    end: new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate(), eh, em, es),
+                    backgroundColor: isPending ? '#ffc107' : (isAssigned ? '#28a745' : '#007bff'),
+                    borderColor: isPending ? '#ffc107' : (isAssigned ? '#28a745' : '#007bff'),
+                    textColor: 'white',
+                    extendedProps: {
+                      isAssigned: isAssigned,
+                      status,
+                      coach_id: assignedCoachObj?.coach_id,
+                      coachName,
+                      timeslot_id: slot.id
+                    },
+                    editable: false
+                  });
+                });
+              } catch (err) {
+                console.error('Error loading coach timeslots:', err);
+                alert('Server error when fetching coach timeslots.');
+              }
+            }
+
+
+
+
+            // Set Availability Icon
+            icon.addEventListener('click', async (e) => {
+              e.stopPropagation();
+
+
+              await setCalendarTitle(coach.id, pkg.id); // Update title
+
+
+              const calendarContainer = document.getElementById('assign-calendar-container');
+              const calendarEl = document.getElementById('assign-calendar');
+              calendarEl.innerHTML = ''; // Clear previous calendar
+              calendarContainer.style.display = 'block';
+
+
+              const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                  start: 'prev,next',
+                  center: 'title',
+                  end: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                slotMinTime: '06:00:00',
+                slotMaxTime: '23:59:59',
+                selectable: true,
+                editable: true,
+                navLinks: true,
+                height: 'auto',
+                events: [], // Initial empty events
+                eventClick: async (info) => {
+                  const { isAssigned, timeslot_id, status, coach_id } = info.event.extendedProps;
+
+                  // Handle pending time-off request
+                  if (status === 'pending') {
+                    const action = prompt("Approve or decline this time-off request? (Type: approve / decline)");
+                    if (action !== 'approve' && action !== 'decline') {
+                      alert('No action taken.');
+                      return;
+                    }
+
+                    const url = `http://localhost:5000/timeslot/admin/${action}-time-off/${timeslot_id}/${coach_id}`;
+                    try {
+                      const res = await fetch(url, {
+                        method: 'PUT',
+                        credentials: 'include'
+                      });
+                      const result = await res.json();
+
+                      if (res.ok) {
+                        alert(`Request ${action}d.`);
+                        await loadCoachTimeslots(calendar, pkg.id, coach.id);
+                      } else {
+                        alert(result.error || 'Action failed.');
+                      }
+                    } catch (err) {
+                      console.error(`Error ${action}ing request:`, err);
+                      alert('Server error.');
+                    }
+                    return; // done
+                  }
+
+                  // Standard assign/unassign logic
+                  const confirmMsg = isAssigned
+                    ? 'Unassign this coach from the timeslot?'
+                    : 'Assign this coach to the timeslot?';
+
+                  const confirmed = confirm(confirmMsg);
+                  if (!confirmed) return;
+
+                  try {
+                    const url = isAssigned
+                      ? 'http://localhost:5000/timeslot/unassign-coach'
+                      : 'http://localhost:5000/timeslot/assign-coach';
+
+                    const res = await fetch(url, {
+                      method: isAssigned ? 'DELETE' : 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      credentials: 'include',
+                      body: JSON.stringify({
+                        coach_id: coach.id,
+                        timeslot_id: info.event.id
+                      })
+                    });
+
+                    const result = await res.json();
+                    if (res.ok) {
+                      alert(isAssigned ? 'Coach unassigned!' : 'Coach assigned!');
+                      await loadCoachTimeslots(calendar, pkg.id, coach.id);
+                    } else {
+                      alert(result.error || 'Failed to update assignment.');
+                    }
+                  } catch (err) {
+                    console.error('Error toggling coach assignment:', err);
+                    alert('Server error.');
+                  }
+                }
+
+
+              });
+
+
+              calendar.render();
+
+
+              // 🔽 Load existing coach/package-specific timeslots
+              await loadCoachTimeslots(calendar, pkg.id, coach.id);
+            });
+
+            // Initialize selection state
+            if (assignedIds.includes(pkg.id)) {
+              tag.classList.add('selected');
+              icon.style.display = 'inline'; // show icon if pre-assigned
+            }
+
+
+            // Toggle selection and icon visibility
+            tag.addEventListener('click', () => {
+              tag.classList.toggle('selected');
+              icon.style.display = tag.classList.contains('selected') ? 'inline' : 'none';
+            });
+
+
+            wrapper.appendChild(tag);
+            wrapper.appendChild(icon);
+            packageList.appendChild(wrapper);
+          });
+
+          box.appendChild(packageList);
+
+          const saveBtn = document.createElement('button');
+          saveBtn.textContent = 'Save Assignments';
+          saveBtn.addEventListener('click', async () => {
+            const selected = Array.from(packageList.querySelectorAll('.selected'))
+              .map(el => el.dataset.packageId);
+
+
+            try {
+              // Delete all current assignments first
+              for (const id of assignedIds) {
+                await fetch('http://localhost:5000/admin/coach-packages', {
+                  method: 'DELETE',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ coachId: coach.id, packageId: id })
+                });
+              }
+
+
+              // Add selected ones
+              for (const id of selected) {
+                await fetch('http://localhost:5000/admin/coach-packages', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ coachId: coach.id, packageId: id })
+                });
+              }
+
+
+              alert('Assignments saved!');
+            } catch (err) {
+              console.error(err);
+              alert('Error saving assignments.');
+            }
+          });
+
+
+          box.appendChild(saveBtn);
+          container.appendChild(box);
+        }
+      } catch (err) {
+        console.error('Error loading coach assignments:', err);
+        alert('Could not load coach assignments.');
+      }
+    }
+    
+    // document.querySelectorAll(".storyForm").forEach(form => {
+    //   form.addEventListener("submit", async function (e) {
+    //     e.preventDefault();
+
+    //     const formData = new FormData(this);
+    //     const response = await fetch("http://localhost:5000/admin/add-story", {
+    //       method: "POST",
+    //       credentials: "include",
+    //       body: formData
+    //     });
+
+    //     const result = await response.json();
+    //     if (response.ok) {
+    //       alert("Story added!");
+    //       this.reset();
+    //       loadStories(); // Refresh list
+    //     } else {
+    //       alert(result.error || "Failed to add story.");
+    //     }
+    //   });
+    // });
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      if (document.getElementById("storyList")) loadStories();
+    });
+
+    async function loadStories() {
+      const res = await fetch("http://localhost:5000/admin/stories");
+      const stories = await res.json();
+
+      const container = document.querySelector('.story-box-container');
+      const addButton = document.querySelector(".add-story-box");
+      container.innerHTML = ""; // Clear current story boxes
+
+      stories.forEach(story => {
+        const box = document.createElement("div");
+        box.className = "story-box";
+        box.innerHTML = `
+          <button class="delete-story-btn material-symbols-outlined" onclick="deleteStory(${story.id}, this)">close</button>
+          <form class="storyForm" data-id="${story.id}" enctype="multipart/form-data" onsubmit="return false;">
+            <label>Athlete Name</label>
+            <input type="text" name="athleteName" value="${story.name}" required />
+
+            <label>Success Story</label>
+            <textarea name="storyText" rows="4" required>${story.story}</textarea>
+
+            <label>Image</label>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <img src="img/stories/${story.image_url.split('/').pop()}" 
+                  style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover;" />
+              <input type="file" name="athleteImage" accept="image/*" />
+            </div>
+
+            <button type="submit">Save Story</button>
+          </form>
+        `;
+        box.querySelector("form").addEventListener("submit", handleStorySubmit);
+        container.appendChild(box);
+      });
+
+      if (addButton) container.appendChild(addButton);
+    }
+
+    function addStoryBox() {
+      const container = document.querySelector('.story-box-container');
+      const addButton = document.querySelector('.add-story-box');
+
+      const box = document.createElement('div');
+      box.className = 'story-box';
+      box.innerHTML = `
+        <button class="delete-story-btn material-symbols-outlined" onclick="this.closest('.story-box').remove()">close</button>
+        <form class="storyForm" enctype="multipart/form-data" onsubmit="return false;">
+          <label>Athlete Name</label>
+          <input type="text" name="athleteName" required />
+
+          <label>Success Story</label>
+          <textarea name="storyText" rows="4" required></textarea>
+
+          <label>Image</label>
+          <input type="file" name="athleteImage" accept="image/*" required />
+
+          <button type="submit">Save Story</button>
+        </form>
+      `;
+
+      box.querySelector('form').addEventListener('submit', handleStorySubmit);
+      container.insertBefore(box, addButton);
+    }
+
+    async function deleteStory(id, button) {
+      if (!confirm("Are you sure you want to delete this story?")) return;
+
+      try {
+        const res = await fetch(`http://localhost:5000/admin/delete-story/${id}`, {
+          method: "DELETE"
+        });
+
+        if (res.ok) {
+          alert("Story deleted.");
+          button.closest(".story-box").remove();
+        } else {
+          const result = await res.json();
+          alert(result.error || "Failed to delete.");
+        }
+      } catch (err) {
+        console.error("Delete failed:", err);
+        alert("Server error during delete.");
+      }
+    }
+
+    async function handleStorySubmit(e) {
+      e.preventDefault();
+      const form = e.target;
+      const storyId = form.dataset.id;
+
+      const formData = new FormData();
+      formData.append("athleteName", form.querySelector('[name="athleteName"]').value);
+      formData.append("storyText", form.querySelector('[name="storyText"]').value);
+
+      const imageInput = form.querySelector('[name="athleteImage"]');
+      if (imageInput && imageInput.files.length > 0) {
+        formData.append("athleteImage", imageInput.files[0]);
+      }
+
+      const url = storyId
+        ? `http://localhost:5000/admin/update-story/${storyId}`
+        : `http://localhost:5000/admin/add-story`;
+
+      const method = storyId ? "PUT" : "POST";
+
+      try {
+        const res = await fetch(url, {
+          method,
+          body: formData
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          alert(storyId ? "Story updated!" : "Story added!");
+          loadStories(); // Refresh UI
+        } else {
+          alert(result.error || "Failed to save story.");
+        }
+      } catch (err) {
+        console.error("Error submitting story:", err);
+        alert("Error submitting story.");
+      }
+    }
+
+    // Trigger loading when "Assign Coaches" section is shown
+    function showSection(sectionId) {
+      const sections = document.querySelectorAll('.page-section');
+      sections.forEach(sec => sec.classList.remove('active'));
+      const target = document.getElementById(sectionId);
+      if (target) {
+        target.classList.add('active');
+        
+        // ✅ This ensures pending coaches are loaded
+        if (sectionId === 'coachRegistry') {
+          loadPendingCoaches();
+          loadApprovedCoaches();
+        }
+
+        if (sectionId === 'assignCoaches') {
+          loadCoachAssignments();
+        }
+
+         if (sectionId === 'storyList') {
+          loadStories(); // <- call here if you want lazy load
+        }
+      }
+    }
   </script>
+
+    <div id="deleteModal" style="display:none; position:fixed; z-index:1000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
+      <div style="background:white; padding:20px; max-width:400px; margin:15% auto; border-radius:8px; text-align:center;">
+        <p style="color:#ff4800">Do you want to delete this timeslot or all future ones?</p>
+        <button id="deleteOneBtn">Delete One</button>
+        <button id="deleteAllBtn">Delete Future</button>
+        <button id="cancelDeleteBtn">Cancel</button>
+      </div> <!--Make the styling of most of like my log buttons like this popup-->
+    </div>
 </body>
 </html>
+
 

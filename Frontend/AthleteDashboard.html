@@ -6,6 +6,8 @@
   <title>Athlete Dashboard</title>
 
   <!-- Poppins & Icons -->
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
@@ -101,8 +103,7 @@
     }
 
     #calendar {
-      width: 90%;
-      max-width: 900px;
+      width: 97%;
       background-color: white;
       padding: 20px;
       border-radius: 10px;
@@ -160,6 +161,21 @@
       background-color: #ff4800;
       color: #2a2f36;
     }
+
+    .back-btn {
+      font-family: Arial, Helvetica, sans-serif;
+      position: fixed;
+      top: 75px;
+      right: 20px;
+      font-size: 18px;
+      color: white;
+      cursor: pointer;
+      z-index: 9999;
+    }
+
+    .back-btn:hover{
+      color:#ff4800;
+    }
   </style>
 </head>
 
@@ -175,9 +191,13 @@
   </nav>
 </header>
 
+<div id="globalBackBtn" class="back-btn" onclick="handleBackClick()">
+  <i class="fas fa-arrow-left">Back to Home</i>
+</div>
+
 <!-- Edit Personal Info -->
 <section id="editInfo">
-  <h2>Edit Personal Info</h2>
+  <h2>Parent/Guardian Info</h2>
   <form id="infoForm">
     <label for="Name">Name</label>
     <input type="text" id="name" name="name" />
@@ -254,6 +274,33 @@
 <!-- FullCalendar Script -->
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar/index.global.min.js"></script>
 <script>
+  function handleBackClick() {
+     window.location.href = "Home.html";
+  }
+
+  window.addEventListener("DOMContentLoaded", () => {
+    const isFirstLogin = sessionStorage.getItem("isFirstLogin");
+
+    if (isFirstLogin === "true") {
+      const message = document.getElementById("firstLoginMessage");
+
+      // Custom message per role if needed
+      if (window.location.href.includes("AthleteDashboard")) {
+        message.textContent = "Welcome! Please fill in your parental/guardian info and add an athlete before booking.";
+      } else if (window.location.href.includes("CoachDashboard")) {
+        message.textContent = "Welcome! Please complete your profile to set availability for athlete training.";
+      }
+
+      document.getElementById("firstLoginPopup").style.display = "block";
+      sessionStorage.removeItem("isFirstLogin"); // Prevent future triggers
+    }
+  });
+
+  function closeFirstLoginPopup() {
+    document.getElementById("firstLoginPopup").style.display = "none";
+  }
+
+
   document.addEventListener('DOMContentLoaded', () => {
     const calendarEl = document.getElementById('calendar');
     const calendar = new FullCalendar.Calendar(calendarEl, {
@@ -545,11 +592,37 @@
     await loadAthleteData();  // Loads athletes for that customer
   });
 
-  // loadAthleteData().then(() => attachAthleteFormHandlers());
-  // // On page load
-  // loadCustomerData();
 
 </script>
+
+  <div id="firstLoginPopup" style="
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #343a40;
+    color: white;
+    padding: 25px 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+    z-index: 9999;
+    font-size: 18px;
+    text-align: center;
+    max-width: 400px;
+  ">
+    <p id="firstLoginMessage">Welcome! Please complete your profile before booking sessions.</p>
+    <button onclick="closeFirstLoginPopup()" style="
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #ff4800;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    ">OK</button>
+  </div>
 
 </body>
 </html>

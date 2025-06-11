@@ -134,40 +134,40 @@ body{
 /* ------------------ FORM CONTAINER ------------------ */
 
 /* Holds both login and register forms side-by-side */
-.form-box{
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 512px;
-    height: 575px;
-    overflow: hidden;
-    z-index: 2;
+.form-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 512px;
+  min-height: 575px;
+  overflow: hidden;
+  z-index: 2;
+  flex-direction: column; /* add this */
 }
 
-/* ------------------ LOGIN FORM ------------------ */
+/* ------------------ LOGIN FORM & REGISTER FORM ------------------ */
 
-/* Styles for the login form container */
-.login-container{
-    position: absolute;
-    left: 4px;
-    width: 500px;
-    display: flex;
-    flex-direction: column;
-    transition: .5s ease-in-out;
+/* ------------------ LOGIN FORM ------------------ */
+.login-container {
+  display: none;
+  width: 100%;
+  flex-direction: column;
 }
 
 /* ------------------ REGISTER FORM ------------------ */
-
-/* Styles for the registration form container */
-.register-container{
-    position: absolute;
-    right: -520px;
-    width: 500px;
-    display: flex;
-    flex-direction: column;
-    transition: .5s ease-in-out;
+.register-container {
+  display: none;
+  width: 100%;
+  flex-direction: column;
 }
+
+/* Show the active form */
+.login-container.active,
+.register-container.active {
+  display: flex;
+}
+
 
 /* ------------------ SHARED FORM CONTENT ------------------ */
 

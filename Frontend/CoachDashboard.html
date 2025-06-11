@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Coach Dashboard</title>
 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <!-- Poppins Font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600&display=swap" rel="stylesheet">
 
@@ -62,7 +63,7 @@
     form input,
     form textarea,
     form select {
-      width: 100%;
+      width: 50%;
       padding: 10px;
       border-radius: 5px;
       border: none;
@@ -94,7 +95,8 @@
       border-radius: 6px;
     }
 
-    #calendar {
+    #coach-calendar {
+      width: 97%;
       background-color: white;
       padding: 20px;
       border-radius: 10px;
@@ -110,10 +112,26 @@
     .fc-day-today {
       background-color: #ffa16291 !important;
     }
+
+    .back-btn {
+      font-family: Arial, Helvetica, sans-serif;
+      position: fixed;
+      top: 75px;
+      right: 20px;
+      font-size: 18px;
+      color: white;
+      cursor: pointer;
+      z-index: 9999;
+    }
+
+    .back-btn:hover{
+      color:#ff4800;
+    }
   </style>
 </head>
 
 <body>
+  <!-- Header -->
   <header>
     <h1>Coach Dashboard</h1>
     <nav>
@@ -123,7 +141,11 @@
     </nav>
   </header>
 
-  <!-- Sections -->
+  <div id="globalBackBtn" class="back-btn" onclick="handleBackClick()">
+    <i class="fas fa-arrow-left">Back to Home</i>
+  </div>
+
+  <!-- Section: Coach Info Form -->
   <section id="editCoachInfo">
     <h1>Personal Info</h1>
     <form id="coachInfoForm">
@@ -138,18 +160,22 @@
 
       <label>Your Specialty</label>
       <textarea rows="4" name="specialty" placeholder="e.g., Strength Training, Speed Improvement..."></textarea>
-
-      <button type="submit">Save Info</button>
+      <div>
+        <button type="submit">Save Info</button>
+      </div>
+      
     </form>
   </section>
 
-  <section id="editAvailability">
-    <h1>Edit Availability</h1>
-
-    <div id="calendar"></div>
-
+  <!-- Section: Timeslots -->
+  <section id="viewAssignedTimeslots" class="page-section">
+    <h2>My Assigned Timeslots</h2>
+    <div id="coach-calendar-container" style="margin-top: 30px;">
+      <div id="coach-calendar"></div>
+    </div>
   </section>
 
+  <!-- Section: Bookings List -->
   <section id="coachBookings">
     <h1>View Bookings</h1>
     <ul id="bookingsList">
@@ -162,287 +188,373 @@
   <!-- FullCalendar JS -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar/index.global.min.js"></script>
   <script>
-    // Initialize global variables for user ID, calendar instance, and coach ID
-    let userId = null;
-    let calendar = null;
-    let coachId = null;
-  
-    // Fetch the currently logged-in user
-    async function fetchLoggedInUser() {
-      try {
-        const res = await fetch('http://localhost:5000/auth/me', { credentials: 'include' }); // Include cookies
-        const data = await res.json();
-        if (data.user && data.user.id) {
-          userId = data.user.id; // Store user ID
-        } else {
-          throw new Error('User data not found');
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        alert('Failed to fetch user data.');
-      }
+  // Global variables to store logged-in user ID, FullCalendar instance, and coach ID
+  let userId = null;
+  let calendar = null;
+  let coachId = null;
+
+  // Back Button 
+  function handleBackClick() {
+     window.location.href = "Home.html";
+  }
+
+  // if first login function
+  window.addEventListener("DOMContentLoaded", () => {
+    const isFirstLogin = sessionStorage.getItem("isFirstLogin");
+
+    if (isFirstLogin === "true") {
+      showCoachFirstLoginPopup(); // fetches coach name and shows popup
+      sessionStorage.removeItem("isFirstLogin");
     }
-  
-    // Load coach profile data linked to the logged-in user
-    async function loadCoachData() {
-      await fetchLoggedInUser(); // Ensure userId is available first
-  
-      try {
-        const coachRes = await fetch(`http://localhost:5000/coach/by-user/${userId}`, {
-          credentials: 'include'
-        });
-        const coach = await coachRes.json();
-  
-        if (coachRes.ok) {
-          coachId = coach.id; // Save coach ID for later use
-  
-          // Populate form fields with coach profile data
-          document.querySelector('input[name="coachName"]').value = `${coach.first_name} ${coach.last_name || ''}`;
-          document.querySelector('input[name="coachEmail"]').value = coach.email || '';
-          document.querySelector('input[name="coachPhone"]').value = coach.phone || '';
-          document.querySelector('textarea[name="specialty"]').value = coach.specialization || '';
-        }
-  
-        // Load available timeslots into calendar after coach data is ready
-        await loadTimeslots();
-      } catch (error) {
-        console.error('Error loading coach data:', error);
-      }
-    }
-  
-    // Load timeslots for the calendar view
-    async function loadTimeslots() {
-      if (!coachId) return; // Do nothing if coachId isn't set yet
-      try {
-        const response = await fetch(`http://localhost:5000/coach/timeslots/${userId}`, {
-          credentials: 'include'
-        });
-  
-        const data = await response.json();
-        if (response.ok && Array.isArray(data.timeslots)) {
-          data.timeslots.forEach(timeslot => {
-            console.log('Adding event to calendar:', timeslot); //+
-            const datePart = timeslot.date.split('T')[0]; // '2025-04-30'
+  });
 
-            const [year, month, day] = datePart.split('-').map(Number);
-            const [sh, sm, ss] = timeslot.start_time.split(':').map(Number);
-            const [eh, em, es] = timeslot.end_time.split(':').map(Number);
-
-            const start = new Date(year, month - 1, day, sh, sm, ss);
-            const end = new Date(year, month - 1, day, eh, em, es);
-            
-            console.log('Parsed start:', start, 'Parsed end:', end); //+
-            // Add each timeslot as an event to the calendar
-            calendar.addEvent({
-              id: timeslot.id,
-              title: `Available (${timeslot.max_capacity || 1} ${timeslot.max_capacity === 1 ? 'slot' : 'slots'})`,
-              start: start,
-              end: end,
-              backgroundColor: '#ff4800',
-              borderColor: '#ff4800'
-            });
-          });
-        } else {
-          console.error('Could not load timeslots:', data.error);
-        }
-      } catch (err) {
-        console.error('Error fetching timeslots:', err);
-      }
-    }
-  
-    // Handle form submission for creating or updating coach profile
-    document.getElementById('coachInfoForm').addEventListener('submit', async (e) => {
-      e.preventDefault(); // Prevent default form behavior
-      await fetchLoggedInUser(); // Make sure userId is set
-  
-      // Extract values from form
-      const fullName = document.querySelector('input[name="coachName"]').value.trim();
-      const [first_name, ...lastNameParts] = fullName.split(' ');
-      const last_name = lastNameParts.join(' ') || '';
-      const coachEmail = document.querySelector('input[name="coachEmail"]').value.trim();
-      const coachPhone = document.querySelector('input[name="coachPhone"]').value.trim();
-      const specialty = document.querySelector('textarea[name="specialty"]').value.trim();
-  
-      try {
-        // Choose endpoint and method based on whether coach already exists
-        const method = coachId ? 'PUT' : 'POST';
-        const url = coachId
-          ? `http://localhost:5000/coach/update/${coachId}`
-          : 'http://localhost:5000/coach/create';
-  
-        // Send profile data to server
-        const response = await fetch(url, {
-          method,
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            first_name,
-            last_name,
-            email: coachEmail,
-            phone: coachPhone,
-            specialization: specialty,
-            user_id: userId
-          }),
-        });
-  
-        const data = await response.json();
-        if (response.ok) {
-          alert('Coach profile saved successfully!');
-          if (!coachId) coachId = data.coach.id; // Save new coachId if just created
-        } else {
-          alert('Error: ' + data.error);
-        }
-      } catch (error) {
-        console.error('Fetch error:', error);
-        alert('Something went wrong saving profile!');
-      }
-    });
-  
-    // Wait for the DOM to be ready before initializing calendar
-    document.addEventListener('DOMContentLoaded', async () => {
-      const calendarEl = document.getElementById('calendar'); // Get calendar container
-      await fetchLoggedInUser(); // Ensure user is authenticated
-  
-      // Initialize FullCalendar instance
-      calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        headerToolbar: {
-          start: 'prev,next',
-          center: 'title',
-          end: 'dayGridMonth,timeGridWeek,timeGridDay'
-        },
-        selectable: true, // Allow user to select date/time
-        editable: true,
-        navLinks: true,
-        slotDuration: '01:00:00',
-        slotMinTime: '06:00:00',
-        slotMaxTime: '22:00:00',
-  
-        // Handler for selecting a time range to create availability
-        select: async (info) => {
-          const start = new Date(info.startStr);
-          const end = new Date(info.endStr);
-  
-          if (info.allDay || end <= start) {
-            alert('Please select a valid hour range.');
-            return;
-          }
-
-          const capacity = prompt('Enter the number of athletes allowed for this slot:', '1');
-          const capacityNumber = parseInt(capacity, 10);
-          if (isNaN(capacityNumber) || capacityNumber <= 0) {
-            alert('Please enter a valid number greater than 0.');
-            return;
-          }
-  
-          try {
-            // Send selected timeslot to server
-            const response = await fetch('http://localhost:5000/coach/create-timeslot', {
-              method: 'POST',
-              credentials: 'include',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                date: start.toISOString().split('T')[0], // still OK
-                start_time: start.toTimeString().split(' ')[0], // "HH:MM:SS" in local time
-                end_time: end.toTimeString().split(' ')[0],
-                exclusive_booking: true,
-                user_id: userId,
-                capacity: capacityNumber
-              }),
-            });
-  
-            const data = await response.json();
-            if (response.ok && data.timeslot) {
-              // Add the new timeslot to the calendar
-              calendar.addEvent({
-                id: data.timeslot.id,
-                title: `Available (${capacityNumber} ${capacityNumber === 1 ? 'slot' : 'slots'})`,
-                start,
-                end,
-                backgroundColor: '#ff4800',
-                borderColor: '#ff4800'
-              });
-            } else {
-              // If creation failed, remove any matching event just created
-              const match = calendar.getEvents().find(ev =>
-                ev.start.getTime() === start.getTime() &&
-                ev.end.getTime() === end.getTime() &&
-                ev.title === 'Available'
-              );
-              if (match) match.remove();
-            }
-          } catch (err) {
-            console.error('Fetch error:', err);
-            alert('Failed to save availability.');
-          }
-        },
-  
-        // Handle user clicking an existing event
-        eventClick: async (info) => {
-          if (info.event.title.startsWith('Available')  && confirm('Remove this availability?')) {
-            info.event.remove(); // Remove from UI
-            try {
-              // Delete from backend
-              const response = await fetch(`http://localhost:5000/coach/delete-timeslot/${info.event.id}`, {
-                method: 'DELETE',
-                credentials: 'include'
-              });
-  
-              if (!response.ok) {
-                alert('Failed to delete timeslot from database.');
-              }
-            } catch (err) {
-              console.error('Delete request failed:', err);
-              alert('Failed to delete availability.');
-            }
-          }
-        },
-
-        eventResize: async (info) => {
-          const event = info.event;
-          try {
-            const response = await fetch(`http://localhost:5000/coach/update-timeslot/${event.id}`, {
-              method: 'PUT',
-              credentials: 'include',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                start_time: event.start.toTimeString().split(' ')[0],
-                end_time: event.end.toTimeString().split(' ')[0],
-                date: event.start.toISOString().split('T')[0]
-              }),
-            });
-
-            const data = await response.json();
-            if (!response.ok) {
-              alert('Failed to update timeslot.');
-              info.revert(); // Revert the resize on failure
-            }
-          } catch (err) {
-            console.error('Resize update failed:', err);
-            alert('Error updating timeslot.');
-            info.revert(); // Revert on error
-          }
-        },
-
-  
-        // Define time grid configurations
-        views: {
-          timeGridDay: { slotDuration: '01:00:00' },
-          timeGridWeek: { slotDuration: '01:00:00' }
-        },
-  
-        height: 'auto' // Adjust height based on content
+  // Example function to fetch and show coach name
+  async function showCoachFirstLoginPopup() {
+    try {
+      const response = await fetch('http://localhost:5000/auth/me', {
+        method: 'GET',
+        credentials: 'include',
       });
-      
 
-      calendar.render(); // Display the calendar
-      await fetchLoggedInUser();
-      await loadCoachData(); // Load profile and availability
+      if (response.ok) {
+        const data = await response.json();
+        const userData = data.user; // Extract the 'user' object
+        const coachName = `${userData.last_name}`;
+        document.getElementById('coachName').textContent = coachName;
+        document.getElementById('coachFirstLoginPopup').style.display = 'block';
+      }
+    } catch (error) {
+      console.error('Error fetching coach data:', error);
+    }
+  }
+
+
+  function closeCoachFirstLoginPopup() {
+    document.getElementById("coachFirstLoginPopup").style.display = "none";
+  }
+
+  //showCoachFirstLoginPopup();
+
+
+  /**
+   * Fetch the currently logged-in user using the /auth/me endpoint.
+   * This sets the global userId if the request succeeds.
+   */
+  async function fetchLoggedInUser() {
+    try {
+      const res = await fetch('http://localhost:5000/auth/me', { credentials: 'include' }); // includes session cookie
+      const data = await res.json();
+      if (data.user && data.user.id) {
+        userId = data.user.id;
+      } else {
+        throw new Error('User data not found');
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      alert('Failed to fetch user data.');
+    }
+  }
+
+  /**
+   * Load the coach profile data for the currently logged-in user.
+   * Fills the form inputs with existing coach data.
+   */
+  async function loadCoachData() {
+    await fetchLoggedInUser(); // Ensure userId is available
+
+    try {
+      const coachRes = await fetch(`http://localhost:5000/coach/by-user/${userId}`, {
+        credentials: 'include'
+      });
+      const coach = await coachRes.json();
+
+      if (coachRes.ok) {
+        coachId = coach.id; // Save for future updates
+
+        // Populate the form fields
+        document.querySelector('input[name="coachName"]').value = `${coach.first_name} ${coach.last_name || ''}`;
+        document.querySelector('input[name="coachEmail"]').value = coach.email || '';
+        document.querySelector('input[name="coachPhone"]').value = coach.phone || '';
+        document.querySelector('textarea[name="specialty"]').value = coach.specialization || '';
+      }
+
+      // Load calendar availability for coach
+      await loadAssignedTimeslots(userId);
+    } catch (error) {
+      console.error('Error loading coach data:', error);
+    }
+  }
+
+  /**
+   * Load all assigned or open timeslots for the coach and render them in the calendar.
+   * @param {string} userId - ID of the logged-in user
+   */
+  async function loadAssignedTimeslots(userId) {
+    try {
+      const res = await fetch(`http://localhost:5000/coach/assigned-timeslots/${userId}`, {
+        credentials: 'include'
+      });
+
+      const contentType = res.headers.get('content-type');
+      if (!res.ok || !contentType.includes('application/json')) {
+        const text = await res.text();
+        console.error('Server error or non-JSON response:', text);
+        alert('Error loading assigned timeslots');
+        return;
+      }
+
+      const data = await res.json();
+      if (!Array.isArray(data)) {
+        alert('Failed to load assigned timeslots');
+        return;
+      }
+
+      // Clear old events from calendar
+      calendar.getEvents().forEach(event => event.remove());
+
+      // Add new events to the calendar
+      data.forEach(slot => {
+        const dateObj = new Date(slot.date);
+        const [sh, sm, ss] = slot.start_time.split(':').map(Number);
+        const [eh, em, es] = slot.end_time.split(':').map(Number);
+
+        const isPending = slot.assignment_status === 'pending';
+        const isAssignedToCurrentCoach = slot.user_id === userId;
+        const isUnassigned = !slot.user_id;
+
+        let title, backgroundColor;
+
+        if (isPending) {
+          title = `${slot.package_name || 'No Package'} — Pending Time-Off Request`;
+          backgroundColor = '#ffc107';
+        } else if (isAssignedToCurrentCoach) {
+          title = `${slot.package_name || 'No Package'} — My Slot (${slot.max_capacity || 1} athlete${slot.max_capacity === 1 ? '' : 's'})`;
+          backgroundColor = '#ff4800';
+        } else if (isUnassigned) {
+          title = `${slot.package_name || 'No Package'} — Open Slot (${slot.max_capacity || 1})`;
+          backgroundColor = '#00aaff';
+        } else {
+          title = `${slot.package_name || 'No Package'} — Open Slot (${slot.max_capacity || 1})`;
+          backgroundColor = '#00aaff';
+        }
+
+        calendar.addEvent({
+          id: slot.id,
+          title,
+          start: new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate(), sh, sm, ss),
+          end: new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate(), eh, em, es),
+          backgroundColor,
+          borderColor: backgroundColor,
+          extendedProps: {
+            package_name: slot.package_name || '',
+            user_id: slot.user_id,
+            max_capacity: slot.max_capacity,
+            request_status: slot.assignment_status || 'assigned'
+          }
+        });
+      });
+
+    } catch (err) {
+      console.error('Error loading assigned timeslots:', err);
+      alert('Server error loading timeslots.');
+    }
+  }
+
+  /**
+   * Handle submission of the coach profile form.
+   * Sends either a POST (new) or PUT (update) request to the backend.
+   */
+  document.getElementById('coachInfoForm').addEventListener('submit', async (e) => {
+    e.preventDefault(); // prevent form reload
+    await fetchLoggedInUser(); // make sure userId is available
+
+    // Extract form values
+    const fullName = document.querySelector('input[name="coachName"]').value.trim();
+    const [first_name, ...lastNameParts] = fullName.split(' ');
+    const last_name = lastNameParts.join(' ') || '';
+    const coachEmail = document.querySelector('input[name="coachEmail"]').value.trim();
+    const coachPhone = document.querySelector('input[name="coachPhone"]').value.trim();
+    const specialty = document.querySelector('textarea[name="specialty"]').value.trim();
+
+    try {
+      const method = coachId ? 'PUT' : 'POST';
+      const url = coachId
+        ? `http://localhost:5000/coach/update/${coachId}`
+        : 'http://localhost:5000/coach/create';
+
+      const response = await fetch(url, {
+        method,
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first_name,
+          last_name,
+          email: coachEmail,
+          phone: coachPhone,
+          specialization: specialty,
+          user_id: userId
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        alert('Coach profile saved successfully!');
+        if (!coachId) coachId = data.coach.id;
+      } else {
+        alert('Error: ' + data.error);
+      }
+    } catch (error) {
+      console.error('Fetch error:', error);
+      alert('Something went wrong saving profile!');
+    }
+  });
+
+  /**
+   * DOMContentLoaded: Once the page is ready, initialize the calendar and load all data.
+   */
+  document.addEventListener('DOMContentLoaded', async () => {
+    const calendarEl = document.getElementById('coach-calendar');
+    await fetchLoggedInUser(); // Get user ID
+
+    if (!userId) {
+      alert('Could not identify logged-in coach.');
+      return;
+    }
+
+    // Create and configure FullCalendar
+    calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      headerToolbar: {
+        start: 'prev,next today',
+        center: 'title',
+        end: 'dayGridMonth,timeGridWeek,timeGridDay'
+      },
+      selectable: false,
+      editable: false,
+      droppable: false,
+      eventStartEditable: false,
+      eventDurationEditable: false,
+      navLinks: true,
+      height: 'auto',
+      events: [],
+      eventDidMount: function(info) {
+        // Show tooltip with package and time info
+        const event = info.event;
+        const startTime = event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const endTime = event.end ? event.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+        const packageName = event.extendedProps.package_name || '';
+        const tooltip = `Package: ${packageName}\nTime: ${startTime} – ${endTime}`;
+        info.el.setAttribute('title', tooltip);
+      },
+      eventClick: async (info) => {
+        const event = info.event;
+        const slotStart = event.start;
+        const now = new Date();
+        const hoursDiff = (slotStart - now) / (1000 * 60 * 60);
+
+        const isAssigned = event.extendedProps.user_id === userId;
+        const isPending = event.extendedProps.request_status === 'pending';
+        const isUnassigned = !event.extendedProps.user_id;
+
+        // Request time off for future assigned slot
+        if (isAssigned && !isPending && hoursDiff > 24) {
+          const confirmed = confirm("Would you like to request time off for this slot?");
+          if (!confirmed) return;
+
+          try {
+            const res = await fetch('http://localhost:5000/coach/request-time-off', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({
+                timeslot_id: event.id,
+                coach_user_id: userId
+              })
+            });
+
+            const result = await res.json();
+            if (res.ok) {
+              alert('Time off request submitted.');
+              await loadAssignedTimeslots(userId);
+            } else {
+              alert(result.error || 'Request failed.');
+            }
+          } catch (err) {
+            console.error('Error submitting request:', err);
+            alert('Server error.');
+          }
+
+        } else if (isUnassigned) {
+          // Allow coach to self-assign to an open slot
+          const confirmed = confirm("This is an open slot. Assign yourself?");
+          if (!confirmed) return;
+
+          try {
+            const res = await fetch('http://localhost:5000/timeslot/assign-coach', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({
+                coach_id: coachId,
+                timeslot_id: event.id
+              })
+            });
+
+            const result = await res.json();
+            if (res.ok) {
+              alert('Assigned successfully.');
+              await loadAssignedTimeslots(userId);
+            } else {
+              alert(result.error || 'Could not assign to slot.');
+            }
+          } catch (err) {
+            console.error('Error assigning to open slot:', err);
+            alert('Server error.');
+          }
+        } else {
+          alert('You can only request time off more than 24 hours in advance.');
+        }
+      }
     });
-    
-  </script>
-  
-  
-  
+
+    calendar.render();
+
+    // Load data after calendar is rendered
+    await loadAssignedTimeslots(userId);
+    await fetchLoggedInUser();
+    await loadCoachData();
+  });
+</script>
+
+  <!-- Add this at the bottom of CoachDashboard.html body -->
+  <div id="coachFirstLoginPopup" style="
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #343a40;
+    color: white;
+    padding: 25px 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+    z-index: 9999;
+    font-size: 18px;
+    text-align: center;
+    max-width: 400px;
+  ">
+    <p>Welcome Coach <span id="coachName"></span>! Please complete your profile for athlete training.</p>
+    <button onclick="closeCoachFirstLoginPopup()" style="
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #ff4800;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    ">OK</button>
+  </div>
+
 </body>
 </html>
