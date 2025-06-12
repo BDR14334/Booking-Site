@@ -4,7 +4,7 @@ const pool = require('../db'); // Import PostgreSQL connection pool
 const router = express.Router(); // Creates a new router instance
 const { v4: uuidv4 } = require('uuid');
 
-// ---------------------- Create a new coach ----------------------
+// Create a new coach  (for dashboard personal data)
 router.post('/create', async (req, res) => {
   const { first_name, last_name, specialization, email, phone, user_id } = req.body;
 
@@ -31,7 +31,7 @@ router.post('/create', async (req, res) => {
   }
 });
 
-// ---------------------- Update an existing coach ----------------------
+// Update an existing coach 
 router.put('/update/:id', async (req, res) => {
   const { id } = req.params;
   const { first_name, last_name, specialization, email, phone, user_id } = req.body;
@@ -69,7 +69,7 @@ router.put('/update/:id', async (req, res) => {
   }
 });
 
-// ---------------------- Get coach by user ID ----------------------
+//  Get coach by user ID 
 router.get('/by-user/:user_id', async (req, res) => {
   const { user_id } = req.params;
 
@@ -92,7 +92,7 @@ router.get('/by-user/:user_id', async (req, res) => {
   }
 });
 
-// ---------------------- Get all timeslots for a coach ----------------------
+// Get all timeslots for a coach 
 router.get('/timeslots/:user_id', async (req, res) => {
   const user_id = req.params.user_id;
 
@@ -111,7 +111,7 @@ router.get('/timeslots/:user_id', async (req, res) => {
 });
 
 // routes/coach.js
-// GET /coach/assigned-timeslots/:userId
+// GET coach assigned timeslots by userId
 router.get('/assigned-timeslots/:userId', async (req, res) => {
   const { userId } = req.params;
 
@@ -152,7 +152,7 @@ router.get('/assigned-timeslots/:userId', async (req, res) => {
 });
 
 
-// PUT /coach/request-time-off
+// PUT coach request time off
 router.put('/request-time-off', async (req, res) => {
   const { timeslot_id, coach_user_id } = req.body;
 

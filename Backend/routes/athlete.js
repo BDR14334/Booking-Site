@@ -2,7 +2,7 @@ const express = require('express');
 const pool = require('../db');
 const router = express.Router();
 
-// ---------------------- Create a new customer (athlete) ----------------------
+// Create a new customer (athlete)
 router.post('/create', async (req, res) => {
   const { first_name, last_name, email, phone, user_id } = req.body;
 
@@ -28,7 +28,7 @@ router.post('/create', async (req, res) => {
   }
 });
 
-// ---------------------- Update an existing customer ----------------------
+// Update an existing customer 
 router.put('/update/:id', async (req, res) => {
   const { id } = req.params;
   const { first_name, last_name, email, phone, user_id } = req.body;
@@ -64,7 +64,7 @@ router.put('/update/:id', async (req, res) => {
   }
 });
 
-// ---------------------- Get customer by user ID ----------------------
+// Get customer by user ID 
 router.get('/by-user/:user_id', async (req, res) => {
   const { user_id } = req.params;
 

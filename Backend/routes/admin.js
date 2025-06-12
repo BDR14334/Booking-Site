@@ -5,6 +5,7 @@ const nodemailer = require('nodemailer');
 const multer = require('multer');
 const path = require('path');
 
+// Saves images for success stories
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, path.join(__dirname, '../../Frontend/img/stories')); // Save to /public/img/stories
@@ -20,6 +21,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Athlete Stories Section
+// Adds new success story to database
 router.post('/add-story', upload.single('athleteImage'), async (req, res) => {
   const { athleteName, storyText } = req.body;
   const imageFile = req.file;
@@ -44,6 +46,7 @@ router.post('/add-story', upload.single('athleteImage'), async (req, res) => {
   }
 });
 
+// Upades success story already in database
 router.put('/update-story/:id', upload.single('athleteImage'), async (req, res) => {
   const { id } = req.params;
   const { athleteName, storyText } = req.body;
@@ -71,6 +74,7 @@ router.put('/update-story/:id', upload.single('athleteImage'), async (req, res) 
   }
 });
 
+// Gets the user story in database
 router.get('/stories', async (req, res) => {
   try {
     const result = await pool.query(`
@@ -85,7 +89,7 @@ router.get('/stories', async (req, res) => {
   }
 });
 
-// Route: Delete a success story by ID
+// Delete a success story by ID
 router.delete('/delete-story/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -104,7 +108,7 @@ router.delete('/delete-story/:id', async (req, res) => {
 
 
 //Packages Choices
-// Route: Create a new package
+// Create a new package
 router.post('/create-package', async (req, res) => {
   try {
     const { packageTitle, price, sessionNumber, description } = req.body;
@@ -131,7 +135,7 @@ router.post('/create-package', async (req, res) => {
   }
 });
 
-// Route: Update an existing package by ID
+// Update an existing package by ID
 router.put('/update-package/:id', async (req, res) => {
     const { id } = req.params;
     const { packageTitle, sessionNumber, price, description } = req.body;
@@ -167,7 +171,7 @@ router.put('/update-package/:id', async (req, res) => {
     }
 });
 
-// Route: Delete a package by ID
+// Delete a package by ID
 router.delete('/delete-package/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -185,7 +189,7 @@ router.delete('/delete-package/:id', async (req, res) => {
   }
 });
 
-// Route: Get all packages
+// Get all packages
 router.get('/get-packages', async (req, res) => {
     try {
       const result = await pool.query(`
@@ -215,6 +219,7 @@ router.get('/get-packages', async (req, res) => {
     }
 });
 
+// Gets coaches that have registered 
 router.get('/pending-coaches', async (req, res) => {
   try {
     const result = await pool.query(`
@@ -234,6 +239,7 @@ router.get('/pending-coaches', async (req, res) => {
   }
 });
 
+// Post coaches as approved to login
 router.post('/approve-coach', async (req, res) => {
   const { coachId, email, coachCode } = req.body;
 
@@ -266,7 +272,7 @@ router.post('/approve-coach', async (req, res) => {
   }
 });
 
-// GET /admin/approved-coaches
+// Get approved coaches
 router.get('/approved-coaches', async (req, res) => {
   try {
     const result = await pool.query(`
@@ -281,7 +287,7 @@ router.get('/approved-coaches', async (req, res) => {
   }
 });
 
-// DELETE /admin/fire-coach/:id
+// Fires coach and removes from database
 router.delete('/fire-coach/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -301,7 +307,7 @@ router.delete('/fire-coach/:id', async (req, res) => {
 
 
 //Connect Packages to Coaches
-// GET /api/admin/coaches
+// Get coaches
 router.get('/coaches', async (req, res) => {
     try {
       const result = await pool.query(`SELECT id, first_name || ' ' || last_name AS name, specialization FROM coaches`);
@@ -312,7 +318,7 @@ router.get('/coaches', async (req, res) => {
     }
 });
 
-// POST /api/admin/coach-packages
+// Post coach to packages
 router.post('/coach-packages', async (req, res) => {
     const { coachId, packageId } = req.body;
     try {
@@ -329,7 +335,7 @@ router.post('/coach-packages', async (req, res) => {
     }
 });
 
-// GET /api/admin/coach-packages/:coachId
+// Gets coaches that are assigned to packages
 router.get('/coach-packages/:coachId', async (req, res) => {
     const { coachId } = req.params;
     try {
@@ -347,7 +353,7 @@ router.get('/coach-packages/:coachId', async (req, res) => {
     }
 });
 
-// DELETE /api/admin/coach-packages
+// Detes the assignment of coach to package
 router.delete('/coach-packages', async (req, res) => {
     const { coachId, packageId } = req.body;
     try {
@@ -362,7 +368,7 @@ router.delete('/coach-packages', async (req, res) => {
     }
 });
 
-// GET /admin/:coachId
+// Gets coach by ID
 router.get('/:coachId', async (req, res) => {
   const { coachId } = req.params;
   const { packageId } = req.query;
@@ -379,7 +385,7 @@ router.get('/:coachId', async (req, res) => {
   }
 });
 
-// At the bottom of routes/admin.js
+// function to send coach email with login ID for security
 async function sendCoachIdEmail(email, code) {
   const transporter = nodemailer.createTransport({
     service: 'gmail',

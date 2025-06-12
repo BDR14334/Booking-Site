@@ -4,7 +4,7 @@ const pool = require('../db'); // Import PostgreSQL connection pool
 const router = express.Router(); // Creates a new router instance
 const { v4: uuidv4 } = require('uuid');
 
-// ---------------------- Create a timeslot ----------------------
+// Create a timeslot 
 router.post('/create-timeslot', async (req, res) => {
     const {
         date,
@@ -82,7 +82,7 @@ router.get('/by-package/:packageId', async (req, res) => {
     }
 });
 
-// ---------------------- Get all timeslots for a package ----------------------
+// Get all timeslots for a package 
 router.get('/timeslots/:package_id', async (req, res) => {
     const package_id = req.params.package_id;
   
@@ -145,7 +145,7 @@ router.delete('/delete-future-timeslots/:recurrence_id/:from_date', async (req, 
 });
 
 //Assing Coach Timeslots
-// GET /timeslot/by-package/:packageId?coachId=...
+// GET timeslot by package packageId and coaches
 router.get('/by-package-with-coaches/:packageId', async (req, res) => {
     const { packageId } = req.params;
     const { coachId } = req.query;
@@ -204,7 +204,8 @@ router.get('/by-package-with-coaches/:packageId', async (req, res) => {
       return res.status(500).json({ error: 'Internal server error' });
     }
 });
-  
+
+// Post assigned coaches to timeslot
 router.post('/assign-coach', async (req, res) => {
     const { timeslot_id, coach_id } = req.body;
   
@@ -252,7 +253,7 @@ router.post('/assign-coach', async (req, res) => {
     }
 });
   
-
+// Get the assigned coaches to timeslot
 router.get('/assigned-coaches/:timeslot_id', async (req, res) => {
     const { timeslot_id } = req.params;
 
@@ -273,6 +274,7 @@ router.get('/assigned-coaches/:timeslot_id', async (req, res) => {
     }
 });
 
+// Delete coach assignment
 router.delete('/unassign-coach', async (req, res) => {
     const { timeslot_id, coach_id } = req.body;
 

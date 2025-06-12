@@ -7,7 +7,7 @@ const { v4: uuidv4 } = require('uuid');
 const bodyParser = require('body-parser'); // Add at the top if not already present
 
 
-// GET /availability/by-package/:packageId
+// GET availability by package packageId
 router.get('/availability/by-package/:packageId', async (req, res) => {
   const { packageId } = req.params;
 
@@ -63,7 +63,7 @@ router.get('/availability/by-package/:packageId', async (req, res) => {
   }
 });
 
-
+// Gets coaches that are assigned to a timeslot
 router.get('/coach-timeslots', async (req, res) => {
   const { packageId } = req.query;
 
@@ -110,7 +110,7 @@ router.get('/coach-timeslots', async (req, res) => {
   }
 });
 
-
+// Post all attributes for booking
 router.post('/booking', async (req, res) => {
   const { customer_id, athleteIds, timeslot_ids, package_id } = req.body;
 
@@ -172,6 +172,7 @@ router.post('/booking', async (req, res) => {
   }
 });
 
+// Post everthing for the checkout session 
 router.post('/create-checkout-session', async (req, res) => {
   const { customerId, packageId, timeslotIds, athleteIds } = req.body;
 
@@ -256,6 +257,7 @@ router.post('/create-checkout-session', async (req, res) => {
   }
 });
 
+// Post payment intent
 router.post('/create-payment-intent', async (req, res) => {
   const { customerId, packageId } = req.body;
 
@@ -290,6 +292,7 @@ router.post('/create-payment-intent', async (req, res) => {
   }
 });
 
+// Gets data to later be sent to customer
 router.get('/payment-success', async (req, res) => {
   const { session_id } = req.query;
 

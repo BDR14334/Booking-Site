@@ -148,7 +148,7 @@ router.post('/logout', (req, res) => {
   res.clearCookie('token').status(200).json({ message: 'Logout successful' });
 });
 
-// VERIFY (optional endpoint to check login status)
+// VERIFY (check login status)
 router.get('/verify', (req, res) => {
     try {
       const token = req.cookies.token;
@@ -174,7 +174,7 @@ router.get('/me', (req, res) => {
   }
 });
 
-
+// sends password reset link to then update password
 router.post('/forgot-password', async (req, res) => {
   const { email, role } = req.body;
 
@@ -219,6 +219,7 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
+// Updates password in database
 router.post('/reset-password', async (req, res) => {
   const { token, newPassword } = req.body;
 
