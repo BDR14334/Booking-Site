@@ -159,7 +159,6 @@
       line-height: 1;
     }
 
-
     .footer {
       background-color: #222;
       color: white;
@@ -238,6 +237,10 @@
     .profile-btn:hover {
       background-color: rgba(255, 72, 0);
     }
+
+    #leftArrowBtn {
+      visibility: hidden; /* Hide by default, but keep space */
+    }
   </style>
 </head>
 <body>
@@ -275,7 +278,7 @@
     <section class="athlete-stories">
       <h2>Success Stories</h2>
       <div class="carousel-wrapper">
-        <button class="arrow-btn prev-btn" onclick="scrollCarousel(-1)">
+        <button class="arrow-btn prev-btn" id="leftArrowBtn" onclick="scrollCarousel(-1)">
           <i class="bx bx-chevron-left"></i>
         </button>
         <div class="carousel-viewport">
@@ -357,6 +360,13 @@
       const container = document.getElementById("storyCards");
       const offset = currentSlide * (300 + 30) * cardsPerPage;
       container.style.transform = `translateX(-${offset}px)`;
+
+      const leftArrow = document.getElementById("leftArrowBtn");
+      if (currentSlide === 0) {
+        leftArrow.style.visibility = "hidden"; // Use visibility, not display
+      } else {
+        leftArrow.style.visibility = "visible";
+      }
     }
 
     loadHomeStories();
