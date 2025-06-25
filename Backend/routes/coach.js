@@ -121,7 +121,15 @@ router.get('/assigned-timeslots/:userId', async (req, res) => {
 
   try {
     const assignedQuery = `
-      SELECT t.*, p.name AS package_name, ta.coach_user_id, ta.status AS assignment_status
+      SELECT 
+        t.*, 
+        p.name AS package_name, 
+        ta.coach_user_id, 
+        ta.status AS assignment_status,
+        t.max_capacity,
+        (
+          SELECT COUNT(*) FROM booking b WHERE b.timeslot_id = t.id
+        ) AS athlete_count
       FROM timeslots t
       INNER JOIN timeslot_assignments ta ON t.id = ta.timeslot_id
       LEFT JOIN packages p ON t.package_id = p.id
@@ -129,7 +137,15 @@ router.get('/assigned-timeslots/:userId', async (req, res) => {
     `;
 
     const unassignedQuery = `
-      SELECT t.*, p.name AS package_name, NULL AS coach_user_id, NULL AS assignment_status
+      SELECT 
+        t.*, 
+        p.name AS package_name, 
+        NULL AS coach_user_id, 
+        NULL AS assignment_status,
+        t.max_capacity,
+        (
+          SELECT COUNT(*) FROM booking b WHERE b.timeslot_id = t.id
+        ) AS athlete_count
       FROM timeslots t
       LEFT JOIN packages p ON t.package_id = p.id
       WHERE NOT EXISTS (
@@ -188,7 +204,35 @@ router.put('/request-time-off', async (req, res) => {
   }
 });
 
-
+// Get all bookings for a coach (sessions with athletes)
+router.get('/bookings/:coachUserId', async (req, res) => {
+  const { coachUserId } = req.params;
+  try {
+    const result = await pool.query(
+      `SELECT
+         a.first_name AS athlete_first,
+         a.last_name AS athlete_last,
+         pk.name AS package_name,
+         json_agg(json_build_object(
+           'date', ts.date,
+           'start_time', ts.start_time
+         ) ORDER BY ts.date, ts.start_time) AS sessions
+       FROM booking b
+       JOIN athlete a ON b.athlete_id = a.id
+       JOIN timeslots ts ON b.timeslot_id = ts.id
+       JOIN packages pk ON b.package_id = pk.id
+       JOIN timeslot_assignments ta ON ts.id = ta.timeslot_id
+       WHERE ta.coach_user_id = $1
+       GROUP BY a.first_name, a.last_name, pk.name
+       ORDER BY a.last_name, a.first_name, pk.name`,
+      [coachUserId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching coach bookings:', err.message);
+    res.status(500).json({ error: 'Error fetching coach bookings' });
+  }
+});
 
 // Export the router to be used in app.js
 module.exports = router;

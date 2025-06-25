@@ -34,14 +34,23 @@
 
     header h1 {
       margin: 0;
-      font-size: 24px;
+      font-size: 28px;
     }
 
-    nav a {
+    #sidebarLinksContainer a,
+    header nav a {
       margin-left: 15px;
       color: white;
       text-decoration: none;
       font-weight: 500;
+      padding: 20px 8px;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    #sidebarLinksContainer a:hover,
+    header nav a:hover {
+      background-color: #333940;
+      color: #fff;
     }
 
     section {
@@ -50,9 +59,23 @@
       margin: auto;
     }
 
-    h2 {
-      margin-bottom: 20px;
-      color: #fff;
+    /* Center all h1 elements */
+    section h1 {
+      text-align: center;
+      font-size: 30px;
+    }
+
+    #editCoachInfo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #coachInfoForm {
+      width: 60%;
+      /* max-width: 80vh; */
+      margin: 0 auto;
     }
 
     form label {
@@ -63,7 +86,7 @@
     form input,
     form textarea,
     form select {
-      width: 50%;
+      width: 100%;
       padding: 10px;
       border-radius: 5px;
       border: none;
@@ -101,16 +124,36 @@
       padding: 20px;
       border-radius: 10px;
       color: black;
+      height: 600px !important;
+      min-height: 600px !important;
     }
 
     .fc-toolbar-title {
       font-size: 24px;
       font-weight: 600;
-      color: #000;
+      color: #000000;
     }
 
     .fc-day-today {
       background-color: #ffa16291 !important;
+    }
+
+    .fc-daygrid-day, .fc-timegrid-col {
+      cursor: pointer;
+    }
+
+    .fc-event[data-tooltip]:hover:after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 50%;
+      top: -30px;
+      background: #222;
+      color: #fff;
+      font-size: 14px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      z-index: 10000;
+      pointer-events: none;
     }
 
     .back-btn {
@@ -134,7 +177,7 @@
   <!-- Header -->
   <header>
     <h1>Coach Dashboard</h1>
-    <nav>
+    <nav id="sidebarLinksContainer">
       <a href="#editCoachInfo">📋 Edit Info</a>
       <a href="#editAvailability">🕑 Edit Availability</a>
       <a href="#coachBookings">📅 View Bookings</a>
@@ -169,7 +212,7 @@
 
   <!-- Section: Timeslots -->
   <section id="viewAssignedTimeslots" class="page-section">
-    <h2>My Assigned Timeslots</h2>
+    <h1>My Assigned Timeslots</h1>
     <div id="coach-calendar-container" style="margin-top: 30px;">
       <div id="coach-calendar"></div>
     </div>
@@ -179,8 +222,7 @@
   <section id="coachBookings">
     <h1>View Bookings</h1>
     <ul id="bookingsList">
-      <li>🏋️‍♂️ John Doe - May 5th @ 2:00 PM</li>
-      <li>🏃‍♀️ Jane Smith - May 7th @ 4:30 PM</li>
+      <!-- Bookings will be dynamically loaded here -->
     </ul>
   </section>
 
@@ -322,19 +364,23 @@
         const isAssignedToCurrentCoach = slot.user_id === userId;
         const isUnassigned = !slot.user_id;
 
+        // Show athlete count out of capacity
+        const athleteCount = slot.athlete_count || 0;
+        const maxCapacity = slot.max_capacity || 1;
+
         let title, backgroundColor;
 
         if (isPending) {
           title = `${slot.package_name || 'No Package'} — Pending Time-Off Request`;
           backgroundColor = '#ffc107';
         } else if (isAssignedToCurrentCoach) {
-          title = `${slot.package_name || 'No Package'} — My Slot (${slot.max_capacity || 1} athlete${slot.max_capacity === 1 ? '' : 's'})`;
+          title = `${slot.package_name || 'No Package'} — ${athleteCount}/${maxCapacity} athletes attending`;
           backgroundColor = '#ff4800';
         } else if (isUnassigned) {
-          title = `${slot.package_name || 'No Package'} — Open Slot (${slot.max_capacity || 1})`;
+          title = `${slot.package_name || 'No Package'} — Open Slot (${maxCapacity})`;
           backgroundColor = '#00aaff';
         } else {
-          title = `${slot.package_name || 'No Package'} — Open Slot (${slot.max_capacity || 1})`;
+          title = `${slot.package_name || 'No Package'} — Open Slot (${maxCapacity})`;
           backgroundColor = '#00aaff';
         }
 
@@ -348,7 +394,8 @@
           extendedProps: {
             package_name: slot.package_name || '',
             user_id: slot.user_id,
-            max_capacity: slot.max_capacity,
+            max_capacity: maxCapacity,
+            athlete_count: athleteCount,
             request_status: slot.assignment_status || 'assigned'
           }
         });
@@ -357,6 +404,41 @@
     } catch (err) {
       console.error('Error loading assigned timeslots:', err);
       alert('Server error loading timeslots.');
+    }
+  }
+
+  /**
+   * Load coach bookings from the server and display them in the bookings list section.
+   * @param {string} userId - ID of the logged-in user
+   */
+  async function loadCoachBookings(userId) {
+    try {
+      const res = await fetch(`http://localhost:5000/coach/bookings/${userId}`, { credentials: 'include' });
+      const bookings = await res.json();
+      const bookingsList = document.getElementById('bookingsList');
+      bookingsList.innerHTML = '';
+
+      if (!bookings.length) {
+        bookingsList.innerHTML = '<li>No bookings found.</li>';
+        return;
+      }
+
+      bookings.forEach(b => {
+        const sessionStr = b.sessions.map(s => {
+          // Format date and time
+          const dateObj = new Date(`${s.date}T${s.start_time}`);
+          const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          let hours = dateObj.getHours();
+          const minutes = dateObj.getMinutes().toString().padStart(2, '0');
+          const ampm = hours >= 12 ? 'PM' : 'AM';
+          hours = hours % 12 || 12;
+          return `${dateStr} @ ${hours}:${minutes} ${ampm}`;
+        }).join(' | ');
+        bookingsList.innerHTML += `<li>🏋️‍♂️ ${b.athlete_first} ${b.athlete_last} - ${b.package_name} - ${sessionStr}</li>`;
+      });
+    } catch (err) {
+      console.error('Error loading coach bookings:', err);
+      document.getElementById('bookingsList').innerHTML = '<li>Error loading bookings.</li>';
     }
   }
 
@@ -435,7 +517,7 @@
       eventStartEditable: false,
       eventDurationEditable: false,
       navLinks: true,
-      height: 'auto',
+      height: 'parent',
       events: [],
       eventDidMount: function(info) {
         // Show tooltip with package and time info
@@ -444,7 +526,7 @@
         const endTime = event.end ? event.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
         const packageName = event.extendedProps.package_name || '';
         const tooltip = `Package: ${packageName}\nTime: ${startTime} – ${endTime}`;
-        info.el.setAttribute('title', tooltip);
+        info.el.setAttribute('data-tooltip', tooltip);
       },
       eventClick: async (info) => {
         const event = info.event;
@@ -514,8 +596,12 @@
         } else {
           alert('You can only request time off more than 24 hours in advance.');
         }
+      },
+      dateClick: function(info) {
+            calendar.changeView('timeGridDay', info.dateStr);
       }
     });
+
 
     calendar.render();
 
@@ -523,6 +609,7 @@
     await loadAssignedTimeslots(userId);
     await fetchLoggedInUser();
     await loadCoachData();
+    await loadCoachBookings(userId);
   });
 </script>
 
