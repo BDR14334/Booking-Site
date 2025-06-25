@@ -31,15 +31,29 @@
 
     header h1 {
       margin: 0;
-      font-size: 24px;
+      font-size: 28px;
     }
 
-    nav a {
+    section h1 {
+      text-align: center;
+      font-size: 30px
+    }
+
+    #sidebarLinksContainer a {
       margin-left: 15px;
       color: white;
       text-decoration: none;
       font-weight: 500;
+      padding: 20px 8px;
+      /* border-radius: 6px; */
+      transition: background 0.2s, color 0.2s;
     }
+
+    #sidebarLinksContainer a:hover {
+      background-color: #333940;
+      color: #fff;
+    }
+
 
     section {
       padding: 30px 20px;
@@ -108,16 +122,37 @@
       padding: 20px;
       border-radius: 10px;
       color: black;
+      height: 600px !important;
+      min-height: 600px !important;
     }
 
     .fc-toolbar-title {
-      font-size: 28px;
-      font-weight: 700;
+      font-size: 24px;
+      font-weight: 600;
       color: #000000;
     }
 
     .fc-day-today {
       background-color: #ffa16291 !important;
+    }
+
+    .fc-daygrid-day, .fc-timegrid-col {
+      cursor: pointer;
+    }
+
+    .fc-event[data-tooltip]:hover:after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 50%;
+      top: -30px;
+      /* transform: translateX(-50%); */
+      background: #222;
+      color: #fff;
+      font-size: 14px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      z-index: 10000;
+      pointer-events: none;
     }
 
     /* Athlete Box Styles */
@@ -176,6 +211,19 @@
     .back-btn:hover{
       color:#ff4800;
     }
+
+    #editInfo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh; /* Adjust as needed */
+    }
+    #infoForm {
+      width: 60%;
+      /* max-width: 400px; */
+      margin: 0 auto;
+    }
   </style>
 </head>
 
@@ -197,7 +245,7 @@
 
 <!-- Edit Personal Info -->
 <section id="editInfo">
-  <h2>Parent/Guardian Info</h2>
+  <h1>Parent/Guardian Info</h1>
   <form id="infoForm">
     <label for="Name">Name</label>
     <input type="text" id="name" name="name" />
@@ -214,7 +262,7 @@
 
 <!-- Add Athlete Info -->
 <section id="athleteInfo">
-  <h2>Add Athlete For Booking</h2>
+  <h1>Add Athlete For Booking</h1>
   <div class="athlete-box-container">
     <!-- First Athlete Form -->
     <div class="athlete-box">
@@ -258,16 +306,15 @@
 
 <!-- Sessions -->
 <section id="viewSessions">
-  <h2>Upcoming Sessions</h2>
+  <h1>Upcoming Sessions</h1>
   <div id="calendar"></div>
 </section>
 
 <!-- Receipts -->
 <section id="receipts">
-  <h2>Receipts</h2>
+  <h1>Receipts</h1>
   <ul id="receiptList">
-    <li>🏋️ Session w/ Coach Mike - $40 - Paid - Apr 25</li>
-    <li>🏃‍♂️ Speed Training - $35 - Paid - Apr 20</li>
+    <!--Receipts load here-->
   </ul>
 </section>
 
@@ -300,45 +347,69 @@
     document.getElementById("firstLoginPopup").style.display = "none";
   }
 
-
-  document.addEventListener('DOMContentLoaded', () => {
-    const calendarEl = document.getElementById('calendar');
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: 'timeGridWeek',
-      headerToolbar: {
-        start: 'prev,next',
-        center: 'title',
-        end: 'dayGridMonth,timeGridWeek'
-      },
-      events: [
-        {
-          title: 'Strength Session - Coach A',
-          start: '2025-05-01T14:00:00',
-          end: '2025-05-01T15:00:00',
-          backgroundColor: '#ff4800',
-          borderColor: '#ff4800'
-        },
-        {
-          title: 'Speed Training - Coach B',
-          start: '2025-05-03T10:00:00',
-          end: '2025-05-03T11:00:00',
-          backgroundColor: '#ff4800',
-          borderColor: '#ff4800'
-        }
-      ]
-    });
-    calendar.render();
-
-    // ✅ Attach submit handler to the initial athlete form
-    const originalAthleteForm = document.querySelector('.athlete-box form');
-    if (originalAthleteForm) {
-      originalAthleteForm.addEventListener('submit', handleAthleteSubmit);
-    }
-  });
-
   // Initialize global variables for user ID, calendar instance, and customer ID
   let userId = null;
   let customerId = null;
+  let calendar = null;
+
+  async function loadBookedSessionsToCalendar() {
+    if (!customerId) return;
+    try {
+      const res = await fetch(`http://localhost:5000/athlete/booked-timeslots/by-customer/${customerId}`, { credentials: 'include' });
+      const sessions = await res.json();
+      console.log('Sessions from backend:', sessions); // <-- Add this line
+
+      const extractTime = t => {
+        // Handles "05:00:00.000Z" or "05:00:00Z" or "05:00:00"
+        if (!t) return '';
+        // If t is "05:00:00.000Z" or "05:00:00Z", just take the first 8 chars
+        return t.substring(0, 8);
+      };
+
+
+      const events = sessions.map(s => {
+        const dateOnly = s.date.split('T')[0]; // Ensure we only take "YYYY-MM-DD"
+        const start = `${dateOnly}T${extractTime(s.start_time)}`;
+        const end = `${dateOnly}T${extractTime(s.end_time)}`;
+        return {
+          title: `${s.package_name} (${s.athlete_first} ${s.athlete_last})${s.coach_first ? ' w/ Coach ' + s.coach_first : ''}`,
+          start,
+          end,
+          backgroundColor: '#ff4800',
+          borderColor: '#ff4800'
+        };
+      });
+
+      console.log('Events for calendar:', events);
+
+      const calendarEl = document.getElementById('calendar');
+      if (!calendar) {
+        calendar = new FullCalendar.Calendar(calendarEl, {
+          initialView: 'dayGridMonth',
+          headerToolbar: {
+            start: 'prev,next today',
+            center: 'title',
+            end: 'dayGridMonth,timeGridWeek,timeGridDay'
+          },
+          events,
+          height: 'parent',
+          navLinks: true, // 👈 Enable day clicking
+          eventDidMount: function(info) {
+            info.el.setAttribute('data-tooltip', info.event.title);
+          },
+          dateClick: function(info) {
+            calendar.changeView('timeGridDay', info.dateStr);
+          }
+        });
+        calendar.render();
+      } else {
+        calendar.removeAllEvents();
+        events.forEach(ev => calendar.addEvent(ev));
+      }
+    } catch (err) {
+      console.error('Error loading booked sessions:', err);
+    }
+  }
 
 
   async function handleAthleteSubmit(e) {
@@ -586,11 +657,54 @@
     }
   }
 
+  async function loadReceipts() {
+    if (!customerId) {
+      document.getElementById('receiptList').innerHTML = '<li>No customer found</li>';
+      return;
+    }
+
+    try {
+      const res = await fetch(`http://localhost:5000/athlete/receipts/by-customer/${customerId}`, {credentials: 'include'});
+      const receipts = await res.json();
+      const receiptList = document.getElementById('receiptList');
+      receiptList.innerHTML = '';
+
+      if(!receipts.length){
+        receiptList.innerHTML = '<li>No receipts found.</li>';
+        return;
+      }
+
+      receipts.forEach(r => {
+        const dateStr = new Date(r.payment_date).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
+        const sessionsList = r.sessions ? r.sessions.join(', ') : '';
+        receiptList.innerHTML += `
+          <li>
+            <strong>Date:</strong> ${dateStr}<br>
+            <strong>Amount Paid:</strong> $${r.amount_paid}<br>
+            <strong>Nature:</strong> ${r.package_name}<br>
+            <strong>Description:</strong> ${r.package_description}<br>
+            <strong>Payer:</strong> ${r.customer_first} ${r.customer_last}<br>
+            <strong>Athlete:</strong> ${r.athlete_first} ${r.athlete_last}<br>
+            <strong>Coach:</strong> ${r.coach_first} ${r.coach_last}<br>
+            <strong>Sessions:</strong> ${sessionsList}<br>
+            <strong>Payment Method:</strong> ${r.payment_method} ${r.transaction_id ? '(Transaction ID: ' + r.transaction_id + ')' : ''}<br>
+            <strong>Status:</strong> ${r.payment_status}
+          </li>
+        `;
+      });
+    } catch (err) {
+      document.getElementById('receiptList').innerHTML = '<li>Error loading receipts.</li>';
+    }
+  }
+
 
   document.addEventListener('DOMContentLoaded', async () => {
     await loadCustomerData(); // Sets customerId
     await loadAthleteData();  // Loads athletes for that customer
+    await loadBookedSessionsToCalendar();
+    await loadReceipts();
   });
+
 
 
 </script>
@@ -626,4 +740,3 @@
 
 </body>
 </html>
-  

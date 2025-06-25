@@ -168,7 +168,118 @@ router.delete('/:athleteId', async (req, res) => {
       res.status(500).json({ error: 'Server error' });
     }
 });
+
+router.get('/receipts/:athleteId', async(req, res) => {
+    const { athleteId } = req.params;
+
+    try {
+      const result = await pool.query(
+        `SELECT 
+            b.id AS booking_id, b.status AS booking_status,
+            pmt.amount AS amount_paid, pmt.payment_method, pmt.payment_status, pmt.transaction_id, pmt.created_at AS payment_date,
+            pk.name AS package_name, pk.price AS package_price, pk.description AS package_description,
+            ts.date, ts.start_time, ts.end_time,
+            a.first_name AS athlete_first, a.last_name AS athlete_last,
+            c.first_name AS customer_first, c.last_name AS customer_last, 
+            u.first_name AS coach_first, u.last_name AS coach_last, 
+          FROM booking b
+          JOIN packages pk ON b.package_id = pk.id
+          JOIN timeslots ts ON b.timeslot_id = ts.id
+          JOIN athlete a ON b.athlete_id = a.id
+          JOIN customer c ON b.customer_id = c.id
+          JOIN timeslot_assignments ta ON ts.id = ta.timeslot_id
+          JOIN users u ON ta.coach_user_id = u.id
+          JOIN orders o ON b.order_id = o.id
+          JOIN payments pmt ON o.id = pmt.order_id
+          WHERE b.athlete_id = $1
+          ORDER BY pmt.created_at DESC`,
+        [athleteId]  
+      );
+      res.json(result.rows);
+    } catch (err) {
+      res.status(500).json({error: err.message});
+    }
+});
   
-  
+// Get receipts by customer ID
+router.get('/receipts/by-customer/:customerId', async (req, res) => {
+  const { customerId } = req.params;
+  try {
+    const result = await pool.query(
+      `SELECT 
+          b.order_id,
+          MIN(b.id) AS booking_id, -- just to have a booking reference
+          pmt.amount AS amount_paid,
+          pmt.payment_method,
+          pmt.payment_status,
+          pmt.transaction_id,
+          pmt.created_at AS payment_date,
+          pk.name AS package_name,
+          pk.price AS package_price,
+          pk.description AS package_description,
+          a.first_name AS athlete_first,
+          a.last_name AS athlete_last,
+          c.first_name AS customer_first,
+          c.last_name AS customer_last,
+          array_agg(
+              to_char(ts.date, 'Mon DD') || ' from ' ||
+              to_char(ts.start_time, 'HH12:MIam') || ' - ' ||
+              to_char(ts.end_time, 'HH12:MIam')
+              ORDER BY ts.date, ts.start_time
+          ) AS sessions
+      FROM booking b
+      JOIN packages pk ON b.package_id = pk.id
+      JOIN athlete a ON b.athlete_id = a.id
+      JOIN customer c ON b.customer_id = c.id
+      JOIN timeslots ts ON b.timeslot_id = ts.id
+      JOIN orders o ON b.order_id = o.id
+      LEFT JOIN payments pmt ON o.id = pmt.order_id
+      WHERE b.customer_id = $1
+      GROUP BY b.order_id, pmt.amount, pmt.payment_method, pmt.payment_status, pmt.transaction_id, pmt.created_at,
+               pk.name, pk.price, pk.description,
+               a.first_name, a.last_name,
+               c.first_name, c.last_name
+      ORDER BY pmt.created_at DESC`,
+      [customerId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Receipts error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/booked-timeslots/by-customer/:customerId', async (req, res) => {
+  const { customerId } = req.params;
+  try {
+    const result = await pool.query(
+      `SELECT 
+          b.id AS booking_id,
+          ts.id AS timeslot_id,
+          ts.date,
+          ts.start_time,
+          ts.end_time,
+          pk.name AS package_name,
+          a.first_name AS athlete_first,
+          a.last_name AS athlete_last,
+          u.first_name AS coach_first,
+          u.last_name AS coach_last
+        FROM booking b
+        JOIN timeslots ts ON b.timeslot_id = ts.id
+        JOIN packages pk ON b.package_id = pk.id
+        JOIN athlete a ON b.athlete_id = a.id
+        JOIN customer c ON b.customer_id = c.id
+        LEFT JOIN timeslot_assignments ta ON ts.id = ta.timeslot_id
+        LEFT JOIN users u ON ta.coach_user_id = u.id
+        WHERE b.customer_id = $1
+        ORDER BY ts.date, ts.start_time`,
+      [customerId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Booked timeslots error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 module.exports = router;
