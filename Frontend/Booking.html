@@ -22,6 +22,7 @@
     }
 
     .wrapper-homepage{
+      overflow-x: hidden;
        justify-content: center;
        align-items: center;
        min-height: 110vh;
@@ -772,20 +773,33 @@
               center: 'title',
               end: 'dayGridMonth,timeGridWeek,timeGridDay'
             },
-            events: (timeslots || []).map(slot => ({
-              id: slot.id,
-              title: `Available - ${slot.first_name} ${slot.last_name}`,  // Include coach name
-              start: slot.start_datetime,
-              end: slot.end_datetime,
-              backgroundColor: "#28a745",
-              extendedProps: {
-                coachName: `${slot.first_name} ${slot.last_name}`,
-                maxCapacity: slot.max_capacity,
-                currentBookings: slot.current_bookings || 0,
-                remainingCapacity: slot.remaining_capacity || slot.max_capacity
-              }
-            })),
+            events: (timeslots || []).map(slot => {
+              const isFull = (slot.remaining_capacity || 0) <= 0;
+              return {
+                id: slot.id,
+                title: isFull
+                  ? "Full Capacity"
+                  : `Available - ${slot.first_name} ${slot.last_name}`,
+                start: slot.start_datetime,
+                end: slot.end_datetime,
+                backgroundColor: isFull ? "#dc3545" : "#28a745", // red if full, green if available
+                borderColor: isFull ? "#dc3545" : "#28a745",
+                textColor: "#fff",
+                extendedProps: {
+                  coachName: `${slot.first_name} ${slot.last_name}`,
+                  maxCapacity: slot.max_capacity,
+                  currentBookings: slot.current_bookings || 0,
+                  remainingCapacity: slot.remaining_capacity || 0,
+                  isFull: isFull
+                }
+              };
+            }),
             eventClick: function (info) {
+              if (selectedAthleteIds.length === 0) {
+                alert("Please select at least one athlete before booking a session.");
+                return;
+              }
+
               const selectedDate = new Date(info.event.start).toDateString();
               const index = selectedTimeslots.indexOf(info.event.id);
               const remainingCapacity = info.event.extendedProps.remainingCapacity;
@@ -916,16 +930,22 @@
                 customer_id: customerId,
                 package_id: selectedPackageId,
                 timeslot_ids: selectedTimeslots,
-                athleteIds: selectedAthleteIds
+                athleteIds: selectedAthleteIds,
+                payment: {
+                  transaction_id: result.paymentIntent.id,
+                  amount: result.paymentIntent.amount / 100,
+                  method: result.paymentIntent.payment_method_types[0],
+                  status: result.paymentIntent.status
+                }
               })
             });
 
-            const result = await bookingRes.json();
+            const bookingData = await bookingRes.json();
             if (bookingRes.ok) {
               alert("🎉 Booking confirmed!");
               window.location.href = "ThankYou.html";
             } else {
-              alert("Booking error: " + result.error);
+              alert("Booking error: " + bookingData.error);
               payNowBtn.disabled = false;
             }
           }

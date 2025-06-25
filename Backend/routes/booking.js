@@ -1,6 +1,7 @@
 // Import Express and create a router instance
 const express = require('express');
 const pool = require('../db'); // Import PostgreSQL connection pool
+const nodemailer = require('nodemailer');
 const router = express.Router(); // Creates a new router instance
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { v4: uuidv4 } = require('uuid');
@@ -33,24 +34,24 @@ router.get('/availability/by-package/:packageId', async (req, res) => {
       `SELECT ts.*, u.first_name, u.last_name,
               ts.date + ts.start_time AS start_datetime,
               ts.date + ts.end_time AS end_datetime,
-              COALESCE(b.count, 0) AS booking_count
-       FROM timeslots ts
-       JOIN timeslot_assignments ta ON ts.id = ta.timeslot_id
-       JOIN users u ON ta.coach_user_id = u.id
-       JOIN coaches c ON c.user_id = u.id
-       LEFT JOIN (
-         SELECT timeslot_id, COUNT(*) as count
-         FROM booking
-         GROUP BY timeslot_id
-       ) b ON ts.id = b.timeslot_id
-       WHERE ta.coach_user_id = ANY($1)
-         AND ta.status = 'assigned'
-         AND ts.date + ts.start_time >= NOW()
-         AND COALESCE(b.count, 0) < ts.max_capacity
-         AND (ts.package_id = $2 OR ts.package_id IS NULL)
-       ORDER BY ts.date, ts.start_time`,
+              COALESCE(b.count, 0) AS booking_count,
+              ts.max_capacity - COALESCE(b.count, 0) AS remaining_capacity
+      FROM timeslots ts
+      JOIN timeslot_assignments ta ON ts.id = ta.timeslot_id
+      JOIN users u ON ta.coach_user_id = u.id
+      JOIN coaches c ON c.user_id = u.id
+      LEFT JOIN (
+        SELECT timeslot_id, COUNT(*) as count
+        FROM booking
+        GROUP BY timeslot_id
+      ) b ON ts.id = b.timeslot_id
+      WHERE ta.coach_user_id = ANY($1)
+        AND ta.status = 'assigned'
+        AND ts.date + ts.start_time >= NOW()
+        AND (ts.package_id = $2 OR ts.package_id IS NULL)
+      ORDER BY ts.date, ts.start_time`,
       [coachUserIds, packageId]
-    );       
+    );
 
     res.status(200).json({
       coaches,
@@ -112,7 +113,7 @@ router.get('/coach-timeslots', async (req, res) => {
 
 // Post all attributes for booking
 router.post('/booking', async (req, res) => {
-  const { customer_id, athleteIds, timeslot_ids, package_id } = req.body;
+  const { customer_id, athleteIds, timeslot_ids, package_id, payment } = req.body;
 
   // ✅ Add validation right after destructuring
   if (!Array.isArray(athleteIds) || athleteIds.length === 0) {
@@ -123,42 +124,61 @@ router.post('/booking', async (req, res) => {
   try {
     await client.query('BEGIN');
 
-    // Get max_capacity of the timeslot
+    // ✅ Step 1: Create order and capture order ID (whether or not payment exists)
+    const orderStatus = payment ? 'paid' : 'pending';
+    const orderRes = await client.query(
+      `INSERT INTO orders (customer_id, package_id, status, order_date)
+       VALUES ($1, $2, $3, NOW())
+       RETURNING id`,
+      [customer_id, package_id, orderStatus]
+    );
+    const orderId = orderRes.rows[0].id;
+
+    // ✅ Step 2: Validate capacity and insert bookings
     for (const timeslot_id of timeslot_ids) {
       const timeslot = await client.query(
         'SELECT max_capacity FROM timeslots WHERE id = $1 FOR UPDATE',
         [timeslot_id]
       );
-    
+
       if (timeslot.rows.length === 0) {
         throw new Error('Timeslot not found');
       }
-    
+
       const maxCapacity = timeslot.rows[0].max_capacity;
-    
+
       const bookingCountResult = await client.query(
         'SELECT COUNT(*) FROM booking WHERE timeslot_id = $1',
         [timeslot_id]
       );
       const currentCount = parseInt(bookingCountResult.rows[0].count);
-    
+
       if (currentCount + athleteIds.length > maxCapacity) {
         throw new Error(`Timeslot ${timeslot_id} exceeds capacity`);
       }
-    
+
       for (const athlete_id of athleteIds) {
         const existing = await client.query(
           'SELECT id FROM booking WHERE athlete_id = $1 AND timeslot_id = $2',
           [athlete_id, timeslot_id]
         );
         if (existing.rows.length > 0) continue;
-    
+
         await client.query(
-          `INSERT INTO booking (customer_id, athlete_id, timeslot_id, package_id)
-            VALUES ($1, $2, $3, $4)`,
-          [customer_id, athlete_id, timeslot_id, package_id]
+          `INSERT INTO booking (customer_id, athlete_id, timeslot_id, package_id, order_id)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [customer_id, athlete_id, timeslot_id, package_id, orderId]
         );
       }
+    }
+
+    // ✅ Step 3: Save payment if provided
+    if (payment) {
+      await client.query(
+        `INSERT INTO payments (order_id, amount, payment_method, transaction_id, payment_status)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [orderId, payment.amount, payment.method, payment.transaction_id, payment.status]
+      );
     }      
 
     await client.query('COMMIT');
@@ -390,6 +410,72 @@ router.post('/webhook', bodyParser.raw({ type: 'application/json' }), async (req
         }
       }
 
+      // nodemailer functionality
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: 'robinsontech30@gmail.com',
+          pass: process.env.GMAIL_APP_PASSWORD
+        }
+      });
+
+      // Fetch package
+      const pkgRes = await pool.query(`SELECT title, location FROM packages WHERE id = $1`, [packageId]);
+      const packageTitle = pkgRes.rows[0].title;
+      const packageLocation = pkgRes.rows[0].location || "TBD";
+
+      // Get detailed timeslot info + coaches
+      const timeslotDetailsRes = await pool.query(`
+        SELECT ts.date, ts.start_time, ts.end_time,
+               u.first_name AS coach_first, u.last_name AS coach_last, u.email AS coach_email
+        FROM timeslots ts
+        JOIN timeslot_assignments ta ON ts.id = ta.timeslot_id
+        JOIN users u ON ta.coach_user_id = u.id
+        WHERE ts.id = ANY($1::int[])`, [timeslotIds]);
+
+      const sessionLines = timeslotDetailsRes.rows.map(row => {
+        const date = new Date(row.date).toLocaleDateString('en-US', {
+          month: 'long', day: 'numeric', year: 'numeric'
+        });
+        const startTime = row.start_time.slice(0, 5);
+        return `• ${date} at ${startTime}`;
+      }).join('\n');
+
+      const customerRes = await pool.query(`
+        SELECT u.email, u.first_name
+        FROM customers c
+        JOIN users u ON c.user_id = u.id
+        WHERE c.id = $1`, [customerId]);
+      const customerEmail = customerRes.rows[0].email;
+      const customerName = customerRes.rows[0].first_name;
+
+      // Send email to athlete
+      await transporter.sendMail({
+        from: 'robinsontech30@gmail.com',
+        to: customerEmail,
+        subject: `Your ZSP Booking for ${packageTitle}`,
+        text: `Hi ${customerName},\n\nThank you for booking with ZSP!\n\nYou have training sessions for "${packageTitle}" on:\n${sessionLines}\n\nLocation: ${packageLocation}\n\nSee you soon!\n\n– ZSP Team`
+      });
+
+      // Email each coach once
+      const coachEmailMap = {};
+      timeslotDetailsRes.rows.forEach(row => {
+        if (!coachEmailMap[row.coach_email]) {
+          coachEmailMap[row.coach_email] = { name: `${row.coach_first} ${row.coach_last}`, count: 1 };
+        } else {
+          coachEmailMap[row.coach_email].count++;
+        }
+      });
+
+      for (const [email, data] of Object.entries(coachEmailMap)) {
+        await transporter.sendMail({
+          from: 'robinsontech30@gmail.com',
+          to: email,
+          subject: `New Athlete Booking – ${packageTitle}`,
+          text: `Hi ${data.name},\n\nYou have a new athlete assigned to you for ${data.count} session(s) under the "${packageTitle}" package.\n\nCheck your dashboard for more details.\n\n– ZSP Team`
+        });
+      }
+
       console.log(`✅ Booking confirmed for Order #${orderId}`);
 
     } catch (err) {
@@ -400,8 +486,6 @@ router.post('/webhook', bodyParser.raw({ type: 'application/json' }), async (req
 
   res.status(200).send('Webhook received');
 });
-
-
 
 
 // Export the router to be used in app.js
