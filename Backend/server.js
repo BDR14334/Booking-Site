@@ -4,6 +4,7 @@ const path = require('path');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const { v4: uuidv4 } = require('uuid');
+const { Pool } = require('pg');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -15,13 +16,31 @@ const timeslotRoutes = require('./routes/timeslot');
 
 // NEW: Load Stripe
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Make sure your .env has this key
+const pool = new Pool({
+  host: 'db.akujlgqrdnvuqntgsgko.supabase.co',
+  port: 5432,
+  user: 'postgres',
+  password: process.env.SUPABASE_PASSWORD,
+  database: 'postgres',
+  ssl: { rejectUnauthorized: false },
+});
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const allowedOrigins = [
+  'http://localhost:5500',       // dev
+  'https://your-netlify-app.netlify.app' // 🚀 your deployed frontend
+];
 
 // CORS config to allow credentials (cookies) from frontend
 app.use(cors({
-  origin: 'http://localhost:5500', // frontend URL 
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 
