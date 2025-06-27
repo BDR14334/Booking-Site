@@ -29,7 +29,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const allowedOrigins = [
   'http://localhost:5500',       // dev
-  'https://your-netlify-app.netlify.app' // 🚀 your deployed frontend
+  'https://booking-site-frontend.onrender.com' // 🚀 your deployed frontend
 ];
 
 // CORS config to allow credentials (cookies) from frontend
