@@ -3,7 +3,7 @@ console.log("authStatus.js loaded");
 // Use local backend if running locally, otherwise use deployed backend
 const API_BASE = window.location.hostname === "localhost"
   ? "http://localhost:5000"
-  : "https://booking-site-backend.onrender.com";
+  : "https://booking-site-rz5b.onrender.com";
 // === Global Functions ===
 
 // Sidebar toggle function
