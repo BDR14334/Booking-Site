@@ -326,7 +326,7 @@
 
     async function loadHomeStories() {
       try {
-        const res = await fetch("http://localhost:5000/admin/stories");
+        const res = await fetch(`${API_BASE}/admin/stories`);
         const stories = await res.json();
         const container = document.getElementById("storyCards");
         container.innerHTML = "";
@@ -335,7 +335,7 @@
           const card = document.createElement("div");
           card.className = "athlete-card";
           card.innerHTML = `
-            <img src="http://localhost:5000${story.image_url}" alt="${story.name}">
+            <img src="${API_BASE}${story.image_url}" alt="${story.name}">
             <h3>${story.name}</h3>
             <p>${story.story}</p>
           `;

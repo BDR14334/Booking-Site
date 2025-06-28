@@ -235,6 +235,11 @@
   let calendar = null;
   let coachId = null;
 
+  // Use local backend if running locally, otherwise use deployed backend
+  const API_BASE = window.location.hostname === "localhost"
+    ? "http://localhost:5000"
+    : "https://booking-site-backend.onrender.com";
+
   // Back Button 
   function handleBackClick() {
      window.location.href = "Home.html";
@@ -253,7 +258,7 @@
   // Example function to fetch and show coach name
   async function showCoachFirstLoginPopup() {
     try {
-      const response = await fetch('http://localhost:5000/auth/me', {
+      const response = await fetch(`${API_BASE}/auth/me`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -284,7 +289,7 @@
    */
   async function fetchLoggedInUser() {
     try {
-      const res = await fetch('http://localhost:5000/auth/me', { credentials: 'include' }); // includes session cookie
+      const res = await fetch(`${API_BASE}/auth/me`, { credentials: 'include' }); // includes session cookie
       const data = await res.json();
       if (data.user && data.user.id) {
         userId = data.user.id;
@@ -305,7 +310,7 @@
     await fetchLoggedInUser(); // Ensure userId is available
 
     try {
-      const coachRes = await fetch(`http://localhost:5000/coach/by-user/${userId}`, {
+      const coachRes = await fetch(`${API_BASE}/coach/by-user/${userId}`, {
         credentials: 'include'
       });
       const coach = await coachRes.json();
@@ -333,7 +338,7 @@
    */
   async function loadAssignedTimeslots(userId) {
     try {
-      const res = await fetch(`http://localhost:5000/coach/assigned-timeslots/${userId}`, {
+      const res = await fetch(`${API_BASE}/coach/assigned-timeslots/${userId}`, {
         credentials: 'include'
       });
 
@@ -413,7 +418,7 @@
    */
   async function loadCoachBookings(userId) {
     try {
-      const res = await fetch(`http://localhost:5000/coach/bookings/${userId}`, { credentials: 'include' });
+      const res = await fetch(`${API_BASE}/coach/bookings/${userId}`, { credentials: 'include' });
       const bookings = await res.json();
       const bookingsList = document.getElementById('bookingsList');
       bookingsList.innerHTML = '';
@@ -461,8 +466,8 @@
     try {
       const method = coachId ? 'PUT' : 'POST';
       const url = coachId
-        ? `http://localhost:5000/coach/update/${coachId}`
-        : 'http://localhost:5000/coach/create';
+        ? `${API_BASE}/coach/update/${coachId}`
+        : `${API_BASE}/coach/create`;
 
       const response = await fetch(url, {
         method,
@@ -544,7 +549,7 @@
           if (!confirmed) return;
 
           try {
-            const res = await fetch('http://localhost:5000/coach/request-time-off', {
+            const res = await fetch(`${API_BASE}/coach/request-time-off`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               credentials: 'include',
@@ -572,7 +577,7 @@
           if (!confirmed) return;
 
           try {
-            const res = await fetch('http://localhost:5000/timeslot/assign-coach', {
+            const res = await fetch(`${API_BASE}/timeslot/assign-coach`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               credentials: 'include',

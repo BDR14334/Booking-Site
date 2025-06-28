@@ -406,12 +406,15 @@
 
   </div>
 
+  <script src="authStatus.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar/index.global.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    // Use local backend if running locally, otherwise use deployed backend
+      
     document.addEventListener('DOMContentLoaded', async () => {
       try {
-        const res = await fetch("http://localhost:5000/auth/verify", {
+        const res = await fetch(`${API_BASE}/auth/verify`, {
           credentials: "include"
         });
 
@@ -428,7 +431,7 @@
 
     async function logout() {
       try {
-        const res = await fetch("http://localhost:5000/auth/logout", {
+        const res = await fetch(`${API_BASE}/auth/logout`, {
           method: "POST",
           credentials: "include"
         });
@@ -468,7 +471,7 @@
     // Accept Registered Coaches
     async function loadPendingCoaches() {
       try {
-        const res = await fetch("http://localhost:5000/admin/pending-coaches", {
+        const res = await fetch(`${API_BASE}/admin/pending-coaches`, {
           credentials: 'include'
         });
 
@@ -499,7 +502,7 @@
     async function approveCoach(coachId, email) {
       const coachCode = Math.floor(1000 + Math.random() * 9000); // 4-digit ID
 
-      const res = await fetch("http://localhost:5000/admin/approve-coach", {
+      const res = await fetch(`${API_BASE}/admin/approve-coach`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -517,7 +520,7 @@
 
     async function loadApprovedCoaches() {
       try {
-        const res = await fetch("http://localhost:5000/admin/approved-coaches", {
+        const res = await fetch(`${API_BASE}/admin/approved-coaches`, {
           credentials: 'include'
         });
         const coaches = await res.json();
@@ -544,7 +547,7 @@
       if (!confirm("Are you sure you want to fire this coach?")) return;
 
       try {
-        const res = await fetch(`http://localhost:5000/admin/fire-coach/${coachId}`, {
+        const res = await fetch(`${API_BASE}/admin/fire-coach/${coachId}`, {
           method: 'DELETE',
           credentials: 'include'
         });
@@ -635,39 +638,38 @@
  
         const method = pkg.id ? 'PUT' : 'POST';
         const endpoint = pkg.id
-          ? `http://localhost:5000/admin/update-package/${pkg.id}`
-          : 'http://localhost:5000/admin/create-package';
+      ? `${API_BASE}/admin/update-package/${pkg.id}`
+      : `${API_BASE}/admin/create-package`;
 
-
-        try {
-          const response = await fetch(endpoint, {
-            method,
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify(payload)
-          });
+    try {
+      const response = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      });
  
-          const result = await response.json();
-          if (response.ok) {
-            alert('Package saved!');
-            console.log(result);
+      const result = await response.json();
+      if (response.ok) {
+        alert('Package saved!');
+        console.log(result);
 
-            if (!pkg.id && result.id) {
-              // Store the returned ID in the pkg object and update form reference
-              pkg.id = result.id;
+        if (!pkg.id && result.id) {
+          // Store the returned ID in the pkg object and update form reference
+          pkg.id = result.id;
 
-              // Optionally update the submit handler so the form switches to PUT mode now
-              form.removeEventListener('submit', arguments.callee); // remove current handler
-              const newForm = createPackageForm(pkg); // re-render with ID
-              box.replaceWith(newForm); // swap the box so it updates behavior
-            }
-          } else {
-            alert('Failed to save package: ' + result.error);
-          }
-        } catch (error) {
-          console.error('Error submitting package:', error);
-          alert('An error occurred. Check console for details.');
+          // Optionally update the submit handler so the form switches to PUT mode now
+          form.removeEventListener('submit', arguments.callee); // remove current handler
+          const newForm = createPackageForm(pkg); // re-render with ID
+          box.replaceWith(newForm); // swap the box so it updates behavior
         }
+      } else {
+        alert('Failed to save package: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error submitting package:', error);
+      alert('An error occurred. Check console for details.');
+    }
       });
  
       const deleteBtn = document.createElement('button');
@@ -690,7 +692,7 @@
         deleteBtn.addEventListener('click', async () => {
           if (confirm('Are you sure you want to delete this package?')) {
             try {
-              const res = await fetch(`http://localhost:5000/admin/delete-package/${pkg.id}`, {
+              const res = await fetch(`${API_BASE}/admin/delete-package/${pkg.id}`, {
                 method: 'DELETE',
                 credentials: 'include'
               });
@@ -725,7 +727,7 @@
  
     async function loadExistingPackages() {
       try {
-        const response = await fetch('http://localhost:5000/admin/get-packages', {
+        const response = await fetch(`${API_BASE}/admin/get-packages`, {
           credentials: 'include'
         });
  
@@ -762,7 +764,7 @@
 
       async function loadTimeslots(packageId) {
         try {
-          const res = await fetch(`http://localhost:5000/timeslot/by-package/${packageId}`, {
+          const res = await fetch(`${API_BASE}/timeslot/by-package/${packageId}`, {
             credentials: 'include'
           });
           const data = await res.json();
@@ -818,7 +820,7 @@
 
 
       // Load all packages
-      fetch('http://localhost:5000/admin/get-packages')
+      fetch(`${API_BASE}/admin/get-packages`)
         .then(res => res.json())
         .then(packages => {
           packages.forEach(pkg => {
@@ -903,7 +905,7 @@
 
 
             try {
-              const res = await fetch('http://localhost:5000/timeslot/create-timeslot', {
+              const res = await fetch(`${API_BASE}/timeslot/create-timeslot`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -964,7 +966,7 @@
             if (!recurrenceId) {
               if (confirm('Delete this timeslot?')) {
                 try {
-                  const res = await fetch(`http://localhost:5000/timeslot/delete-timeslot/${event.id}`, {
+                  const res = await fetch(`${API_BASE}/timeslot/delete-timeslot/${event.id}`, {
                     method: 'DELETE',
                     credentials: 'include'
                   });
@@ -991,7 +993,7 @@
             deleteOneBtn.onclick = async () => {
               modal.style.display = 'none';
               try {
-                const res = await fetch(`http://localhost:5000/timeslot/delete-timeslot/${event.id}`, {
+                const res = await fetch(`${API_BASE}/timeslot/delete-timeslot/${event.id}`, {
                   method: 'DELETE',
                   credentials: 'include'
                 });
@@ -1007,7 +1009,7 @@
             deleteAllBtn.onclick = async () => {
               modal.style.display = 'none';
               try {
-                const res = await fetch(`http://localhost:5000/timeslot/delete-future-timeslots/${recurrenceId}/${eventDate}`, {
+                const res = await fetch(`${API_BASE}/timeslot/delete-future-timeslots/${recurrenceId}/${eventDate}`, {
                   method: 'DELETE',
                   credentials: 'include'
                 });
@@ -1036,7 +1038,7 @@
           eventResize: async (info) => {
             const event = info.event;
             try {
-              const res = await fetch(`http://localhost:5000/timeslot/update-timeslot/${event.id}`, {
+              const res = await fetch(`${API_BASE}/timeslot/update-timeslot/${event.id}`, {
                 method: 'PUT',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
@@ -1070,11 +1072,10 @@
       const container = document.getElementById('coachAssignmentsContainer');
       container.innerHTML = ''; // Clear previous content
 
-
       try {
         const [coachesRes, packagesRes] = await Promise.all([
-          fetch('http://localhost:5000/admin/coaches'),
-          fetch('http://localhost:5000/admin/get-packages')
+          fetch(`${API_BASE}/admin/coaches`),
+          fetch(`${API_BASE}/admin/get-packages`)
         ]);
 
 
@@ -1084,7 +1085,7 @@
 
         for (const coach of coaches) {
           // Get currently assigned packages
-          const assignedRes = await fetch(`http://localhost:5000/admin/coach-packages/${coach.id}`);
+          const assignedRes = await fetch(`${API_BASE}/admin/coach-packages/${coach.id}`);
           const assigned = await assignedRes.json();
           const assignedIds = assigned.map(pkg => pkg.id);
 
@@ -1138,7 +1139,7 @@
 
 
             async function getCoachName(coachId) {
-              const res = await fetch(`http://localhost:5000/admin/coaches`);
+              const res = await fetch(`${API_BASE}/admin/coaches`);
               const coaches = await res.json();
               const coach = coaches.find(c => c.id == coachId);
 
@@ -1152,7 +1153,7 @@
 
 
             async function getPackageTitle(packageId) {
-              const res = await fetch(`http://localhost:5000/admin/get-packages`);
+              const res = await fetch(`${API_BASE}/admin/get-packages`);
               const packages = await res.json();
               const pkg = packages.find(p => p.id == packageId);
               return pkg.title || 'Unknown Package';
@@ -1172,7 +1173,7 @@
             // Add this helper function to load timeslots for a specific coach/package combo
             async function loadCoachTimeslots(calendar, packageId, coachId) {
               try {
-                const res = await fetch(`http://localhost:5000/timeslot/by-package-with-coaches/${packageId}?coachId=${coachId}`, {
+                const res = await fetch(`${API_BASE}/timeslot/by-package-with-coaches/${packageId}?coachId=${coachId}`, {
                   credentials: 'include'
                 });
 
@@ -1283,7 +1284,7 @@
                       return;
                     }
 
-                    const url = `http://localhost:5000/timeslot/admin/${action}-time-off/${timeslot_id}/${coach_id}`;
+                    const url = `${API_BASE}/timeslot/admin/${action}-time-off/${timeslot_id}/${coach_id}`;
                     try {
                       const res = await fetch(url, {
                         method: 'PUT',
@@ -1314,8 +1315,8 @@
 
                   try {
                     const url = isAssigned
-                      ? 'http://localhost:5000/timeslot/unassign-coach'
-                      : 'http://localhost:5000/timeslot/assign-coach';
+                      ? `${API_BASE}/timeslot/unassign-coach`
+                      : `${API_BASE}/timeslot/assign-coach`;
 
                     const res = await fetch(url, {
                       method: isAssigned ? 'DELETE' : 'POST',
@@ -1382,7 +1383,7 @@
             try {
               // Delete all current assignments first
               for (const id of assignedIds) {
-                await fetch('http://localhost:5000/admin/coach-packages', {
+                await fetch(`${API_BASE}/admin/coach-packages`, {
                   method: 'DELETE',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ coachId: coach.id, packageId: id })
@@ -1392,7 +1393,7 @@
 
               // Add selected ones
               for (const id of selected) {
-                await fetch('http://localhost:5000/admin/coach-packages', {
+                await fetch(`${API_BASE}/admin/coach-packages`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ coachId: coach.id, packageId: id })
@@ -1444,7 +1445,7 @@
     });
 
     async function loadStories() {
-      const res = await fetch("http://localhost:5000/admin/stories");
+      const res = await fetch(`${API_BASE}/admin/stories`);
       const stories = await res.json();
 
       const container = document.querySelector('.story-box-container');
@@ -1510,7 +1511,7 @@
       if (!confirm("Are you sure you want to delete this story?")) return;
 
       try {
-        const res = await fetch(`http://localhost:5000/admin/delete-story/${id}`, {
+        const res = await fetch(`${API_BASE}/admin/delete-story/${id}`, {
           method: "DELETE"
         });
 
@@ -1542,8 +1543,8 @@
       }
 
       const url = storyId
-        ? `http://localhost:5000/admin/update-story/${storyId}`
-        : `http://localhost:5000/admin/add-story`;
+        ? `${API_BASE}/admin/update-story/${storyId}`
+        : `${API_BASE}/admin/add-story`;
 
       const method = storyId ? "PUT" : "POST";
 

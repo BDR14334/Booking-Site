@@ -1,5 +1,9 @@
 console.log("authStatus.js loaded");
 
+// Use local backend if running locally, otherwise use deployed backend
+const API_BASE = window.location.hostname === "localhost"
+  ? "http://localhost:5000"
+  : "https://booking-site-backend.onrender.com";
 // === Global Functions ===
 
 // Sidebar toggle function
@@ -10,7 +14,7 @@ function toggleSidebar() {
 
 // Logout function
 function handleLogout() {
-  fetch('http://localhost:5000/auth/logout', {
+  fetch(`${API_BASE}/auth/logout`, {
     method: 'POST',
     credentials: 'include',
   })
@@ -51,7 +55,7 @@ function buildSidebarLinks(role) {
 // Function to fetch user details from the backend (verify endpoint)
 async function getUserDetails() {
   try {
-    const response = await fetch('http://localhost:5000/auth/verify', {
+    const response = await fetch(`${API_BASE}/auth/verify`, {
       method: 'GET',
       credentials: 'include' // Ensure cookies are sent with the request
     });
@@ -78,7 +82,7 @@ async function getUserDetails() {
 // === DOM Content Loaded Event ===
 document.addEventListener('DOMContentLoaded', () => {
   // Fetch login status from server
-  fetch('http://localhost:5000/auth/verify', {
+  fetch(`${API_BASE}/auth/verify`, {
     method: 'GET',
     credentials: 'include',
   })
@@ -113,6 +117,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Call getUserDetails to populate sidebar with user info
       getUserDetails();
+    } else {
+      // Not logged in: show login/register buttons and attach handlers
+      navButton.innerHTML = `
+        <button class="btn white-btn" id="loginBtn">Login</button>
+        <button class="btn" id="registerBtn">Register</button>
+      `;
+      // Attach handlers in JS so they always work
+      document.getElementById('loginBtn').onclick = function() {
+        window.location.href = "login.html";
+      };
+      document.getElementById('registerBtn').onclick = function() {
+        window.location.href = "login.html?register=true";
+      };
     }
   })
   .catch(err => console.error('Verification error:', err));

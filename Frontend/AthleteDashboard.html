@@ -319,6 +319,7 @@
 </section>
 
 <!-- FullCalendar Script -->
+<script src="authStatus.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar/index.global.min.js"></script>
 <script>
   function handleBackClick() {
@@ -355,7 +356,7 @@
   async function loadBookedSessionsToCalendar() {
     if (!customerId) return;
     try {
-      const res = await fetch(`http://localhost:5000/athlete/booked-timeslots/by-customer/${customerId}`, { credentials: 'include' });
+      const res = await fetch(`${API_BASE}/athlete/booked-timeslots/by-customer/${customerId}`, { credentials: 'include' });
       const sessions = await res.json();
       console.log('Sessions from backend:', sessions); // <-- Add this line
 
@@ -430,8 +431,8 @@
 
     const method = athleteId ? 'PUT' : 'POST';
     const url = athleteId
-      ? `http://localhost:5000/athlete/${athleteId}`
-      : `http://localhost:5000/athlete`;
+      ? `${API_BASE}/athlete/${athleteId}`
+      : `${API_BASE}/athlete`;
 
     try {
       const res = await fetch(url, {
@@ -493,7 +494,7 @@
 
   async function deleteAthlete(athleteId) {
     try {
-      const res = await fetch(`http://localhost:5000/athlete/${athleteId}`, {
+      const res = await fetch(`${API_BASE}/athlete/${athleteId}`, {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -515,7 +516,7 @@
   // Fetch logged-in user
   async function fetchLoggedInUser() {
     try {
-      const res = await fetch('http://localhost:5000/auth/me', { credentials: 'include' });
+      const res = await fetch(`${API_BASE}/auth/me`, { credentials: 'include' });
       const data = await res.json();
       if (data.user && data.user.id) {
         userId = data.user.id;
@@ -533,7 +534,7 @@
     await fetchLoggedInUser();
 
     try {
-      const athleteRes = await fetch(`http://localhost:5000/athlete/by-user/${userId}`, {
+      const athleteRes = await fetch(`${API_BASE}/athlete/by-user/${userId}`, {
         credentials: 'include'
       });
       const athlete = await athleteRes.json();
@@ -564,8 +565,8 @@
     try {
       const method = customerId ? 'PUT' : 'POST';
       const url = customerId
-        ? `http://localhost:5000/athlete/update/${customerId}`
-        : 'http://localhost:5000/athlete/create';
+        ? `${API_BASE}/athlete/update/${customerId}`
+        : `${API_BASE}/athlete/create`;
 
       const response = await fetch(url, {
         method,
@@ -597,7 +598,7 @@
     if (!customerId) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/athlete/${customerId}`, { credentials: 'include' });
+      const res = await fetch(`${API_BASE}/athlete/${customerId}`, { credentials: 'include' });
       const athletes = await res.json();
 
       const container = document.querySelector('.athlete-box-container');
@@ -664,7 +665,7 @@
     }
 
     try {
-      const res = await fetch(`http://localhost:5000/athlete/receipts/by-customer/${customerId}`, {credentials: 'include'});
+      const res = await fetch(`${API_BASE}/athlete/receipts/by-customer/${customerId}`, {credentials: 'include'});
       const receipts = await res.json();
       const receiptList = document.getElementById('receiptList');
       receiptList.innerHTML = '';

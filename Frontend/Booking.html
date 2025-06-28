@@ -553,7 +553,7 @@
     let maxSessions = 0;
     let selectedTimeslots = [];
     let calendar = null;
-  
+
     function goToStep(step) {
       const slider = document.getElementById('bookingFlow');
       currentStep = step;
@@ -618,9 +618,8 @@
   
     // Package Selection
     document.addEventListener('DOMContentLoaded', async () => {
-
       try {
-        const response = await fetch('http://localhost:5000/admin/get-packages');
+        const response = await fetch(`${API_BASE}/admin/get-packages`);
         const packages = await response.json();
         const container = document.getElementById('packageContainer');
         container.innerHTML = '';
@@ -655,7 +654,7 @@
             // Ensure authenticated
             if (!customerId) {
               try {
-                const userRes = await fetch('http://localhost:5000/auth/verify', {
+                const userRes = await fetch(`${API_BASE}/auth/verify`, {
                   credentials: 'include'
                 });
                 const userData = await userRes.json();
@@ -668,7 +667,7 @@
                 }
 
                 // Retrieve athlete customer data
-                const customerRes = await fetch(`http://localhost:5000/athlete/by-user/${user.id}`, {
+                const customerRes = await fetch(`${API_BASE}/athlete/by-user/${user.id}`, {
                   credentials: 'include'
                 });
                 const customerData = await customerRes.json();
@@ -692,7 +691,7 @@
             goToStep(1);
   
             try {
-              const res = await fetch(`http://localhost:5000/athlete/${customerId}`);
+              const res = await fetch(`${API_BASE}/athlete/${customerId}`);
               const data = await res.json();
               const athletes = Array.isArray(data) ? data : data.athletes || [];
               const athleteContainer = document.getElementById('athleteContainer');
@@ -760,7 +759,7 @@
     function loadCalendar() {
       document.getElementById("calendarSection").style.display = "block";
   
-      fetch(`http://localhost:5000/booking/availability/by-package/${selectedPackageId}`)
+      fetch(`${API_BASE}/booking/availability/by-package/${selectedPackageId}`)
         .then(res => res.json())
         .then(({ timeslots }) => {
           const calendarEl = document.getElementById("calendar");
@@ -893,7 +892,7 @@
         payNowBtn.disabled = true;
 
         try {
-          const intentRes = await fetch("http://localhost:5000/booking/create-payment-intent", {
+          const intentRes = await fetch(`${API_BASE}/booking/create-payment-intent`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -923,7 +922,7 @@
           } else if (result.paymentIntent.status === "succeeded") {
             alert("✅ Payment successful. Finalizing booking...");
 
-            const bookingRes = await fetch("http://localhost:5000/booking/booking", {
+            const bookingRes = await fetch(`${API_BASE}/booking/booking`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
