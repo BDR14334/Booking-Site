@@ -228,6 +228,7 @@
 
 
   <!-- FullCalendar JS -->
+  <script src="authStatus.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar/index.global.min.js"></script>
   <script>
   // Global variables to store logged-in user ID, FullCalendar instance, and coach ID
@@ -235,14 +236,9 @@
   let calendar = null;
   let coachId = null;
 
-  // Use local backend if running locally, otherwise use deployed backend
-  const API_BASE = window.location.hostname === "localhost"
-    ? "http://localhost:5000"
-    : "https://booking-site-backend.onrender.com";
-
   // Back Button 
   function handleBackClick() {
-     window.location.href = "Home.html";
+     window.location.href = "index.html";
   }
 
   // if first login function

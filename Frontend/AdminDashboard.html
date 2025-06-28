@@ -274,7 +274,7 @@
       </button>
       <ul class="dropdown-menu dropdown-menu-end">
         <li><a class="dropdown-item" href="#" id="toggleSidebar">Menu</a></li>
-        <li><a class="dropdown-item" href="/Booking-Site/Frontend/Home.html" id="toggleSidebar">Website</a></li>
+        <li><a class="dropdown-item" href="/Booking-Site/Frontend/index.html" id="toggleSidebar">Website</a></li>
         <li><a class="dropdown-item text-danger" href="#" onclick="logout()">Logout</a></li>
 
       </ul>
@@ -421,11 +421,11 @@
         const data = await res.json();
 
         if (!res.ok || !data.loggedIn || data.user.role !== 'admin') {
-          window.location.href = "/Booking-Site/Frontend/Home.html"; // redirect non-admins or unauthenticated users
+          window.location.href = "/Booking-Site/Frontend/index.html"; // redirect non-admins or unauthenticated users
         }
       } catch (err) {
         console.error("Access check failed", err);
-        window.location.href = "/Booking-Site/Frontend/Home.html"; // fallback redirect
+        window.location.href = "/Booking-Site/Frontend/index.html"; // fallback redirect
       }
     });
 
@@ -437,8 +437,8 @@
         });
 
         if (res.ok) {
-          // Redirect to Home.html after successful logout
-          window.location.href = "/Booking-Site/Frontend/Home.html";
+          // Redirect to index.html after successful logout
+          window.location.href = "/Booking-Site/Frontend/index.html";
         } else {
           alert("Logout failed.");
         }
