@@ -125,10 +125,10 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
       // Attach handlers in JS so they always work
       document.getElementById('loginBtn').onclick = function() {
-        window.location.href = "login.html";
+        window.location.href = "Login.html";
       };
       document.getElementById('registerBtn').onclick = function() {
-        window.location.href = "login.html?register=true";
+        window.location.href = "Login.html?register=true";
       };
     }
   })
