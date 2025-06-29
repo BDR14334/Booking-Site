@@ -4,7 +4,6 @@ const path = require('path');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const { v4: uuidv4 } = require('uuid');
-const { Pool } = require('pg');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -16,14 +15,7 @@ const timeslotRoutes = require('./routes/timeslot');
 
 // NEW: Load Stripe
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Make sure your .env has this key
-const pool = new Pool({
-  host: 'db.akujlgqrdnvuqntgsgko.supabase.co',
-  port: 5432,
-  user: 'postgres',
-  password: process.env.SUPABASE_PASSWORD,
-  database: 'postgres',
-  ssl: { rejectUnauthorized: false },
-});
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
