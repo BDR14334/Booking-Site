@@ -128,7 +128,7 @@ router.post('/login', async (req, res) => {
         httpOnly: true,
         secure: true, 
         maxAge: 3600000, // 1 hour
-        sameSite: 'strict',
+        sameSite: 'None',
       })
       .status(200)
       .json({ message: 'Login successful', user: { id: user.id, email: user.email, role: user.role, is_first_login: user.is_first_login } });
