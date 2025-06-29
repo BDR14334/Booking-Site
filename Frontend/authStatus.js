@@ -14,6 +14,7 @@ function toggleSidebar() {
 
 // Logout function
 function handleLogout() {
+  console.log("Logout clicked");
   fetch(`${API_BASE}/auth/logout`, {
     method: 'POST',
     credentials: 'include',
@@ -111,9 +112,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const profileBtn = document.getElementById('profileBtn');
       profileBtn?.addEventListener('click', toggleSidebar);
 
-      // Hook up logout
-      const logoutBtn = document.getElementById('logoutBtn');
-      logoutBtn?.addEventListener('click', handleLogout);
+      // Always attach logout handler after sidebar links are built
+      setTimeout(() => {
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+          logoutBtn.onclick = handleLogout;
+        }
+      }, 0);
 
       // Call getUserDetails to populate sidebar with user info
       getUserDetails();
