@@ -145,8 +145,14 @@ router.post('/login', async (req, res) => {
 
 // LOGOUT
 router.post('/logout', (req, res) => {
-  res.clearCookie('token').status(200).json({ message: 'Logout successful' });
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'None'
+  });
+  res.status(200).json({ message: 'Logout successful' });
 });
+
 
 // VERIFY (check login status)
 router.get('/verify', (req, res) => {
