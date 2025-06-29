@@ -116,9 +116,13 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
         const logoutBtn = document.getElementById('logoutBtn');
         if (logoutBtn) {
-          logoutBtn.onclick = handleLogout;
+          logoutBtn.onclick = (e) => {
+            e.preventDefault();
+            handleLogout();
+          };
         }
       }, 0);
+
 
       // Call getUserDetails to populate sidebar with user info
       getUserDetails();
