@@ -44,8 +44,12 @@
     }
 
     #mainContent {
-      margin-left: 240px;
+      margin-left: 30px;
       padding: 20px;
+      transition: margin-left 0.3s;
+    }
+    body.sidebar-open #mainContent {
+      margin-left: 240px;
     }
 
     .page-section {
@@ -274,9 +278,8 @@
       </button>
       <ul class="dropdown-menu dropdown-menu-end">
         <li><a class="dropdown-item" href="#" id="toggleSidebar">Menu</a></li>
-        <li><a class="dropdown-item" href="/Booking-Site/Frontend/index.html" id="toggleSidebar">Website</a></li>
+        <li><a class="dropdown-item" href="/Booking-Site/Frontend/index.html" id="toggleSite">Website</a></li>
         <li><a class="dropdown-item text-danger" href="#" onclick="logout()">Logout</a></li>
-
       </ul>
     </div>
   </nav>
@@ -291,8 +294,9 @@
       <a onclick="showSection('timeslotCreation')">⏰ Create Timeslots</a>
       <a onclick="showSection('assignCoaches')">🧑‍🏫 Assign Coaches</a>
       <a onclick="showSection('manageStories')">🏅 Manage Success Stories</a>
-  </div>
-   
+
+      <button id="closeSidebarBtn" style="margin: 10px 0 0 0; color:white; cursor:pointer;">Close Sidebar</button>
+    </div>
   </div>
 
   <!-- Main Content -->
@@ -449,10 +453,39 @@
     }
 
     const sidebar = document.getElementById("sidebarMenu");
-    const toggleSidebar = document.getElementById("toggleSidebar");
+    // const toggleSidebar = document.getElementById("toggleSidebar");
  
-    toggleSidebar.addEventListener("click", () => {
-      sidebar.style.display = sidebar.style.display === "block" ? "none" : "block";
+    // toggleSidebar.addEventListener("click", () => {
+    //   sidebar.style.display = sidebar.style.display === "block" ? "none" : "block";
+    // });
+    document.addEventListener('DOMContentLoaded', function() {
+      const sidebar = document.getElementById('sidebarMenu');
+      const menuBtn = document.getElementById('toggleSidebar');
+      const closeBtn = document.getElementById('closeSidebarBtn');
+      if (sidebar && menuBtn && closeBtn) {
+        menuBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const isOpen = sidebar.style.display === 'block';
+          sidebar.style.display = isOpen ? 'none' : 'block';
+          document.body.classList.toggle('sidebar-open', !isOpen);
+        });
+
+        closeBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          sidebar.style.display = 'none';
+          document.body.classList.remove('sidebar-open');
+        });
+
+        // Close sidebar when clicking outside
+        document.addEventListener('mousedown', function(event) {
+          if (sidebar.style.display === 'block' &&
+              !sidebar.contains(event.target) &&
+              !menuBtn.contains(event.target)) {
+            sidebar.style.display = 'none';
+            document.body.classList.remove('sidebar-open');
+          }
+        });
+      }
     });
  
     function showSection(sectionId) {
@@ -1468,9 +1501,6 @@
             <div style="display: flex; align-items: center; gap: 10px;">
               <img src="img/stories/${story.image_url.split('/').pop()}" 
                   style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover;" />
-              <input type="file" name="athleteImage" accept="image/*" />
-            </div>
-
             <button type="submit">Save Story</button>
           </form>
         `;

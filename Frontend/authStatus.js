@@ -91,6 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
   .then(data => {
     const navButton = document.getElementById('authButtons');
 
+    if (!navButton) return; // Prevent errors if the element doesn't exist
+
     if (data.loggedIn) {
       const { role, first_name } = data.user;
 
@@ -116,13 +118,9 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
         const logoutBtn = document.getElementById('logoutBtn');
         if (logoutBtn) {
-          logoutBtn.onclick = (e) => {
-            e.preventDefault();
-            handleLogout();
-          };
+          logoutBtn.onclick = handleLogout;
         }
       }, 0);
-
 
       // Call getUserDetails to populate sidebar with user info
       getUserDetails();
