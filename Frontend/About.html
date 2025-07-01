@@ -8,6 +8,13 @@
   <link rel="stylesheet" href="style.css">
   <title>Homepage</title>
   <style>
+    .wrapper-about {
+      justify-content: center;
+      align-items: center;
+      min-height: 110vh;
+      background: #000;
+    }
+
     .close-btn{
       background-color: #ff4800;
       color: white;
@@ -113,14 +120,20 @@
     }
 
     .coach-profile {
+      width: 100%;
       position: relative;
-      background: black;
+      background: #000;
       color: white;
-      padding: 6rem 2rem 4rem;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      padding: 8rem 0;
+      border-bottom: 2px solid #000;
+      margin: 0;
+    }
+
+    .section-inner {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
     }
 
     .coach-overlay {
@@ -156,12 +169,70 @@
       border: 4px solid #ff4800;
     }
 
+    /* New styles for the coach profile section */
+    .coach-profile-flex {
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      justify-content: center;
+      width: 100%;
+      max-width: 1200px;
+      margin: auto;
+      background: #000;
+      border-radius: 1rem;
+      padding: 0;
+      min-height: 900px;
+      overflow: hidden;
+    }
+
+    .coach-image-col {
+      flex: 1 1 50%;
+      display: flex;
+      align-items: stretch;
+      justify-content: stretch;
+      min-width: 0;
+      min-height: 100%;
+    }
+
+    .coach-image-large {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 0;
+      border: none;
+      display: block;
+    }
+
+    .coach-desc-col {
+      flex: 1 1 50%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 3rem 2rem;
+      background: transparent;
+    }
+
+    @media (max-width: 900px) {
+      .coach-profile-flex {
+        flex-direction: column;
+        min-height: unset;
+      }
+      .coach-image-col,
+      .coach-desc-col {
+        flex: none;
+        width: 100%;
+        padding: 1rem 0;
+      }
+      .coach-desc-col {
+        padding: 1.5rem;
+      }
+    }
 
   </style>
 </head>
 <body>
   <!-- Main wrapper that centers content and applies background overlay -->
-  <div class="wrapper">
+  <div class="wrapper-about">
     
     <!-- Navigation bar at the top -->
     <nav class="nav">
@@ -195,30 +266,56 @@
     </nav>
 
     <!-- Coach Video Section -->
-    <section style="height: 120vh; background: black;">
-      <!-- <video autoplay muted loop playsinline style="width: 100%; height: 100%; object-fit: cover;">
+    <!-- <section style="height: 120vh; background: black;">
+      <video autoplay muted loop playsinline style="width: 100%; height: 100%; object-fit: cover;">
         <source src="video/fotor-ai-20250528155745.mp4" type="video/mp4">
         Your browser does not support the video tag.
-      </video> -->
-      <img src="img/fotor-ai-20250528154636.jpg" alt="Coach Dennis" class="coach-image" style="width: 100%; height: 100%; object-fit: cover;">
+      </video>
+    </section> -->
 
+    <!-- First coach (image left, text right) -->
+    <section class="coach-profile" id="coach-dennis">
+      <div class="section-inner">
+        <div class="coach-profile-flex">
+          <div class="coach-image-col">
+            <img src="img/fotor-ai-20250528154636.jpg" alt="Coach Dennis" class="coach-image-large">
+          </div>
+          <div class="coach-desc-col">
+            <h2 class="coach-name">Darrel Smith</h2>
+            <div class="coach-desc">
+              <p>
+                Darrel Smith is the Co-Founder and Head Performance Coach at Zephyrs Strength & Performance. With over 15 years of experience in athletic development, Darrel has trained youth and collegiate athletes across Illinois. Specializing in speed, agility, and injury prevention, he creates programs that balance sports science and intuitive coaching.
+                <br><br>
+                Known for his high-energy sessions and deep care for individual growth, Darrel believes that athletic performance begins with character. As a father, mentor, and respected leader in the Illinois sports community, he’s driven by the mission to help athletes become not only stronger—but more disciplined, resilient, and confident in every arena of life.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <section class="coach-profile" id="coach-dennis">
-      <div class="coach-overlay">
-        <img src="img/fotor-ai-20250528154636.jpg" alt="Coach Dennis" class="coach-image" style="display:none;">
-        <h2 class="coach-name">Darrel Smith</h2>
-        <div class="coach-desc">
-          <p>
-            Darrel Smith is the Co-Founder and Head Performance Coach at Zephyrs Strength & Performance. With over 15 years of experience in athletic development, Darrel has trained youth and collegiate athletes across Illinois. Specializing in speed, agility, and injury prevention, he creates programs that balance sports science and intuitive coaching.
-            <br><br>
-            Known for his high-energy sessions and deep care for individual growth, Darrel believes that athletic performance begins with character. As a father, mentor, and respected leader in the Illinois sports community, he’s driven by the mission to help athletes become not only stronger—but more disciplined, resilient, and confident in every arena of life.
-          </p>
+    <!-- Second coach (text left, image right) -->
+    <section class="coach-profile" id="coach-jane">
+      <div class="section-inner">
+        <div class="coach-profile-flex">
+          <div class="coach-desc-col">
+            <h2 class="coach-name">Jane Doe</h2>
+            <div class="coach-desc">
+              <p>
+                Jane Doe is the Assistant Performance Coach at Zephyrs Strength & Performance. With a decade of experience in sports training, Jane has helped countless athletes reach their full potential. She specializes in strength training, nutrition, and mental conditioning.
+                <br><br>
+                Jane is known for her motivational coaching style and her commitment to each athlete’s personal growth. Her passion for sports and education makes her a valued mentor and leader in the Zephyrs community.
+              </p>
+            </div>
+          </div>
+          <div class="coach-image-col">
+            <img src="img/athlete2.jpg" alt="Coach Jane" class="coach-image-large">
+          </div>
         </div>
       </div>
     </section>
     
-    
+
 
      <!-- Right-Aligned Sidebar -->
     <div id="profileSidebar" class="sidebar bg-dark text-white">
