@@ -4,6 +4,7 @@ const pool = require('../db');
 const nodemailer = require('nodemailer'); 
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 
 // Saves images for success stories
 const storage = multer.diskStorage({
@@ -94,9 +95,26 @@ router.delete('/delete-story/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
+    // 1. Get the story to find the image filename
+    const storyResult = await pool.query('SELECT image_url FROM success_stories WHERE id = $1', [id]);
+    if (storyResult.rowCount === 0) {
+      return res.status(404).json({ error: 'Story not found.' });
+    }
+    const imageUrl = storyResult.rows[0].image_url;
+    // 2. Delete the story from the database
     const result = await pool.query('DELETE FROM success_stories WHERE id = $1 RETURNING *', [id]);
     if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Story not found.' });
+    }
+
+    // 3. Delete the image file from storage (if it exists and is not a placeholder)
+    if (imageUrl && !imageUrl.includes('placeholder')) {
+      const imagePath = path.join(__dirname, '../../Frontend', imageUrl);
+      fs.unlink(imagePath, (err) => {
+        if (err && err.code !== 'ENOENT') {
+          console.error('Error deleting image file:', err);
+        }
+      });
     }
 
     res.json({ message: 'Story deleted.', deleted: result.rows[0] });

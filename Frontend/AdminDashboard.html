@@ -9,6 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
+  <!-- Cropper.js CSS -->
+<link  href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet"/>
   <style>
     .sidebar {
       position: fixed;
@@ -264,9 +266,36 @@
       color: red;
     }
 
+    .choose-image-btn {
+      background: #f5f5f5;
+      color: #222;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 0.95rem;
+      height: 32px;
+      line-height: 1.2;
+      cursor: pointer;
+      transition: background 0.2s;
+      box-shadow: 1px 1px 2px #0001;
+    }
+
+    .choose-image-btn:hover {
+      background: #eee;
+      color: #ff4800;
+      border-color: #ff4800;
+    }
+
+    .image-upload-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px; /* Add this line for spacing */
+    }
+
   </style>
 </head>
-<body onload="showSection('dashboard')" >
+<body>
   <!-- Navbar -->
   <nav class="navbar navbar-dark bg-dark px-3" style="z-index: 1000; ">
     <a class="navbar-brand" href="#">Admin Panel</a>
@@ -396,7 +425,11 @@
             <textarea name="storyText" rows="4" required></textarea>
 
             <label>Image</label>
-            <input type="file" name="athleteImage" accept="image/*" required />
+            <div class="image-upload-wrapper" style="display: flex; align-items: center; gap: 10px;">
+              <input type="file" name="athleteImage" accept="image/*" class="image-input" style="display:none;" />
+              <img class="image-preview" src="img/placeholder.png" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 2px solid #ff4800;" />
+              <button type="button" class="choose-image-btn" style="margin-left: 10px;">Choose Image</button>
+            </div>
 
             <button type="submit">Save Story</button>
           </form>
@@ -413,6 +446,7 @@
   <script src="authStatus.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar/index.global.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   <script>
     // Use local backend if running locally, otherwise use deployed backend
       
@@ -451,13 +485,10 @@
         alert("Server error during logout.");
       }
     }
-
+    
     const sidebar = document.getElementById("sidebarMenu");
-    // const toggleSidebar = document.getElementById("toggleSidebar");
- 
-    // toggleSidebar.addEventListener("click", () => {
-    //   sidebar.style.display = sidebar.style.display === "block" ? "none" : "block";
-    // });
+    
+
     document.addEventListener('DOMContentLoaded', function() {
       const sidebar = document.getElementById('sidebarMenu');
       const menuBtn = document.getElementById('toggleSidebar');
@@ -671,38 +702,38 @@
  
         const method = pkg.id ? 'PUT' : 'POST';
         const endpoint = pkg.id
-      ? `${API_BASE}/admin/update-package/${pkg.id}`
-      : `${API_BASE}/admin/create-package`;
+          ? `${API_BASE}/admin/update-package/${pkg.id}`
+          : `${API_BASE}/admin/create-package`;
 
-    try {
-      const response = await fetch(endpoint, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(payload)
-      });
- 
-      const result = await response.json();
-      if (response.ok) {
-        alert('Package saved!');
-        console.log(result);
+        try {
+          const response = await fetch(endpoint, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(payload)
+          });
+    
+          const result = await response.json();
+          if (response.ok) {
+            alert('Package saved!');
+            console.log(result);
 
-        if (!pkg.id && result.id) {
-          // Store the returned ID in the pkg object and update form reference
-          pkg.id = result.id;
+            if (!pkg.id && result.id) {
+              // Store the returned ID in the pkg object and update form reference
+              pkg.id = result.id;
 
-          // Optionally update the submit handler so the form switches to PUT mode now
-          form.removeEventListener('submit', arguments.callee); // remove current handler
-          const newForm = createPackageForm(pkg); // re-render with ID
-          box.replaceWith(newForm); // swap the box so it updates behavior
+              // Optionally update the submit handler so the form switches to PUT mode now
+              form.removeEventListener('submit', arguments.callee); // remove current handler
+              const newForm = createPackageForm(pkg); // re-render with ID
+              box.replaceWith(newForm); // swap the box so it updates behavior
+            }
+          } else {
+            alert('Failed to save package: ' + result.error);
+          }
+        } catch (error) {
+          console.error('Error submitting package:', error);
+          alert('An error occurred. Check console for details.');
         }
-      } else {
-        alert('Failed to save package: ' + result.error);
-      }
-    } catch (error) {
-      console.error('Error submitting package:', error);
-      alert('An error occurred. Check console for details.');
-    }
       });
  
       const deleteBtn = document.createElement('button');
@@ -1498,9 +1529,12 @@
             <textarea name="storyText" rows="4" required>${story.story}</textarea>
 
             <label>Image</label>
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <img src="img/stories/${story.image_url.split('/').pop()}" 
-                  style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover;" />
+            <div class="image-upload-wrapper" style="display: flex; align-items: center; gap: 10px;">
+              <input type="file" name="athleteImage" accept="image/*" class="image-input" style="display:none;" />
+              <img class="image-preview" src="${story.image_url ? 'img/stories/' + story.image_url.split('/').pop() : 'img/placeholder.png'}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 2px solid #ff4800;" />
+              <button type="button" class="choose-image-btn" style="margin-left: 10px;">Choose Image</button>
+            </div>
+
             <button type="submit">Save Story</button>
           </form>
         `;
@@ -1527,7 +1561,11 @@
           <textarea name="storyText" rows="4" required></textarea>
 
           <label>Image</label>
-          <input type="file" name="athleteImage" accept="image/*" required />
+          <div class="image-upload-wrapper" style="display: flex; align-items: center; gap: 10px;">
+              <input type="file" name="athleteImage" accept="image/*" class="image-input" style="display:none;" />
+              <img class="image-preview" src="img/placeholder.png" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 2px solid #ff4800;" />
+              <button type="button" class="choose-image-btn" style="margin-left: 10px;">Choose Image</button>
+            </div>
 
           <button type="submit">Save Story</button>
         </form>
@@ -1567,9 +1605,14 @@
       formData.append("athleteName", form.querySelector('[name="athleteName"]').value);
       formData.append("storyText", form.querySelector('[name="storyText"]').value);
 
-      const imageInput = form.querySelector('[name="athleteImage"]');
-      if (imageInput && imageInput.files.length > 0) {
-        formData.append("athleteImage", imageInput.files[0]);
+      // Use the cropped blob for this form if it exists
+      if (form.croppedBlob) {
+        formData.append("athleteImage", form.croppedBlob, 'cropped.jpg');
+      } else {
+        const imageInput = form.querySelector('[name="athleteImage"]');
+        if (imageInput && imageInput.files.length > 0) {
+          formData.append("athleteImage", imageInput.files[0]);
+        }
       }
 
       const url = storyId
@@ -1589,6 +1632,7 @@
         if (res.ok) {
           alert(storyId ? "Story updated!" : "Story added!");
           loadStories(); // Refresh UI
+          showSection('manageStories'); // Ensure the section stays visible
         } else {
           alert(result.error || "Failed to save story.");
         }
@@ -1598,29 +1642,153 @@
       }
     }
 
+    let cropper = null;
+    let currentImageInput = null;
+    let currentPreview = null;
+    let currentForm = null;
+    let croppedBlob = null;
+
+    // Open crop modal when image is selected
+    document.body.addEventListener('change', function(e) {
+      if (e.target.classList.contains('image-input')) {
+        const input = e.target;
+        const file = input.files[0];
+        if (!file) return;
+
+        currentImageInput = input;
+        currentForm = input.closest('form');
+        currentPreview = currentForm.querySelector('.image-preview');
+
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          const cropModal = document.getElementById('cropModal');
+          const cropImage = document.getElementById('cropImage');
+          cropImage.src = evt.target.result;
+          cropModal.style.display = 'flex';
+
+          // Destroy previous cropper if exists
+          if (cropper) cropper.destroy();
+          cropper = new Cropper(cropImage, {
+            aspectRatio: 1,
+            viewMode: 1,
+            autoCropArea: 1,
+          });
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() { 
+      // Confirm crop
+      document.getElementById('confirmCropBtn').addEventListener('click', function() {
+        if (cropper && currentPreview && currentForm) {
+          cropper.getCroppedCanvas({
+            width: 300,
+            height: 300
+          }).toBlob(blob => {
+            // Store the cropped blob on the form
+            currentForm.croppedBlob = blob;
+            currentPreview.src = URL.createObjectURL(blob);
+            currentPreview.style.display = 'block';
+            document.getElementById('cropModal').style.display = 'none';
+            cropper.destroy();
+            cropper = null;
+          }, 'image/jpeg');
+        }
+      });
+
+      // Cancel crop
+      document.getElementById('cancelCropBtn').addEventListener('click', function() {
+        document.getElementById('cropModal').style.display = 'none';
+        if (cropper) {
+          cropper.destroy();
+          cropper = null;
+        }
+        // Optionally clear file input if you want
+        // if (currentImageInput) currentImageInput.value = '';
+      });
+
+    });
+
+    
+    // Allow clicking preview to replace image
+    document.body.addEventListener('click', function(e) {
+      // // Click image to re-crop
+      // if (e.target.classList.contains('image-preview')) {
+      //   const form = e.target.closest('form');
+      //   const input = form.querySelector('.image-input');
+      //   if (input) input.click();
+      // }
+      // Click "Choose Image" button
+      if (e.target.classList.contains('choose-image-btn')) {
+        const form = e.target.closest('form');
+        const input = form.querySelector('.image-input');
+        if (input) {
+          // Reset the input value so selecting the same file triggers 'change'
+          input.value = '';
+          input.click();
+        }
+      }
+    });
+
+    // When file is chosen, open crop modal
+    document.body.addEventListener('change', function(e) {
+      if (e.target.classList.contains('image-input')) {
+        const input = e.target;
+        const file = input.files[0];
+        if (!file) return;
+
+        currentImageInput = input;
+        currentForm = input.closest('form');
+        currentPreview = currentForm.querySelector('.image-preview');
+
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          const cropModal = document.getElementById('cropModal');
+          const cropImage = document.getElementById('cropImage');
+          cropImage.src = evt.target.result;
+          cropModal.style.display = 'flex';
+
+          if (cropper) cropper.destroy();
+          cropper = new Cropper(cropImage, {
+            aspectRatio: 1,
+            viewMode: 1,
+            autoCropArea: 1,
+          });
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    
     // Trigger loading when "Assign Coaches" section is shown
     function showSection(sectionId) {
-      const sections = document.querySelectorAll('.page-section');
-      sections.forEach(sec => sec.classList.remove('active'));
+      localStorage.setItem('adminSection', sectionId); // Remember the section
+
+      document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
       const target = document.getElementById(sectionId);
       if (target) {
         target.classList.add('active');
-        
-        // ✅ This ensures pending coaches are loaded
+
         if (sectionId === 'coachRegistry') {
           loadPendingCoaches();
           loadApprovedCoaches();
         }
-
         if (sectionId === 'assignCoaches') {
           loadCoachAssignments();
         }
-
-         if (sectionId === 'storyList') {
-          loadStories(); // <- call here if you want lazy load
+        if (sectionId === 'manageStories') {
+          loadStories();
         }
       }
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      if (!document.querySelector('.page-section.active')) {
+        showSection('dashboard');
+      }
+    });
+    
   </script>
 
     <div id="deleteModal" style="display:none; position:fixed; z-index:1000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
@@ -1630,6 +1798,17 @@
         <button id="deleteAllBtn">Delete Future</button>
         <button id="cancelDeleteBtn">Cancel</button>
       </div> <!--Make the styling of most of like my log buttons like this popup-->
+    </div>
+
+    <!-- Crop Image Modal -->
+    <div id="cropModal" style="display:none; position:fixed; z-index:2000; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); align-items:center; justify-content:center;">
+      <div style="background:#222; padding:24px 24px 16px 24px; border-radius:12px; max-width:90vw; max-height:90vh; text-align:center; position:relative;">
+        <img id="cropImage" style="max-width:70vw; max-height:60vh; background:#fff; border-radius:8px;" />
+        <div style="margin-top:16px;">
+          <button id="confirmCropBtn" style="margin-right:10px;">Confirm Crop</button>
+          <button id="cancelCropBtn">Cancel</button>
+        </div>
+      </div>
     </div>
 </body>
 </html>
