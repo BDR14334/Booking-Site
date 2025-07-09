@@ -6,83 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
   <link rel="stylesheet" href="style.css">
-  <title>Homepage</title>
+  <title>Contact</title>
   <style>
-    .close-btn{
-      background-color: #ff4800;
-      color: white;
-      position: absolute; /* Position it relative to the sidebar */
-      top: 1rem; /* Position from the top */
-      right: -5px; /* Position from the right */
-      padding: 2.5px 5px; /* Adjust padding for smaller size */
-      border-radius: 50px;
-      border: none; /* Remove the default border */
-      /* margin: 10px 10px 10px; */
-      
-    }
-    .close-btn:hover{
-      background-color:#e03e00;
-      color: white;
-      
-    }
-
-    #userRole {
-      color: white;
-      padding-left: 20px; /* Tab Affect */
-      padding-bottom: 10px;
-      padding-top: 5px;
-    }
-
-    .user-name {
-      color: #ff4800;
-      font-weight: bold;
-      font-size: 18px;
-    }
-     /* Sidebar styling */
-    .sidebar {
-      position: fixed;
-      top: 0;
-      right: 0;
-      width: 275px;
-      height: 100%;
-      background-color: #343a40;
-      box-shadow: -10px 0 20px #24282c;
-      padding-top: 1rem;
-      display: none;
-      z-index: 999;
-      transition: all 0.3s ease-in-out;
-    }
-
-    .sidebar a {
-      padding: 10px 20px;
-      color: white;
-      display: block;
-      text-decoration: none;
-      transition: background-color 0.3s ease;
-    }
-
-    .sidebar a:hover {
-      background-color: #495057;
-    }
-
-    .sidebar .btn {
-      margin-left: auto;
-      margin-right: 1rem;
-    }
-
-    .profile-btn {
-      background-color: rgba(255, 255, 255, 0.2);
-      color: white;
-      padding: 10px;
-      border: none;
-      cursor: pointer;
-      margin-left: 10px;
-    }
-
-    .profile-btn:hover {
-      background-color: rgba(255, 72, 0);
-    }
-
     /* Contact Section Styling */
     .contact-section {
       background-color: #24282c;
@@ -173,16 +98,11 @@
 <body>
   <!-- Main wrapper that centers content and applies background overlay -->
   <div class="wrapper">
-    
-    <!-- Navigation bar at the top -->
     <nav class="nav">
-      
-      <!-- Logo section -->
       <div class="nav-logo">
         <p>ZSP</p>
       </div>
 
-      <!-- Navigation menu links -->
       <div class="nav-menu" id="navMenu">
         <ul>
           <li><a href="index.html" class="link">Home</a></li>
@@ -192,18 +112,35 @@
         </ul>
       </div>
 
-      <!-- Profile button or login/register buttons -->
       <div class="nav-button" id="authButtons">
-        <!-- These buttons will be toggled based on login status -->
         <button class="btn white-btn" id="loginBtn" onclick="login()">Login</button>
         <button class="btn" id="registerBtn" onclick="register()">Register</button>
-      </div> 
+      </div>
 
-      <!-- Hamburger menu icon for mobile -->
       <div class="nav-menu-btn">
-        <i class="bx bx-menu" onclick="myMenuFunction()"></i>
+        <i class="bx bx-menu" onclick="toggleMenuSidebar()"></i>
       </div>
     </nav>
+
+    <div id="profileSidebar" class="sidebar bg-dark text-white">
+      <button class="btn btn-sm btn-outline-light ms-2 mt-2 close-btn" onclick="toggleSidebar()">× Close</button>
+      <div class="mt-4 d-flex flex-column">
+        <p id="userRole" class="px-3 text-white"></p>
+        <div id="sidebarLinksContainer"></div>
+        <a href="#" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none" style="display:none;">🚪 Logout</a>
+      </div>
+    </div>
+
+    <div id="menuSidebar" class="sidebar bg-dark text-white" style="left:0; right:auto;">
+      <button class="btn btn-sm btn-outline-light ms-2 mt-2 close-btn" onclick="toggleMenuSidebar()">× Close</button>
+      <h4 style="margin-left:1.5rem; color:#fff;">Menu</h4>
+      <div class="mt-4 d-flex flex-column">
+        <a href="index.html" class="text-white px-3 py-2 text-decoration-none">🏠 Home</a>
+        <a href="About.html" class="text-white px-3 py-2 text-decoration-none">ℹ️ About</a>
+        <a href="Booking.html" class="text-white px-3 py-2 text-decoration-none">📅 Book</a>
+        <a href="Contact.html" class="text-white px-3 py-2 text-decoration-none">✉️ Contact</a>
+      </div>
+    </div>
 
     <section class="contact-section">
         <h1>REACH US</h1>
@@ -274,21 +211,46 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 
   <script src="authStatus.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Login and register redirection functions
     function login() {
-      window.location.href = "Login.html";  // Redirect to login page
+      window.location.href = "Login.html";
     }
 
     function register() {
-      window.location.href = "Login.html?register=true";  // Redirect to register page
+      window.location.href = "Login.html?register=true";
     }
 
-    // Hamburger menu toggle function
-    function myMenuFunction() {
-      var nav = document.getElementById("navMenu");
-      nav.classList.toggle("responsive");
+    function toggleMenuSidebar() {
+      const sidebar = document.getElementById("menuSidebar");
+      sidebar.style.display = sidebar.style.display === "block" ? "none" : "block";
     }
+
+    // Update your hamburger icon to call this function:
+    document.querySelector('.nav-menu-btn i').onclick = toggleMenuSidebar;
+
+    // Hide sidebar when clicking outside
+    document.addEventListener("click", function (event) {
+      const menuSidebar = document.getElementById("menuSidebar");
+      const menuBtn = document.querySelector('.nav-menu-btn i');
+      if (
+        menuSidebar.style.display === "block" &&
+        !menuSidebar.contains(event.target) &&
+        !(menuBtn && menuBtn.contains(event.target))
+      ) {
+        menuSidebar.style.display = "none";
+      }
+    });
+
+    document.addEventListener("click", function (event) {
+      const sidebar = document.getElementById("profileSidebar");
+      const profileBtn = document.getElementById("profileBtn");
+      if (sidebar.style.display === "block" &&
+          !sidebar.contains(event.target) &&
+          !(profileBtn && profileBtn.contains(event.target))) {
+        sidebar.style.display = "none";
+      }
+    });
 
   </script>
 
