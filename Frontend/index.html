@@ -263,28 +263,32 @@
         border-radius: 2rem;
       }
 
+      .athlete-card {
+        margin: 0 5px; /* Reduce side margins */
+        flex: 0 0 calc(100vw - 100px); /* Width minus arrow space (~50px each side) */
+      }
+
       .carousel-wrapper {
-        max-width: 100vw !important;
-        padding: 0 !important;
+        padding: 0 25px; /* Leave room for arrows */
         box-sizing: border-box;
       }
 
       .carousel-viewport {
-        width: 100vw !important;
-        max-width: 100vw !important;
-        padding: 0 !important;
+        padding: 0; /* Keep tight container */
+        overflow: hidden;
       }
 
-      .athlete-card {
-        flex: 0 0 90vw !important;
-        max-width: 90vw !important;
-        margin: 0 auto 20px auto !important;
-        box-sizing: border-box;
+      .athlete-cards-carousel {
+        padding-left: 0;
+        padding-right: 0;
       }
 
-      .arrow-btn, .arrow-btn i {
-        font-size: 32px !important;
-        padding: 0 2vw !important;
+      .arrow-btn {
+        width: 30px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
     }
 
