@@ -111,8 +111,6 @@
     .athlete-cards-carousel {
       display: flex;
       transition: transform 0.5s ease;
-      touch-action: pan-y;
-      -webkit-overflow-scrolling: touch;
     }
 
     .athlete-card {
@@ -519,54 +517,7 @@
       }
     }
 
-    let startX = 0;
-    let currentTranslate = 0;
-    let isDragging = false;
-
-    function enableTouchScroll() {
-      const container = document.getElementById("storyCards");
-      if (!container) return;
-
-      container.addEventListener('touchstart', (e) => {
-        isDragging = true;
-        startX = e.touches[0].clientX;
-        currentTranslate = getTranslateX(container);
-      });
-
-      container.addEventListener('touchmove', (e) => {
-        if (!isDragging) return;
-        const dx = e.touches[0].clientX - startX;
-        container.style.transition = 'none';
-        container.style.transform = `translateX(${currentTranslate + dx}px)`;
-      });
-
-      container.addEventListener('touchend', (e) => {
-        isDragging = false;
-        container.style.transition = 'transform 0.5s ease';
-        const dx = e.changedTouches[0].clientX - startX;
-        if (Math.abs(dx) > 50) {
-          if (dx < 0) {
-            scrollCarousel(1); // swipe left, next
-          } else {
-            scrollCarousel(-1); // swipe right, prev
-          }
-        } else {
-          updateCarousel(); // snap back if not enough swipe
-        }
-      });
-    }
-
-    // Helper to get current translateX value
-    function getTranslateX(element) {
-      const style = window.getComputedStyle(element);
-      const matrix = new WebKitCSSMatrix(style.transform);
-      return matrix.m41;
-    }
-
-  
-
     loadHomeStories();
-    enableTouchScroll();
 
 
   </script>
