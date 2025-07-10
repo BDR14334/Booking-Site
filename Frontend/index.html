@@ -102,10 +102,16 @@
     }
 
     .carousel-viewport {
-      overflow-x: hidden;
-      width: 990px;
-      height: auto;           
+      overflow: none;;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
       display: flex;
+    }
+
+    .carousel-viewport::-webkit-scrollbar {
+      display: none;                
+    
     }
 
     .athlete-cards-carousel {
@@ -171,6 +177,8 @@
       visibility: hidden; /* Hide by default, but keep space */
     }
 
+
+
     /* Tablet view */
     @media (max-width: 1023px) {
       .carousel-viewport {
@@ -228,6 +236,7 @@
       .carousel-viewport {
         width: 100%;
         overflow: hidden;
+        overflow-x: auto;
         padding: 0;
         box-sizing: border-box;
       }
