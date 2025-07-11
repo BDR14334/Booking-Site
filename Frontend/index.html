@@ -103,10 +103,9 @@
     }
 
     .carousel-viewport {
-      overflow: none;;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      -webkit-overflow-scrolling: touch;
+      overflow-x: hidden;
+      width: 990px;
+      height: auto;  
       display: flex;
     }
 
@@ -173,12 +172,6 @@
     .sidebar-link-margin {
       margin-top: 0.6rem;
     }
-
-    #leftArrowBtn {
-      visibility: hidden; /* Hide by default, but keep space */
-    }
-
-
 
     /* Tablet view */
     @media (max-width: 1023px) {
@@ -275,11 +268,6 @@
       color: white;
       padding: 20px 0;
       text-align: center;
-    }
-
-
-    #leftArrowBtn {
-      visibility: hidden; /* Hide by default, but keep space */
     }
   </style>
 </head>
