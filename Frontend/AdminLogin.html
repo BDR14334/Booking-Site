@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Registration</title>
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+        background: url("img/Background.jpg");
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        overflow-y: auto; /* Allows vertical scroll if needed */
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="form-box">
+      <div class="register-container active" id="register">
+        <div class="top">
+          <header>Admin Registration</header>
+        </div>
+
+        <!-- Admin ID field -->
+        <div class="input-box">
+          <input type="password" class="input-field" id="adminId" placeholder="Admin Secret ID" />
+          <i class="bx bx-key"></i>
+        </div>
+
+        <!-- First and Last name -->
+        <div class="two-forms">
+          <div class="input-box">
+            <input type="text" class="input-field" id="firstName" placeholder="First Name" />
+            <i class="bx bx-user"></i>
+          </div>
+          <div class="input-box">
+            <input type="text" class="input-field" id="lastName" placeholder="Last Name" />
+            <i class="bx bx-user"></i>
+          </div>
+        </div>
+
+        <!-- Email and Password -->
+        <div class="input-box">
+          <input type="email" class="input-field" id="email" placeholder="Email" />
+          <i class="bx bx-envelope"></i>
+        </div>
+
+        <div class="input-box">
+          <input type="password" class="input-field" id="password" placeholder="Password" />
+          <i class="bx bx-lock-alt"></i>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="input-box">
+          <input type="password" class="input-field" id="confirmPassword" placeholder="Confirm Password" />
+          <i class="bx bx-lock"></i>
+        </div>
+
+        <!-- Submit -->
+        <div class="input-box">
+            <input type="submit" class="submit" value="Register">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alert popup -->
+  <div id="customAlertPopup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background-color:#343a40; color:white; padding:25px 30px; border-radius:12px; box-shadow:0 5px 15px rgba(0,0,0,0.4); z-index:9999; font-size:18px; text-align:center; max-width:400px;">
+    <p id="customAlertMessage">Placeholder message</p>
+    <button onclick="closeCustomAlertPopup()" style="margin-top:20px; padding:10px 20px; background-color:#ff4800; color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px;">OK</button>
+  </div>
+
+  <script src="authStatus.js"></script>
+  <script>
+
+    function showCustomAlert(message) {
+      document.getElementById("customAlertMessage").innerText = message;
+      document.getElementById("customAlertPopup").style.display = "block";
+    }
+
+    function closeCustomAlertPopup() {
+      document.getElementById("customAlertPopup").style.display = "none";
+    }
+
+    document.querySelector('#register .submit').addEventListener("click", async (e) => {
+      e.preventDefault();
+
+      const first_name = document.getElementById("firstName").value.trim();
+      const last_name = document.getElementById("lastName").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const admin_id = document.getElementById("adminId").value.trim();
+      const confirmPassword = document.getElementById("confirmPassword").value;
+
+      if (!admin_id || !first_name || !last_name || !email || !password || !confirmPassword) {
+        showCustomAlert("Please fill in all fields.");
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        showCustomAlert("Passwords do not match.");
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ first_name, last_name, email, password, role: "admin", admin_id }),
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          window.location.href = "Login.html";
+        } else {
+          showCustomAlert(data.error || "Registration failed.");
+        }
+      } catch (err) {
+        console.error(err);
+        showCustomAlert("Error occurred during registration.");
+      }
+    });
+  </script>
+</body>
+</html>

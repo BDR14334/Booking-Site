@@ -79,69 +79,76 @@ router.post('/register', async (req, res) => {
 
 // LOGIN
 router.post('/login', async (req, res) => {
-  const { email, password, role, admin_id } = req.body;
+  const { email, password, admin_id } = req.body;
 
-  if (!email || !password || !role) {
-    return res.status(400).json({ error: 'Email, password, and role are required.' });
-  }
-
-  if (!validRoles.includes(role)) {
-    return res.status(400).json({ error: 'Invalid role.' });
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required.' });
   }
 
   try {
-    const userQuery = await pool.query(`SELECT * FROM public.users WHERE LOWER(email) = LOWER($1) AND role = $2`, [email, role]);
+    // Find user by email only
+    const userQuery = await pool.query(
+      `SELECT * FROM public.users WHERE LOWER(email) = LOWER($1)`,
+      [email]
+    );
+
     if (userQuery.rows.length === 0) {
-      return res.status(401).json({ error: 'User not found or role mismatch.' });
+      return res.status(401).json({ error: 'User not found.' });
     }
 
     const user = userQuery.rows[0];
+    const role = user.role;
+
+    // Check password
     const isPasswordMatch = await bcrypt.compare(password, user.password_hash);
     if (!isPasswordMatch) {
       return res.status(401).json({ error: 'Incorrect password.' });
     }
 
-    if (role === 'admin') {
-      if (!admin_id) {
-        return res.status(400).json({ error: 'Admin ID is required for admin login.' });
-      }
+    // Admins no longer need to provide admin ID for login
 
-      const adminProfileQuery = await pool.query(`SELECT * FROM public.admin_profile WHERE user_id = $1`, [user.id]);
-      if (adminProfileQuery.rows.length === 0) {
-        return res.status(403).json({ error: 'Admin profile not found.' });
-      }
-
-      const adminProfile = adminProfileQuery.rows[0];
-      const isAdminIdMatch = await bcrypt.compare(admin_id, adminProfile.admin_id);
-      if (!isAdminIdMatch) {
-        return res.status(403).json({ error: 'Invalid Admin ID.' });
-      }
-    }
-
+    // Generate token
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role, first_name: user.first_name, last_name: user.last_name },
+      {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        first_name: user.first_name,
+        last_name: user.last_name,
+      },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
 
-    res.cookie('token', token, {
+    // Set cookie
+    res
+      .cookie('token', token, {
         httpOnly: true,
-        secure: true, 
-        maxAge: 3600000, // 1 hour
+        secure: true,
+        maxAge: 3600000,
         sameSite: 'None',
       })
       .status(200)
-      .json({ message: 'Login successful', user: { id: user.id, email: user.email, role: user.role, is_first_login: user.is_first_login } });
-      // Update the user's first login status to false
-      if (user.is_first_login) {
-        await pool.query(`UPDATE users SET is_first_login = false WHERE id = $1`, [user.id]);
-      }
+      .json({
+        message: 'Login successful',
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          is_first_login: user.is_first_login,
+        },
+      });
 
+    // Mark user as not first-time login
+    if (user.is_first_login) {
+      await pool.query(`UPDATE users SET is_first_login = false WHERE id = $1`, [user.id]);
+    }
   } catch (err) {
     console.error('Login error:', err.message);
     res.status(500).json({ error: 'Server error during login.' });
   }
 });
+
 
 // LOGOUT
 router.post('/logout', (req, res) => {

@@ -77,37 +77,15 @@
                 <header>Login</header>
             </div>
 
-            <!-- Role selection dropdown -->
-            <div class="input-box">
-                <select class="input-field" id="loginRoleSelect" required>
-                    <option value="" disabled selected>Select Role</option>
-                    <option value="admin">Admin</option>
-                    <option value="coach">Coach</option>
-                    <option value="athlete">Athlete</option>
-                </select>
-                <i class='bx bx-user-check'></i>
-            </div>
-
-            <!-- Admin ID input (shown only if 'admin' is selected) -->
-            <div class="input-box" id="loginAdminIdContainer" style="display: none;">
-                <input type="password" class="input-field" id="loginAdminId" placeholder="Admin ID">
-                <i class="bx bx-lock-alt"></i>
-            </div>
-
-            <!-- Coach ID input (shown only if 'coach' is selected) -->
-            <div class="input-box" id="loginCoachIdContainer" style="display: none;">
-                <input type="text" class="input-field" id="loginCoachId" placeholder="Coach ID">
-                <i class="bx bx-id-card"></i>
-            </div>
-
             <!-- Login credentials -->
             <div class="input-box">
-                <input type="text" class="input-field" placeholder="Username or Email">
+                <input type="text" class="input-field" id="loginEmail" placeholder="Email">
                 <i class="bx bx-user"></i>
             </div>
 
+            <!-- Password field -->
             <div class="input-box">
-                <input type="password" class="input-field" placeholder="Password">
+                <input type="password" class="input-field" id="loginPassword" placeholder="Password">
                 <i class="bx bx-lock-alt"></i>
             </div>
 
@@ -139,9 +117,8 @@
             <div class="input-box">
                 <select class="input-field" id="registerRoleSelect">
                     <option value="" disabled selected>Select Role</option>
-                    <option value="admin">Admin</option>
-                    <option value="coach">Coach</option>
-                    <option value="athlete">Athlete</option>
+                    <option value="athlete">Adult Athlete</option>
+                    <option value="athlete">Parent/Guardian</option>
                 </select>
                 <i class='bx bx-user-check'></i>
             </div>
@@ -209,14 +186,14 @@
 
     document.addEventListener("DOMContentLoaded", () => {
         // Login role-dependent input visibility
-        const loginRoleSelect = document.getElementById("loginRoleSelect");
-        const loginAdminIdContainer = document.getElementById("loginAdminIdContainer");
-        const loginCoachIdContainer = document.getElementById("loginCoachIdContainer");
+        // const loginRoleSelect = document.getElementById("loginRoleSelect");
+        // const loginAdminIdContainer = document.getElementById("loginAdminIdContainer");
+        // const loginCoachIdContainer = document.getElementById("loginCoachIdContainer");
 
-        loginRoleSelect.addEventListener("change", function () {
-            loginAdminIdContainer.style.display = (this.value === "admin") ? "block" : "none";
-            loginCoachIdContainer.style.display = (this.value === "coach") ? "block" : "none";
-        });
+        // loginRoleSelect.addEventListener("change", function () {
+        //     loginAdminIdContainer.style.display = (this.value === "admin") ? "block" : "none";
+        //     loginCoachIdContainer.style.display = (this.value === "coach") ? "block" : "none";
+        // });
 
         // Register role-dependent input visibility
         const registerRoleSelect = document.getElementById("registerRoleSelect");
@@ -230,70 +207,66 @@
         document.querySelector('#login .submit').addEventListener('click', async (e) => {
             e.preventDefault();
 
-            // Gather form input values
-            const email = document.querySelector('#login input[placeholder="Username or Email"]').value;
-            const password = document.querySelector('#login input[placeholder="Password"]').value;
-            const role = document.getElementById("loginRoleSelect").value;
-            const adminId = document.getElementById("loginAdminId")?.value;
-            const coachId = document.getElementById("loginCoachId")?.value;
+            const email = document.getElementById("loginEmail").value.trim();
+            const password = document.getElementById("loginPassword").value.trim();
+
+            if (!email || !password) {
+                showCustomAlert("Please enter both email and password.");
+                return;
+            }
 
             try {
-                const body = { email, password, role };
-                if (role === "admin" && adminId) body.admin_id = adminId;
-                else if (role === "coach" && coachId) body.coach_id = coachId;
-
-                // Send login request
                 const res = await fetch(`${API_BASE}/auth/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include', // Include cookies if any
-                    body: JSON.stringify(body)
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ email, password })
                 });
 
                 const data = await res.json();
                 if (res.ok) {
-                      const { user } = data;
+                    const { user } = data;
 
-                    // Save this in sessionStorage to read on dashboard
-                    sessionStorage.setItem("isFirstLogin", user.is_first_login);
-                    
-                    if (role === "athlete") {
+                    // Redirect based on user.role
+                    if (user.role === "athlete") {
                         window.location.href = "AthleteDashboard.html";
-                    } else if (role === "coach") {
+                    } else if (user.role === "coach") {
                         window.location.href = "CoachDashboard.html";
+                    } else if (user.role === "admin") {
+                        window.location.href = "AdminDashboard.html";
                     } else {
-                        window.location.href = "index.html"; // fallback or admin
+                        window.location.href = "index.html"; // fallback
                     }
                 } else {
                     showCustomAlert(data.error || "Login failed.");
                 }
             } catch (err) {
-                showCustomAlert("Error logging in.");
                 console.error(err);
+                showCustomAlert("Error logging in.");
             }
         });
+
 
         // REGISTER form submission logic
         document.querySelector('#register .submit').addEventListener('click', async (e) => {
             e.preventDefault();
 
             // Gather form input values
-            const first_name = document.querySelector('#register input[placeholder="First Name"]').value;
-            const last_name = document.querySelector('#register input[placeholder="Last Name"]').value;
-            const email = document.querySelector('#register input[placeholder="Email"]').value;
+            const first_name = document.querySelector('#register input[placeholder="First Name"]').value.trim();
+            const last_name = document.querySelector('#register input[placeholder="Last Name"]').value.trim();
+            const email = document.querySelector('#register input[placeholder="Email"]').value.trim();
             const password = document.querySelector('#register input[placeholder="Password"]').value;
             const role = document.getElementById("registerRoleSelect").value;
-            const adminId = document.getElementById("registerAdminId")?.value;
+
+            // Validate that the selected role is allowed
+            const validRoles = ['adult_athlete', 'parent_guardian'];
+            if (!validRoles.includes(role)) {
+                showCustomAlert("Please select a valid role.");
+                return;
+            }
 
             try {
                 const body = { first_name, last_name, email, password, role };
-                if (role === "admin") {
-                    if (!adminId) {
-                        showCustomAlert("Admin ID is required for admin registration.");
-                        return;
-                    }
-                    body.admin_id = adminId;
-                }
 
                 // Send registration request
                 const res = await fetch(`${API_BASE}/auth/register`, {
