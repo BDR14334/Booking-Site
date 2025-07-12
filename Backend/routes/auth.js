@@ -131,6 +131,7 @@ router.post('/login', async (req, res) => {
       .status(200)
       .json({
         message: 'Login successful',
+        token,
         user: {
           id: user.id,
           email: user.email,
@@ -164,7 +165,7 @@ router.post('/logout', (req, res) => {
 // VERIFY (check login status)
 router.get('/verify', (req, res) => {
     try {
-      const token = req.cookies.token;
+      const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
       if (!token) return res.status(401).json({ loggedIn: false });
   
       const decoded = jwt.verify(token, JWT_SECRET);
@@ -177,7 +178,7 @@ router.get('/verify', (req, res) => {
 // GET current logged-in user
 router.get('/me', (req, res) => {
   try {
-    const token = req.cookies.token;
+    const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'Not logged in' });
 
     const decoded = jwt.verify(token, JWT_SECRET);

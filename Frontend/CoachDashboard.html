@@ -254,9 +254,12 @@
   // Example function to fetch and show coach name
   async function showCoachFirstLoginPopup() {
     try {
+      const token = localStorage.getItem("token");
+
       const response = await fetch(`${API_BASE}/auth/me`, {
         method: 'GET',
         credentials: 'include',
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
 
       if (response.ok) {
@@ -285,7 +288,13 @@
    */
   async function fetchLoggedInUser() {
     try {
-      const res = await fetch(`${API_BASE}/auth/me`, { credentials: 'include' }); // includes session cookie
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(`${API_BASE}/auth/me`, {
+        credentials: 'include', // try sending cookie
+        headers: token ? { Authorization: `Bearer ${token}` } : {} // fallback to header
+      });
+
       const data = await res.json();
       if (data.user && data.user.id) {
         userId = data.user.id;
@@ -294,7 +303,8 @@
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
-      alert('Failed to fetch user data.');
+      alert('Session expired or unauthorized. Please log in again.');
+      window.location.href = "Login.html";
     }
   }
 

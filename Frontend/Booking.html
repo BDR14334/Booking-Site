@@ -619,8 +619,11 @@
             // Ensure authenticated
             if (!customerId) {
               try {
+                const token = localStorage.getItem("token");
+
                 const userRes = await fetch(`${API_BASE}/auth/verify`, {
-                  credentials: 'include'
+                  credentials: 'include',
+                  headers: token ? { Authorization: `Bearer ${token}` } : {}
                 });
                 const userData = await userRes.json();
                 const user = userData.user;

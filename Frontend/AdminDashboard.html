@@ -452,8 +452,11 @@
       
     document.addEventListener('DOMContentLoaded', async () => {
       try {
+        const token = localStorage.getItem("token");
+
         const res = await fetch(`${API_BASE}/auth/verify`, {
-          credentials: "include"
+          credentials: "include", // try to send cookie if available
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
         });
 
         const data = await res.json();
@@ -469,10 +472,16 @@
 
     async function logout() {
       try {
+        const token = localStorage.getItem("token");
+
         const res = await fetch(`${API_BASE}/auth/logout`, {
           method: "POST",
-          credentials: "include"
+          credentials: "include",
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
         });
+
+        // Clear localStorage regardless of logout success
+        localStorage.removeItem("token");
 
         if (res.ok) {
           // Redirect to index.html after successful logout

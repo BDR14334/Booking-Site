@@ -16,12 +16,16 @@ function toggleSidebar() {
 // Logout function
 function handleLogout() {
   console.log("Logout clicked");
+  const token = localStorage.getItem("token");
+
   fetch(`${API_BASE}/auth/logout`, {
     method: 'POST',
     credentials: 'include',
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
   })
   .then(res => res.json())
   .then(() => {
+    localStorage.removeItem("token");
     window.location.reload();
   });
 }
@@ -57,9 +61,12 @@ function buildSidebarLinks(role) {
 // Function to fetch user details from the backend (verify endpoint)
 async function getUserDetails() {
   try {
+    const token = localStorage.getItem("token");
+
     const response = await fetch(`${API_BASE}/auth/verify`, {
       method: 'GET',
-      credentials: 'include'
+      credentials: 'include',
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
 
     const data = await response.json();
@@ -96,11 +103,14 @@ function updateNavButton() {
   // Determine screen width
   const isMobile = window.innerWidth < 824;
 
-  // Add a cache-busting query param to prevent browser from reusing old fetch result
+  const token = localStorage.getItem("token");
+
   fetch(`${API_BASE}/auth/verify?_=${Date.now()}`, {
     method: 'GET',
     credentials: 'include',
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
   })
+
     .then(res => res.json())
     .then(data => {
       if (data.loggedIn) {

@@ -225,7 +225,10 @@
 
                 const data = await res.json();
                 if (res.ok) {
-                    const { user } = data;
+                    const { user, token } = data;
+
+                    // ✅ Store the token in localStorage for mobile compatibility
+                    localStorage.setItem("token", token);
 
                     // Redirect based on user.role
                     if (user.role === "athlete") {

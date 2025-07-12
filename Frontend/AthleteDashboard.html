@@ -516,7 +516,12 @@
   // Fetch logged-in user
   async function fetchLoggedInUser() {
     try {
-      const res = await fetch(`${API_BASE}/auth/me`, { credentials: 'include' });
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(`${API_BASE}/auth/me`, {
+        credentials: 'include', // try sending cookie
+        headers: token ? { Authorization: `Bearer ${token}` } : {} // fallback to header
+      });
       const data = await res.json();
       if (data.user && data.user.id) {
         userId = data.user.id;
@@ -524,8 +529,8 @@
         throw new Error('User data not found');
       }
     } catch (error) {
-      console.error('Error fetching user data:', error);
-      alert('Failed to fetch user data.');
+      alert('Session expired or unauthorized. Please log in again.');
+      window.location.href = "Login.html";
     }
   }
 
