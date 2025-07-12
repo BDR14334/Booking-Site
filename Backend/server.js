@@ -12,6 +12,7 @@ const adminRoutes = require('./routes/admin');
 const athleteRoutes = require('./routes/athlete');
 const bookingRoutes = require('./routes/booking');  
 const timeslotRoutes = require('./routes/timeslot'); 
+const contactRoutes = require('./routes/contact');
 
 // NEW: Load Stripe
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Make sure your .env has this key
@@ -47,7 +48,7 @@ app.use('/admin', adminRoutes);
 app.use('/booking', bookingRoutes);
 app.use('/timeslot', timeslotRoutes);
 app.use('/img', express.static(path.join(__dirname, '../Frontend/img')));
-
+app.use('/contact', contactRoutes); 
 
 // NEW: Stripe payment intent route
 app.post('/payment/create-payment-intent', async (req, res) => {
