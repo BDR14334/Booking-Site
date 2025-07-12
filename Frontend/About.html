@@ -49,7 +49,7 @@
       position: relative;
       background: #000;
       color: white;
-      padding: 8rem 0;
+      padding: 3rem 0;
       border-bottom: 2px solid #000;
       margin: 0;
     }
@@ -137,16 +137,53 @@
       background: transparent;
     }
 
-    @media (max-width: 900px) {
+    @media (max-width: 824px) {
+      .coach-profile {
+        padding: 0 !important; /* Reduce vertical space */
+        margin-bottom: 0 !important;  /* Remove extra margin if present */
+        border-bottom: none;          /* Remove border if you don't want a divider */
+      }
+      .section-inner {
+        padding: 0 !important; /* Reduce horizontal padding if needed */
+      }
+      
       .coach-profile-flex {
-        flex-direction: column;
-        min-height: unset;
+        flex-direction: column !important;
+        padding: 1rem !important;
+        margin: 1rem !important;
+        min-height: unset !important;
+      }
+      
+      .coach-name {
+        font-size: 2rem;
+      }
+
+      .coach-desc p {
+        font-size: 0.85rem;
+      }
+      .coach-image-col {
+        order: 1;
+      }
+      .coach-desc-col {
+        order: 2;
       }
       .coach-image-col,
       .coach-desc-col {
         flex: none;
         width: 100%;
         padding: 1rem 0;
+        
+      }
+      .coach-image-col {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .coach-image-large {
+        width: 300px;  
+        height: 300px;   
+        border-radius: 1rem;
+        border: 4px solid #ff4800;
       }
       .coach-desc-col {
         padding: 1.5rem;
