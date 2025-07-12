@@ -144,6 +144,7 @@ body{
   overflow: hidden;
   z-index: 2;
   flex-direction: column; /* add this */
+  border: none;
 }
 
 /* ------------------ LOGIN FORM & REGISTER FORM ------------------ */
@@ -153,6 +154,7 @@ body{
   display: none;
   width: 100%;
   flex-direction: column;
+  border: none;
 }
 
 /* ------------------ REGISTER FORM ------------------ */
@@ -160,6 +162,7 @@ body{
   display: none;
   width: 100%;
   flex-direction: column;
+  border: none;
 }
 
 /* Show the active form */
@@ -269,6 +272,7 @@ header{
 /* Disabled option style */
 .input-box select.input-field option[disabled] {
     color: #ccc;
+    border: none;
 }
 
 /* ------------------ SUBMIT BUTTON ------------------ */
@@ -575,6 +579,8 @@ header{
   left: auto;
   box-shadow: -10px 0 20px #24282c;
 }
+
+
 
 
 
