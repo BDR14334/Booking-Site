@@ -161,11 +161,11 @@
                 <div class="form-row">
                 <div>
                     <label for="firstName">Name *</label>
-                    <input type="text" id="firstName" placeholder="First" required>
+                    <input type="text" id="firstName" placeholder="First Name" required>
                 </div>
                 <div>
                     <label for="lastName">&nbsp;</label>
-                    <input type="text" id="lastName" placeholder="Last" required>
+                    <input type="text" id="lastName" placeholder="Last Name" required>
                 </div>
                 </div>
                 <label for="email">Email *</label>
@@ -173,13 +173,6 @@
 
                 <label for="phone">Contact Number *</label>
                 <input type="tel" id="phone" required>
-
-                <!-- <label for="timing">Your Desired Gym Timing</label>
-                <select id="timing">
-                <option>Morning</option>
-                <option>Afternoon</option>
-                <option>Evening</option>
-                </select> -->
 
                 <label for="message">Comment or Message *</label>
                 <textarea id="message" rows="4" required></textarea>
@@ -252,6 +245,30 @@
       }
     });
 
+    document.getElementById("contactForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const data = {
+        firstName: document.getElementById("firstName").value,
+        lastName: document.getElementById("lastName").value,
+        email: document.getElementById("email").value,
+        phone: document.getElementById("phone").value,
+        message: document.getElementById("message").value
+      };
+
+      const res = await fetch(`${API_BASE}/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      if (res.ok) {
+        alert("Thank you! Your message has been sent.");
+        document.getElementById("contactForm").reset();
+      } else {
+        alert("Sorry, there was a problem sending your message.");
+      }
+    });
   </script>
 
 </body>
