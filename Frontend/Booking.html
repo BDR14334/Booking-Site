@@ -311,7 +311,19 @@
       background-color: #e03e00;
     }
 
+    @media (max-width: 824px) {
+      .back-btn {
+        top: 110px; /* Adjusted for smaller screens */
+        left: 20px; /* Adjusted for smaller screens */
+      }
+    }
 
+    @media (max-width: 824px) {
+      .calendar-title-mobile span {
+        display: block;
+        text-align: center;
+      }
+    }
   </style>
 </head>
 <body>
@@ -390,11 +402,15 @@
       <section class="booking" id="calendarSection">
         <!-- <div class="back-btn" onclick="goToStep(1)"><i class="fas fa-arrow-left"></i></div> -->
         <div class="content">
-          <div class="title"><span>Select Available Sessions</span></div>
-          <div id="sessionTracker" style="text-align:center; font-size:16px; margin-bottom: 30px; margin-top: -30px; color:white;">
-            Choose number of sessions based on package:<br> 
-            <span id="chosenSessions">0</span> / <span id="maxSessions">0</span><br>
-            <span style="font-size: 14px; color: #28a745;"> click available timeslot in green </span>
+          <div class="title">
+            <span class="calendar-title-mobile">
+              <span>Select Available</span>
+              <span>Sessions</span>
+            </span>
+          </div>
+          <div id="sessionTracker" style="text-align:center; font-size:16px; margin-bottom: 30px; margin-top: -40px; color:white;">
+            Tap green timeslots to book:<br> 
+            <span id="chosenSessions"><strong>0</strong></span> / <span id="maxSessions"><strong>0</strong></span><span style="font-size: 16px;"><strong> selected</strong></span> 
           </div>
           <div id="calendar" style="max-width: 600px; max-height: 500px; margin: 0 auto;"></div>
           <div style="text-align: center; margin-top: 20px;">
@@ -613,8 +629,8 @@
             selectedPackageId = pkg.id;
             maxSessions = pkg.sessions;
 
-            document.getElementById("maxSessions").innerText = maxSessions;
-            document.getElementById("chosenSessions").innerText = 0;
+            document.getElementById("maxSessions").innerHTML = `<strong>${maxSessions}</strong>`;
+            document.getElementById("chosenSessions").innerHTML = `<strong>${selectedTimeslots.length}</strong>`;
   
             // Ensure authenticated
             if (!customerId) {
@@ -806,7 +822,7 @@
               }
 
               // Update session tracker
-              document.getElementById("chosenSessions").innerText = selectedTimeslots.length;
+              document.getElementById("chosenSessions").innerHTML = `<strong>${selectedTimeslots.length}</strong>`;
 
               // Toggle Confirm button visibility
               const confirmBtn = document.getElementById("confirmTimeslotsBtn");
