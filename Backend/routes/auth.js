@@ -190,12 +190,12 @@ router.get('/me', (req, res) => {
 
 // sends password reset link to then update password
 router.post('/forgot-password', async (req, res) => {
-  const { email, role } = req.body;
+  const { email } = req.body;
 
   try {
-    const userRes = await pool.query(`SELECT * FROM users WHERE email = $1 AND role = $2`, [email, role]);
+    const userRes = await pool.query(`SELECT * FROM users WHERE email = $1`, [email]);
     if (userRes.rows.length === 0) {
-      return res.status(200).json({ message: 'If your email exists, a reset link has been sent.' }); // Don't leak info
+      return res.status(404).json({ error: 'Account with this email does not exist.' });
     }
 
     const user = userRes.rows[0];
@@ -226,7 +226,7 @@ router.post('/forgot-password', async (req, res) => {
       html: `<p>Click <a href="${resetLink}">here</a> to reset your password. The link expires in 15 minutes.</p>`
     });
 
-    res.json({ message: 'If your email exists, a reset link has been sent.' });
+    res.json({ message: 'Reset link sent to your email address.' });
   } catch (err) {
     console.error('Forgot password error:', err.message);
     res.status(500).json({ error: 'Server error' });
