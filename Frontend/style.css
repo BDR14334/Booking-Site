@@ -351,19 +351,19 @@ header{
 
 /* Styles for screens smaller than 824px (tablets) */
 @media only screen and (max-width: 824px){
-    .nav-menu.responsive{
+    /* .nav-menu.responsive{
         top: 100px;
-    }
-    .nav-menu{
-        position: absolute;
-        top: -800px;
-        display: flex;
-        justify-content: center;
-        background: rgba(255, 255, 255, 0.2);
-        width: 100%;
-        height: 90vh;
-        backdrop-filter: blur(20px);
-        transition: .3s;
+    } */
+    .nav-menu {
+        display: none !important;
+        position: static !important;
+        height: auto !important;
+        width: auto !important;
+        background: none !important;
+        backdrop-filter: none !important;
+        top: auto !important;
+        left: auto !important;
+        transition: none !important;
     }
     .nav-menu ul{
         flex-direction: column;
