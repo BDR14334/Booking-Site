@@ -8,11 +8,14 @@
   <link rel="stylesheet" href="style.css">
   <title>Homepage</title>
   <style>
-    .wrapper-about {
-      justify-content: center;
-      align-items: center;
-      min-height: 110vh;
-      background: #000;
+    .wrapper-homepage {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      height: auto;
+      justify-content: flex-start;
+      align-items: stretch;
+      background: #343a40;
     }
 
     .coach-video-section {
@@ -199,7 +202,7 @@
 </head>
 <body>
   <!-- Main wrapper that centers content and applies background overlay -->
-  <div class="wrapper-about">
+  <div class="wrapper-homepage">
     <nav class="nav">
       <div class="nav-logo">
         <p>ZSP</p>
@@ -298,7 +301,7 @@
       </div>
   </div>
 
-  </div>
+ 
 
   <!-- Profile dropdown logic + login/register redirection -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
