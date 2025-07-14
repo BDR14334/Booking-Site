@@ -21,7 +21,10 @@
       height: 100%;
     }
 
-    .wrapper-homepage{
+    .wrapper-homepage {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
       overflow-x: hidden;
       justify-content: center;
       align-items: center;
@@ -39,17 +42,23 @@
 
 
     .booking-slider {
+      flex: 1 0 auto;
       display: flex;
-      width: 100%; 
-      transition: transform 0.6s ease;
       flex-direction: row;
+      width: 100%;
+      transition: transform 0.6s ease;
       height: auto; /* full screen height */
     }
 
     .booking-slider > section {
+      min-height: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
       position: relative;
       flex: 1 0 100%;
-      height: auto;
       overflow: visible;
     }
 
