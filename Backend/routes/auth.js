@@ -193,7 +193,10 @@ router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
 
   try {
-    const userRes = await pool.query(`SELECT * FROM users WHERE email = $1`, [email]);
+    // Make the email check case-insensitive
+    const userRes = await pool.query(
+      `SELECT * FROM users WHERE LOWER(email) = LOWER($1)`, [email]
+    );
     if (userRes.rows.length === 0) {
       return res.status(404).json({ error: 'Account with this email does not exist.' });
     }
