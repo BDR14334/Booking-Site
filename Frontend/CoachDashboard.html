@@ -15,6 +15,9 @@
   <!-- FullCalendar CSS -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
 
+  <!--icons-->
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+
   <style>
     body {
       font-family: 'Poppins', sans-serif;
@@ -159,16 +162,133 @@
     .back-btn {
       font-family: Arial, Helvetica, sans-serif;
       position: fixed;
-      top: 75px;
+      top: 90px;
       right: 20px;
       font-size: 18px;
       color: white;
       cursor: pointer;
-      z-index: 9999;
+      text-shadow: 0 2px 8px rgb(0, 0, 0); 
+      z-index: 99;
     }
 
     .back-btn:hover{
       color:#ff4800;
+    }
+
+     @media (max-width: 1024px) {
+      .material-symbols-outlined {
+        font-size: 2.5rem !important;
+      }
+      form label {
+        font-size: 1.2rem;
+      }
+      form input,
+      form textarea {
+        font-size: 1rem;
+        padding: 14px;
+      }
+      button {
+        font-size: 1rem;
+      }
+      #profileBtn {
+        background: #333940;
+        border: none;
+        color: #fff;
+        cursor: pointer;
+        font-size: 22px;
+        transition: background 0.2s;
+      }
+      #profileBtn:hover {
+        background: #ff4800;
+        color: #fff;
+      }
+      .sidebar {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 275px;
+        height: 100%;
+        background-color: #343a40;
+        box-shadow: -10px 0 20px #24282c;
+        padding-top: 1rem;
+        display: none;
+        z-index: 999;
+        transition: all 0.3s ease-in-out;
+      }
+
+      .sidebar a {
+        padding: 10px 20px;
+        color: white;
+        display: block;
+        text-decoration: none;
+        transition: background-color 0.3s ease;
+      }
+
+      .sidebar a:hover {
+        background-color: #495057;
+      }
+
+      .sidebar-link-margin {
+        margin-top: 0.6rem !important;
+      }
+
+      .close-btn {
+        background-color: #ff4800;
+        color: white;
+        position: absolute;
+        top: 1rem;
+        right: 10px;
+        padding: 2.5px 5px;
+        border-radius: 50px;
+        border: none;
+      }
+      #sidebarLinksContainer {
+        display: none !important;
+      }
+      #profileBtn {
+        display: inline-block !important;
+      }
+      #calendar {
+        width: 97%;
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        color: black;
+        height: 500px !important;
+        min-height: 500px !important;
+        padding-bottom: -50px;
+      }
+
+      .fc-toolbar-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: #000000;
+      }
+      .fc-toolbar {
+        display: flex !important;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .fc-toolbar-chunk {
+        flex: 1 1 0;
+      }
+
+      .fc-toolbar-title {
+        min-width: 180px; /* Adjust as needed for longest month name */
+        text-align: center;
+        flex: 2 1 0;
+      }
+
+      .fc-day-today {
+        background-color: #ffa16291 !important;
+      }
+
+      .fc-daygrid-day, .fc-timegrid-col {
+        cursor: pointer;
+      }
+
     }
   </style>
 </head>
@@ -181,8 +301,22 @@
       <a href="#editCoachInfo">📋 Edit Info</a>
       <a href="#editAvailability">🕑 Edit Availability</a>
       <a href="#coachBookings">📅 View Bookings</a>
+      <a href="#" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none" >🚪 Logout</a>
     </nav>
+    <button id="profileBtn" class="btn btn-outline-light" style="display:none;">
+      <i class="bx bx-user"></i>
+    </button>
   </header>
+
+  <div id="profileSidebar" class="sidebar bg-dark text-white" style="display:none;">
+    <button class="btn btn-sm btn-outline-light ms-2 mt-2 close-btn" onclick="toggleSidebar()">× Close</button>
+    <div class="mt-4 d-flex flex-column">
+      <a href="#editCoachInfo">📋 Edit Info</a>
+      <a href="#editAvailability">🕑 Edit Availability</a>
+      <a href="#coachBookings">📅 View Bookings</a>
+      <a href="#" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none" >🚪 Logout</a>
+    </div>
+  </div>
 
   <div id="globalBackBtn" class="back-btn" onclick="handleBackClick()">
     <i class="fas fa-arrow-left">Back to Home</i>
@@ -220,7 +354,7 @@
 
   <!-- Section: Bookings List -->
   <section id="coachBookings">
-    <h1>View Bookings</h1>
+    <h1>View Bookies</h1>
     <ul id="bookingsList">
       <!-- Bookings will be dynamically loaded here -->
     </ul>
@@ -611,6 +745,53 @@
       dateClick: function(info) {
             calendar.changeView('timeGridDay', info.dateStr);
       }
+    });
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById("profileSidebar");
+      sidebar.style.display = sidebar.style.display === "block" ? "none" : "block";
+    }
+
+    document.getElementById("profileBtn").onclick = toggleSidebar;
+
+    // Hide sidebar when clicking outside
+    document.addEventListener("click", function (event) {
+      const sidebar = document.getElementById("profileSidebar");
+      const profileBtn = document.getElementById("profileBtn");
+      if (
+        sidebar.style.display === "block" &&
+        !sidebar.contains(event.target) &&
+        !(profileBtn && profileBtn.contains(event.target))
+      ) {
+        sidebar.style.display = "none";
+      }
+    });
+
+    async function handleLogout() {
+      try {
+        // Hit your logout route to clear the cookie
+        const token = localStorage.getItem("token");
+
+        fetch(`${API_BASE}/auth/logout`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+      } catch (err) {
+        console.error("Logout request failed:", err);
+      }
+
+      // Clear frontend tokens
+      localStorage.removeItem("token");
+      sessionStorage.clear();
+
+      // Redirect to homepage
+      window.location.href = "index.html";
+    }
+
+    document.getElementById("logoutBtn")?.addEventListener("click", function(e) {
+      e.preventDefault();
+      handleLogout();
     });
 
 
