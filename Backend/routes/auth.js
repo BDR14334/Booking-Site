@@ -211,7 +211,8 @@ router.post('/forgot-password', async (req, res) => {
       ON CONFLICT (user_id) DO UPDATE SET token = EXCLUDED.token, expires_at = EXCLUDED.expires_at
     `, [user.id, token, expiresAt]);
 
-    const resetLink = `http://localhost:5500/Booking-Site/Frontend/ResetPassword.html?token=${token}`;
+    const FRONTEND_BASE_URL = process.env.FRONTEND_BASE_URL || "http://localhost:5500/Booking-Site/Frontend";
+    const resetLink = `${FRONTEND_BASE_URL}/ResetPassword.html?token=${token}`;
 
     // Replace with real email service (e.g., SendGrid or SMTP)
     const transporter = nodemailer.createTransport({
