@@ -184,27 +184,23 @@
     /* Mobile view */
     @media (max-width: 767px) {
       .hero-section {
-        height: 100vh;
+        height: 120vh; /* Increase vertical space for the video */
+        min-height: 600px; /* Optional: ensure enough height on small screens */
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 0 10px; /* Add horizontal padding */
+        padding: 0 10px; 
         box-sizing: border-box;
         position: relative;
         overflow: hidden;
       }
 
       .hero-video {
-        width: 100%;
-        height: 100%;
-        max-width: 100vw;
-        max-height: 100vh;
-        object-fit: contain; 
-        background: #000;    
-        position: relative;
-        z-index: 1;
-        border-radius: 12px; 
+        height: 65vh; /* Match the section height */
+        width: 100vw;
+        object-fit: cover;
+        border-radius: 0; /* Remove rounding for full coverage */
       }
 
       .hero-overlay {
@@ -317,7 +313,7 @@
 
     <section class="hero-section">
       <video autoplay muted loop playsinline class="hero-video">
-        <source src="video/Zephyrs.mp4" type="video/mp4" />
+        <source src="video/ZSP.mp4" type="video/mp4" />
       </video>
       <div class="hero-overlay">
         <button class="book-now-btn" onclick="window.location.href='Booking.html'">Book Now</button>
