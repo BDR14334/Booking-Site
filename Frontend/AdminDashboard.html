@@ -427,7 +427,7 @@
             <label>Image</label>
             <div class="image-upload-wrapper" style="display: flex; align-items: center; gap: 10px;">
               <input type="file" name="athleteImage" accept="image/*" class="image-input" style="display:none;" />
-              <img class="image-preview" src="${story.image_url || 'img/placeholder.png'}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 2px solid #ff4800;" />
+              <img class="image-preview" src="img/placeholder.png" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 2px solid #ff4800;" />
               <button type="button" class="choose-image-btn" style="margin-left: 10px;">Choose Image</button>
             </div>
 
@@ -1664,26 +1664,37 @@
         const file = input.files[0];
         if (!file) return;
 
-        currentImageInput = input;
-        currentForm = input.closest('form');
-        currentPreview = currentForm.querySelector('.image-preview');
-
+        const form = input.closest('form');
+        const preview = form.querySelector('.image-preview');
         const reader = new FileReader();
-        reader.onload = function(evt) {
-          const cropModal = document.getElementById('cropModal');
-          const cropImage = document.getElementById('cropImage');
-          cropImage.src = evt.target.result;
-          cropModal.style.display = 'flex';
 
-          // Destroy previous cropper if exists
-          if (cropper) cropper.destroy();
-          cropper = new Cropper(cropImage, {
-            aspectRatio: 1,
-            viewMode: 1,
-            autoCropArea: 1,
-          });
-        };
-        reader.readAsDataURL(file);
+        // Check environment: use crop modal locally, direct preview for Supabase (production)
+        if (window.location.hostname === "localhost") {
+          // Local: open crop modal
+          currentImageInput = input;
+          currentForm = form;
+          currentPreview = preview;
+          reader.onload = function(evt) {
+            const cropModal = document.getElementById('cropModal');
+            const cropImage = document.getElementById('cropImage');
+            cropImage.src = evt.target.result;
+            cropModal.style.display = 'flex';
+
+            if (cropper) cropper.destroy();
+            cropper = new Cropper(cropImage, {
+              aspectRatio: 1,
+              viewMode: 1,
+              autoCropArea: 1,
+            });
+          };
+          reader.readAsDataURL(file);
+        } else {
+          // Production/Supabase: show direct preview
+          reader.onload = function(evt) {
+            preview.src = evt.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
       }
     });
 
