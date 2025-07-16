@@ -81,9 +81,25 @@ router.put('/update-story/:id', upload.single('athleteImage'), async (req, res) 
       return res.status(404).json({ error: 'Story not found' });
     }
 
-    const imageUrl = imageFile
-      ? `/img/stories/${imageFile.filename}`
-      : existing.rows[0].image_url;
+    let imageUrl = existing.rows[0].image_url;
+    if (imageFile) {
+      if (process.env.NODE_ENV === 'production') {
+        // Upload to Supabase
+        try {
+          imageUrl = await uploadImageToSupabase(
+            fs.readFileSync(imageFile.path),
+            imageFile.filename,
+            imageFile.mimetype
+          );
+          fs.unlinkSync(imageFile.path);
+        } catch (err) {
+          return res.status(500).json({ error: 'Supabase upload failed.' });
+        }
+      } else {
+        // Local storage
+        imageUrl = `/img/stories/${imageFile.filename}`;
+      }
+    }
 
     const result = await pool.query(
       `UPDATE success_stories SET name = $1, story = $2, image_url = $3 WHERE id = $4 RETURNING *`,
