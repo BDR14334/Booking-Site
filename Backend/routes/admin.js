@@ -5,6 +5,11 @@ const nodemailer = require('nodemailer');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { createClient } = require('@supabase/supabase-js');
+
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Saves images for success stories
 const storage = multer.diskStorage({
@@ -31,7 +36,24 @@ router.post('/add-story', upload.single('athleteImage'), async (req, res) => {
     return res.status(400).json({ error: 'All fields are required.' });
   }
 
-  const imageUrl = `/img/stories/${imageFile.filename}`;
+  let imageUrl;
+  if (process.env.NODE_ENV === 'production') {
+    // Upload to Supabase
+    try {
+      imageUrl = await uploadImageToSupabase(
+        fs.readFileSync(imageFile.path),
+        imageFile.filename,
+        imageFile.mimetype
+      );
+      // Optionally delete local file after upload
+      fs.unlinkSync(imageFile.path);
+    } catch (err) {
+      return res.status(500).json({ error: 'Supabase upload failed.' });
+    }
+  } else {
+    // Local storage
+    imageUrl = `/img/stories/${imageFile.filename}`;
+  }
 
   try {
     const result = await pool.query(
@@ -421,6 +443,17 @@ async function sendCoachIdEmail(email, code) {
   };
 
   await transporter.sendMail(mailOptions);
+}
+
+// Upload image to Supabase storage
+async function uploadImageToSupabase(fileBuffer, fileName, mimeType) {
+  const { data, error } = await supabase.storage
+    .from('stories')
+    .upload(fileName, fileBuffer, { contentType: mimeType, upsert: true });
+  if (error) throw error;
+  // Get public URL
+  const { publicUrl } = supabase.storage.from('stories').getPublicUrl(fileName).data;
+  return publicUrl;
 }
   
 module.exports = router;
