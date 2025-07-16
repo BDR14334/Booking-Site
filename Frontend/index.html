@@ -509,10 +509,20 @@
           const container = document.getElementById("storyCards");
           container.innerHTML = "";
           stories.forEach(story => {
+            let imgSrc;
+            if (story.image_url) {
+              // If image_url starts with http, it's a Supabase/public URL
+              imgSrc = story.image_url.startsWith('http')
+                ? story.image_url
+                : `${API_BASE}${story.image_url}`;
+            } else {
+              imgSrc = 'img/placeholder.png';
+            }
+
             const card = document.createElement("div");
             card.className = "athlete-card";
             card.innerHTML = `
-              <img src="${API_BASE}${story.image_url}" alt="${story.name}">
+              <img src="${imgSrc}" alt="${story.name}">
               <h3>${story.name}</h3>
               <p>${story.story}</p>
             `;
