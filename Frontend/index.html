@@ -64,6 +64,21 @@
       }
     }
 
+    @media (max-width: 900px) and (orientation: landscape) {
+      .hero-video {
+        height: 100%;
+        width: 100vw;
+        object-fit: cover;
+      }
+      .hero-overlay {
+        bottom: 20px;
+        padding-bottom: 0;
+      }
+      .book-now-btn {
+        margin-bottom: 0;
+      }
+    }
+
     .athlete-stories {
       background-color: #343a40;
       padding: 80px 20px;
@@ -88,42 +103,31 @@
       margin: 0 auto;
     }
 
-    .carousel-btn {
-      background-color: #ff4800;
-      border: none;
-      color: white;
-      font-size: 40px;
-      padding: 10px 20px;
-      cursor: pointer;
-      z-index: 1;
-      border-radius: 50%;
-      transition: background-color 0.3s ease;
-    }
-
-    .carousel-btn:hover {
-      background-color: #e03e00;
-    }
-
     .carousel-viewport {
-      overflow-x: hidden;
+      overflow-x: auto;
+      overflow-y: hidden;
       width: 990px;
-      height: auto;  
+      height: auto;
+      padding: 20px 60px; 
       display: flex;
+      scroll-behavior: smooth;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE 10+ */
     }
-
     .carousel-viewport::-webkit-scrollbar {
-      display: none;                
-    
+      display: none; /* Chrome, Safari */
     }
 
     .athlete-cards-carousel {
       display: flex;
-      transition: transform 0.5s ease;
+      gap: 30px; 
     }
 
     .athlete-card {
       flex: 0 0 300px;
-      margin: 0 15px;
+      scroll-snap-align: start;
+      margin: 0; /* Remove margin, use gap instead */
       background: #343a40;
       color: white;
       border-radius: 10px;
@@ -184,7 +188,7 @@
 
     @media (max-width: 900px) {
       .hero-section {
-        height: 90vh;
+        height: 100vh;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -217,7 +221,7 @@
     /* Mobile view */
     @media (max-width: 400px) {
       .hero-section {
-        height: 90vh; /* Increase vertical space for the video */
+        height: 100vh; /* Increase vertical space for the video */
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -248,26 +252,6 @@
 
     /* Mobile view */
     @media (max-width: 767px) {
-      /* .hero-section {
-        height: 90vh; 
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 0 10px; 
-        box-sizing: border-box;
-        position: relative;
-        overflow: hidden;
-      }
-
-      .hero-video {
-        position: absolute;
-        height: 45vh; 
-        width: 100vw;
-        object-fit: cover;
-        border-radius: 0; 
-      } */
-
       .hero-overlay {
         position: absolute;
         left: 0; right: 0;
@@ -546,46 +530,81 @@
       const card = container.querySelector(".athlete-card");
       if (!card) return;
 
-      const cardWidth = card.offsetWidth + parseFloat(getComputedStyle(card).marginLeft) + parseFloat(getComputedStyle(card).marginRight);
-      const totalCards = document.querySelectorAll('.athlete-card').length;
-      const totalWidth = cardWidth * totalCards;
+      // Get gap between cards from CSS
+      const gap = parseFloat(getComputedStyle(container).gap) || 0;
+      const cardWidth = card.offsetWidth;
+      const totalCards = container.children.length;
       const viewportWidth = viewport.offsetWidth;
 
       // Calculate maxSlide so the last card is fully in view
-      let maxSlide = Math.ceil((totalWidth - viewportWidth) / cardWidth);
+      let maxSlide = Math.ceil((cardWidth * totalCards + gap * (totalCards - 1) - viewportWidth) / (cardWidth + gap));
       if (maxSlide < 0) maxSlide = 0;
 
       currentSlide += direction;
       if (currentSlide < 0) currentSlide = 0;
       if (currentSlide > maxSlide) currentSlide = maxSlide;
-      updateCarousel();
+
+      // Scroll to the correct position
+      const offset = currentSlide * (cardWidth + gap);
+      viewport.scrollTo({ left: offset, behavior: "smooth" });
+
+      // Arrow visibility
+      const leftArrow = document.getElementById("leftArrowBtn");
+      leftArrow.style.visibility = currentSlide === 0 ? "hidden" : "visible";
+      const rightArrow = document.querySelector(".next-btn");
+      rightArrow.style.visibility = currentSlide >= maxSlide ? "hidden" : "visible";
     }
 
     function updateCarousel() {
+      // Only update arrow visibility, no transform needed
       const container = document.getElementById("storyCards");
-      const viewport = container.parentElement; // .carousel-viewport
+      const viewport = container.parentElement;
       const card = container.querySelector(".athlete-card");
       if (!card) return;
 
-      const cardWidth = card.offsetWidth + parseFloat(getComputedStyle(card).marginLeft) + parseFloat(getComputedStyle(card).marginRight);
-      const totalCards = document.querySelectorAll('.athlete-card').length;
-      const totalWidth = cardWidth * totalCards;
+      const gap = parseFloat(getComputedStyle(container).gap) || 0;
+      const cardWidth = card.offsetWidth;
+      const totalCards = container.children.length;
       const viewportWidth = viewport.offsetWidth;
 
-      // Calculate maxSlide so the last card is fully in view
-      let maxSlide = Math.ceil((totalWidth - viewportWidth) / cardWidth);
+      let maxSlide = Math.ceil((cardWidth * totalCards + gap * (totalCards - 1) - viewportWidth) / (cardWidth + gap));
       if (maxSlide < 0) maxSlide = 0;
-
-      const offset = currentSlide * cardWidth;
-      container.style.transform = `translateX(-${offset}px)`;
 
       const leftArrow = document.getElementById("leftArrowBtn");
       leftArrow.style.visibility = currentSlide === 0 ? "hidden" : "visible";
       const rightArrow = document.querySelector(".next-btn");
-      if (rightArrow) {
-        rightArrow.style.visibility = currentSlide >= maxSlide ? "hidden" : "visible";
-      }
+      rightArrow.style.visibility = currentSlide >= maxSlide ? "hidden" : "visible";
     }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // Attach scroll listener after stories are loaded
+      function attachCarouselScrollListener() {
+        const viewport = document.querySelector(".carousel-viewport");
+        const container = document.getElementById("storyCards");
+        if (!viewport || !container) return;
+
+        viewport.addEventListener("scroll", () => {
+          const card = container.querySelector(".athlete-card");
+          if (!card) return;
+          const gap = parseFloat(getComputedStyle(container).gap) || 0;
+          const cardWidth = card.offsetWidth;
+          // Calculate which slide is in view
+          const scrollLeft = viewport.scrollLeft;
+          const slide = Math.round(scrollLeft / (cardWidth + gap));
+          currentSlide = slide;
+          updateCarousel();
+        });
+      }
+
+      // Call after stories are loaded
+      const observer = new MutationObserver(() => {
+        if (document.getElementById("storyCards")) {
+          attachCarouselScrollListener();
+          observer.disconnect();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    });
 
     loadHomeStories();
 
