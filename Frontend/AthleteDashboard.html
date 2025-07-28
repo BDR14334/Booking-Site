@@ -275,7 +275,8 @@
       }
 
       .add-athlete-box {
-        width: 345px;
+        width: 350px;
+        height: 450px;
         margin-left: auto;
         margin-right: auto;
       }
@@ -393,7 +394,7 @@
     <a href="#athleteInfo">➕ Add Athlete</a>
     <a href="#viewSessions">📅 View Sessions</a>
     <a href="#receipts">🧾 Receipts</a>
-    <a href="#" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none" >🚪 Logout</a>
+    <a href="#" id="sidebarLogoutBtn" class="text-danger px-3 py-2 text-decoration-none">🚪 Logout</a>
   </nav>
   <button id="profileBtn" class="btn btn-outline-light" style="display:none;">
     <i class="bx bx-user"></i>
@@ -494,6 +495,11 @@
 <script src="authStatus.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar/index.global.min.js"></script>
 <script>
+  // Redirect to login if not authenticated
+  if (!localStorage.getItem("token")) {
+    window.location.href = "Login.html";
+  }
+
   function handleBackClick() {
      window.location.href = "index.html";
   }
@@ -719,9 +725,9 @@
       if (athleteRes.ok) {
         customerId = athlete.customer.id; // ✅ FIXED: Store correct customer ID
 
-        document.querySelector('input[name="name"]').value = `${athlete.customer.first_name} ${athlete.customer.last_name || ''}`;
-        document.querySelector('input[name="email"]').value = athlete.customer.email || '';
-        document.querySelector('input[name="phone"]').value = athlete.customer.phone || '';
+        document.getElementById("name").value = (athlete.customer.first_name || "") + (athlete.customer.last_name ? " " + athlete.customer.last_name : "");
+        document.getElementById("email").value = athlete.customer.email || "";
+        document.getElementById("phone").value = athlete.customer.phone || "";
       }
     } catch (error) {
       console.error('Error loading client data:', error);
@@ -733,11 +739,11 @@
     e.preventDefault();
     await fetchLoggedInUser();
 
-    const fullName = document.querySelector('input[name="name"]').value.trim();
+    const fullName = document.getElementById("name").value.trim();
     const [first_name, ...lastNameParts] = fullName.split(' ');
     const last_name = lastNameParts.join(' ') || '';
-    const email = document.querySelector('input[name="email"]').value.trim();
-    const phone = document.querySelector('input[name="phone"]').value.trim();
+    const email = document.getElementById("email").value.trim();
+    const phone = document.getElementById("phone").value.trim();
 
     try {
       const method = customerId ? 'PUT' : 'POST';
@@ -761,6 +767,7 @@
       const data = await response.json();
       if (response.ok) {
         alert('Client profile saved successfully!');
+        getUserDetails(); // <-- Update welcome message
         if (!customerId) customerId = data.customer.id;
       } else {
         alert('Error: ' + data.error);
@@ -927,11 +934,51 @@
       e.preventDefault();
       handleLogout();
     });
+    document.getElementById("sidebarLogoutBtn")?.addEventListener("click", function(e) {
+      e.preventDefault();
+      handleLogout();
+    });
   });
 
 
 
+  async function autofillParentInfoIfFirstLogin() {
+    if (localStorage.getItem("parentAutofilled") === "true") {
+      return; // Already autofilled once
+    }
 
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await fetch(`${API_BASE}/athlete/me`, {
+        method: 'GET',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: 'include'
+      });
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      // Only autofill if fields are empty (don't overwrite user edits)
+      const firstNameInput = document.getElementById("parentFirstName");
+      const lastNameInput = document.getElementById("parentLastName");
+      const emailInput = document.getElementById("parentEmail");
+
+      if (firstNameInput && !firstNameInput.value) firstNameInput.value = data.first_name || "";
+      if (lastNameInput && !lastNameInput.value) lastNameInput.value = data.last_name || "";
+      if (emailInput && !emailInput.value) emailInput.value = data.email || "";
+
+      // Set flag so this logic only runs once
+      localStorage.setItem("parentAutofilled", "true");
+    } catch (err) {
+      console.error("Failed to autofill parent info", err);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    autofillParentInfoIfFirstLogin();
+  });
 </script>
 
   <div id="firstLoginPopup" style="
