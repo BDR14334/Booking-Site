@@ -63,17 +63,31 @@ async function getUserDetails() {
   try {
     const token = localStorage.getItem("token");
 
+    // Fetch user info
     const response = await fetch(`${API_BASE}/auth/verify`, {
       method: 'GET',
       credentials: 'include',
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
-
     const data = await response.json();
+
+    let firstName = data.user?.first_name || "";
+
+    // Try to fetch updated customer info
+    const customerRes = await fetch(`${API_BASE}/athlete/me`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+    if (customerRes.ok) {
+      const customerData = await customerRes.json();
+      if (customerData.first_name) {
+        firstName = customerData.first_name;
+      }
+    }
 
     const userRole = document.getElementById('userRole');
     if (data.loggedIn) {
-      const firstName = data.user.first_name;
       if (userRole && firstName) {
         userRole.innerHTML = `Welcome, <span class="user-name">${firstName}</span>`;
       }
