@@ -303,10 +303,10 @@
     <!-- Profile Dropdown -->
     <div class="dropdown profile-dropdown">
       <button class="btn btn-outline-light dropdown-toggle" id="profileBtn" data-bs-toggle="dropdown">
-        Profile
+        Menu
       </button>
       <ul class="dropdown-menu dropdown-menu-end">
-        <li><a class="dropdown-item" href="#" id="toggleSidebar">Menu</a></li>
+        <li><a class="dropdown-item" href="#" id="toggleSidebar">Admin Menu</a></li>
         <li><a class="dropdown-item" href="index.html" id="toggleSite">Website</a></li>
         <li><a class="dropdown-item text-danger" href="#" onclick="logout()">Logout</a></li>
       </ul>
@@ -357,11 +357,18 @@
           <form class="packageInfoForm">
             <label for="packageTitle">Package Title</label>
             <input type="text" id="packageTitle" name="packageTitle" />
-   
+
             <label for="description">Description</label>
-            <div class="description-list">
+            <div style="position: relative;">
+              <textarea id="description" maxlength="400" rows="4" placeholder="Enter a short paragraph description..." style="padding-bottom: 28px;"></textarea>
+              <span class="descCharCount" style="position: absolute; bottom: 6px; right: 10px; font-size: 0.95em; color: #aaa;">0/400 Characters</span>
+            </div>
+   
+            <!-- Features list input -->
+            <label for="features">Features</label>
+            <div class="features-list">
               <div class="feature-item d-flex mb-2">
-                <input type="text" class="form-control me-2" name="description[]" placeholder="Enter a feature..." />
+                <input type="text" class="form-control me-2" name="features[]" placeholder="Enter a feature..." />
                 <button type="button" class="btn btn-danger btn-sm" onclick="removeFeature(this)">−</button>
               </div>
               <button type="button" class="btn btn-outline-primary btn-sm" onclick="addFeature(this)">+ Add Feature</button>
@@ -447,85 +454,113 @@
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar/index.global.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
   <script>
     // Use local backend if running locally, otherwise use deployed backend
-      
-    document.addEventListener('DOMContentLoaded', async () => {
+    
+    // Redirect to login if not authenticated
+    if (!localStorage.getItem("token")) {
+      window.location.href = "Login.html";
+    }
+
+    function logout() {
       try {
         const token = localStorage.getItem("token");
-
-        const res = await fetch(`${API_BASE}/auth/verify`, {
-          credentials: "include", // try to send cookie if available
+        fetch(`${API_BASE}/auth/logout`, {
+          method: 'POST',
+          credentials: 'include',
           headers: token ? { Authorization: `Bearer ${token}` } : {}
         });
-
-        const data = await res.json();
-
-        if (!res.ok || !data.loggedIn || data.user.role !== 'admin') {
-          window.location.href = "index.html"; // redirect non-admins or unauthenticated users
-        }
       } catch (err) {
-        console.error("Access check failed", err);
-        window.location.href = "index.html"; // fallback redirect 
+        console.error("Logout request failed:", err);
       }
-    });
+      localStorage.removeItem("token");
+      sessionStorage.clear();
+      window.location.href = "index.html";
+    }
 
-    async function logout() {
+    document.addEventListener('DOMContentLoaded', async function () {
+      // 1. Auth check
       try {
         const token = localStorage.getItem("token");
-
-        const res = await fetch(`${API_BASE}/auth/logout`, {
-          method: "POST",
+        const res = await fetch(`${API_BASE}/auth/verify`, {
           credentials: "include",
           headers: token ? { Authorization: `Bearer ${token}` } : {}
         });
-
-        // Clear localStorage regardless of logout success
-        localStorage.removeItem("token");
-
-        if (res.ok) {
-          // Redirect to index.html after successful logout
+        const data = await res.json();
+        if (!res.ok || !data.loggedIn || data.user.role !== 'admin') {
           window.location.href = "index.html";
-        } else {
-          alert("Logout failed.");
+          return;
         }
       } catch (err) {
-        console.error("Logout error:", err);
-        alert("Server error during logout.");
+        console.error("Access check failed", err);
+        window.location.href = "index.html";
+        return;
       }
-    }
-    
-    const sidebar = document.getElementById("sidebarMenu");
-    
 
-    document.addEventListener('DOMContentLoaded', function() {
+      // 2. Sidebar/menu logic
       const sidebar = document.getElementById('sidebarMenu');
       const menuBtn = document.getElementById('toggleSidebar');
       const closeBtn = document.getElementById('closeSidebarBtn');
-      if (sidebar && menuBtn && closeBtn) {
-        menuBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          const isOpen = sidebar.style.display === 'block';
-          sidebar.style.display = isOpen ? 'none' : 'block';
-          document.body.classList.toggle('sidebar-open', !isOpen);
-        });
+      let currentSection = 'dashboard';
+      let sidebarOpen = false;
 
-        closeBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          sidebar.style.display = 'none';
-          document.body.classList.remove('sidebar-open');
-        });
-
-        // Close sidebar when clicking outside
-        document.addEventListener('mousedown', function(event) {
-          if (sidebar.style.display === 'block' &&
-              !sidebar.contains(event.target) &&
-              !menuBtn.contains(event.target)) {
-            sidebar.style.display = 'none';
-            document.body.classList.remove('sidebar-open');
-          }
-        });
+      function pushState(sectionId, sidebarOpen) {
+        history.pushState({ sectionId, sidebarOpen }, '', '');
       }
+
+      function showSection(sectionId) {
+        currentSection = sectionId;
+        document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
+        const target = document.getElementById(sectionId);
+        if (target) {
+          target.classList.add('active');
+          if (sectionId === 'coachRegistry') {
+            loadPendingCoaches();
+            loadApprovedCoaches();
+          }
+          if (sectionId === 'assignCoaches') {
+            loadCoachAssignments();
+          }
+          if (sectionId === 'manageStories') {
+            loadStories();
+          }
+        }
+        pushState(currentSection, sidebarOpen);
+      }
+      window.showSection = showSection;
+
+      // Sidebar open/close
+      menuBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        sidebarOpen = !sidebarOpen;
+        sidebar.style.display = sidebarOpen ? 'block' : 'none';
+        document.body.classList.toggle('sidebar-open', sidebarOpen);
+        pushState(currentSection, sidebarOpen);
+      });
+      closeBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        sidebarOpen = false;
+        sidebar.style.display = 'none';
+        document.body.classList.remove('sidebar-open');
+        pushState(currentSection, sidebarOpen);
+      });
+
+      // Handle browser navigation
+      window.addEventListener('popstate', function(event) {
+        const state = event.state;
+        if (state) {
+          currentSection = state.sectionId || 'dashboard';
+          sidebarOpen = !!state.sidebarOpen;
+          showSection(currentSection);
+          sidebar.style.display = sidebarOpen ? 'block' : 'none';
+          document.body.classList.toggle('sidebar-open', sidebarOpen);
+        }
+      });
+
+      // Set initial state and show dashboard
+      pushState(currentSection, sidebarOpen);
+      showSection('dashboard');
     });
  
     function showSection(sectionId) {
@@ -538,6 +573,13 @@
         // Trigger coach loading if viewing coach registry
         if (sectionId === 'coachRegistry') {
           loadPendingCoaches();
+          loadApprovedCoaches(); // <-- Add this line
+        }
+        if (sectionId === 'assignCoaches') {
+          loadCoachAssignments();
+        }
+        if (sectionId === 'manageStories') {
+          loadStories();
         }
       }
     }
@@ -644,7 +686,7 @@
       const featureItem = document.createElement('div');
       featureItem.className = 'feature-item d-flex mb-2';
       featureItem.innerHTML = `
-        <input type="text" class="form-control me-2" name="description[]" placeholder="Enter a feature..." />
+        <input type="text" class="form-control me-2" name="features[]" placeholder="Enter a feature..." />
         <button type="button" class="btn btn-danger btn-sm" onclick="removeFeature(this)">−</button>
       `;
       container.insertBefore(featureItem, button);
@@ -654,6 +696,27 @@
       const featureItem = button.parentElement;
       featureItem.remove();
     }
+
+    document.addEventListener('input', function (e) {
+      if (e.target.matches('textarea[name="description"]')) {
+        const span = e.target.parentElement.querySelector('.descCharCount');
+        if (span) {
+          span.textContent = `${e.target.value.length}/500 Characters`;
+        }
+      }
+    });
+
+    // document.addEventListener('DOMContentLoaded', function() {
+    //   const desc = document.getElementById('description');
+    //   const counter = document.getElementById('descCharCount');
+    //   if (desc && counter) {
+    //     desc.addEventListener('input', function() {
+    //       counter.textContent = `${desc.value.length}/500`;
+    //     });
+    //     // Initialize counter on form creation
+    //     counter.textContent = `${desc.value.length}/500`;
+    //   }
+    // });
  
     function createPackageForm(pkg = {}) {
       const box = document.createElement('div');
@@ -661,30 +724,36 @@
  
       const form = document.createElement('form');
       form.className = 'packageInfoForm';
- 
-      const descriptionArray = Array.isArray(pkg.description) ? pkg.description : [];
- 
+
+      const featuresArray = Array.isArray(pkg.features) ? pkg.features : [];
+
       form.innerHTML = `
         <label for="packageTitle">Package Title</label>
         <input type="text" name="packageTitle" value="${pkg.title || ''}" />
- 
+
         <label for="description">Description</label>
-        <div class="description-list">
-          ${(descriptionArray.length > 0 ? descriptionArray : ['']).map(desc => `
+        <div style="position: relative;">
+          <textarea id="description" name="description" maxlength="400" rows="4" placeholder="Enter a short paragraph description..." style="padding-bottom: 28px;">${pkg.description || ''}</textarea>
+          <span class="descCharCount" style="position: absolute; bottom: 0px; right: 10px; font-size: 0.95em; color: #aaa;">0/400 Characters</span>
+        </div>
+
+        <label for="features">Features</label>
+        <div class="features-list">
+          ${(featuresArray.length > 0 ? featuresArray : ['']).map(desc => `
             <div class="feature-item d-flex mb-2">
-              <input type="text" class="form-control me-2" name="description[]" value="${desc}" placeholder="Enter a feature..." />
+              <input type="text" class="form-control me-2" name="features[]" value="${desc}" placeholder="Enter a feature..." />
               <button type="button" class="btn btn-danger btn-sm" onclick="removeFeature(this)">−</button>
             </div>
           `).join('')}
           <button type="button" class="btn btn-outline-primary btn-sm" onclick="addFeature(this)">+ Add Feature</button>
         </div>
- 
+
         <label for="sessionNumber">Number of Sessions</label>
         <input type="text" name="sessionNumber" value="${pkg.sessions || ''}" />
- 
+
         <label for="price">Price</label>
         <input type="text" name="price" value="${pkg.price || ''}" />
- 
+
         <button type="submit">Save Package</button>
       `;
  
@@ -695,7 +764,10 @@
         const packageTitle = formData.get('packageTitle');
         const sessionNumber = formData.get('sessionNumber');
         const price = formData.get('price');
-        const description = formData.getAll('description[]').filter(item => item.trim() !== '');
+        const description = form.querySelector('textarea[name="description"]').value.trim();
+        const features = formData.getAll('features[]').filter(item => item.trim() !== '');
+ 
+        
  
         if (!description.length) {
           alert("Please add at least one feature description.");
@@ -706,7 +778,8 @@
           packageTitle,
           sessionNumber,
           price,
-          description
+          description,
+          features
         };
  
         const method = pkg.id ? 'PUT' : 'POST';
@@ -797,23 +870,53 @@
       const newBox = createPackageForm();
       container.insertBefore(newBox, addButton);
     }
+
+    function enablePackageSorting() {
+      const container = document.querySelector('.package-box-container');
+      if (!container) return;
+      Sortable.create(container, {
+        animation: 150,
+        handle: '.package-box', // Make the whole box draggable
+        filter: '.add-package-box', // Prevent dragging the add button
+        onEnd: function () {
+          // Save the new order of package IDs to localStorage
+          const order = Array.from(container.querySelectorAll('.packageInfoForm')).map(form => form.dataset.id);
+          localStorage.setItem('packageOrder', JSON.stringify(order));
+        }
+      });
+    }
  
     async function loadExistingPackages() {
       try {
         const response = await fetch(`${API_BASE}/admin/get-packages`, {
           credentials: 'include'
         });
- 
+
         const packages = await response.json();
         if (response.ok) {
           const container = document.querySelector('.package-box-container');
           const addButton = document.querySelector('.add-package-box');
           container.innerHTML = '';
-          packages.forEach(pkg => {
+
+          // Get saved order from localStorage
+          const savedOrder = JSON.parse(localStorage.getItem('packageOrder') || '[]');
+          // Sort packages according to saved order
+          const orderedPackages = savedOrder.length
+            ? savedOrder
+                .map(id => packages.find(pkg => String(pkg.id) === String(id)))
+                .filter(Boolean)
+                .concat(packages.filter(pkg => !savedOrder.includes(String(pkg.id))))
+            : packages;
+
+          orderedPackages.forEach(pkg => {
             const box = createPackageForm(pkg);
+            // Make sure each form has a data-id for sorting
+            box.querySelector('form').dataset.id = pkg.id;
             container.appendChild(box);
           });
           container.appendChild(addButton);
+
+          enablePackageSorting(); // Enable drag-and-drop after rendering
         } else {
           alert('Failed to load packages: ' + packages.error);
         }
@@ -948,9 +1051,7 @@
             timeGridWeek: { slotDuration: '01:00:00' }
           },
 
-
           events: [],
-
 
           select: async (info) => {
             const start = new Date(info.startStr);
@@ -960,7 +1061,6 @@
               return;
             }
 
-
             const capacity = prompt('Enter number of athletes for this slot:', '1');
             const cap = parseInt(capacity, 10);
             if (!cap || cap <= 0) {
@@ -968,14 +1068,12 @@
               return;
             }
 
-
             const recurrence = prompt('Recurrence? (none/daily/weekly)', 'none').toLowerCase();
             const count = recurrence !== 'none' ? parseInt(prompt('Repeat how many times?', '5'), 10) : 1;
             if (recurrence !== 'none' && (!count || count <= 0)) {
               alert('Invalid recurrence count.');
               return;
             }
-
 
             try {
               const res = await fetch(`${API_BASE}/timeslot/create-timeslot`, {
@@ -993,7 +1091,6 @@
                 }),
               });
 
-
               const data = await res.json();
               if (res.ok && Array.isArray(data.timeslots)) {
                 data.timeslots.forEach(slot => {
@@ -1001,11 +1098,8 @@
                   const y = dateObj.getFullYear();
                   const m = dateObj.getMonth() + 1;
                   const d = dateObj.getDate();
-
-
                   const [sh, sm, ss] = slot.start_time.split(':').map(Number);
                   const [eh, em, es] = slot.end_time.split(':').map(Number);
-
 
                   calendar.addEvent({
                     id: slot.id,
@@ -1029,12 +1123,10 @@
             }
           },
 
-
           eventClick: async (info) => {
             const event = info.event;
             const recurrenceId = event.extendedProps.recurrence_id;
             const eventDate = event.start.toISOString().split('T')[0];
-
 
             if (!recurrenceId) {
               if (confirm('Delete this timeslot?')) {
@@ -1056,12 +1148,9 @@
 
             const modal = document.getElementById('deleteModal');
             modal.style.display = 'block';
-
-
             const deleteOneBtn = document.getElementById('deleteOneBtn');
             const deleteAllBtn = document.getElementById('deleteAllBtn');
             const cancelBtn = document.getElementById('cancelDeleteBtn');
-
 
             deleteOneBtn.onclick = async () => {
               modal.style.display = 'none';
@@ -1077,7 +1166,6 @@
                 alert('Error deleting timeslot.');
               }
             };
-
 
             deleteAllBtn.onclick = async () => {
               modal.style.display = 'none';
@@ -1101,12 +1189,10 @@
               }
             };
 
-
             cancelBtn.onclick = () => {
               modal.style.display = 'none';
             };
           },
-
 
           eventResize: async (info) => {
             const event = info.event;
@@ -1132,8 +1218,7 @@
             }
           }
         });
-
-
+        // Render the calendar
         calendar.render();
         await loadTimeslots(packageId);
       });
@@ -1417,9 +1502,7 @@
 
               });
 
-
               calendar.render();
-
 
               // 🔽 Load existing coach/package-specific timeslots
               await loadCoachTimeslots(calendar, pkg.id, coach.id);
@@ -1491,41 +1574,51 @@
       }
     }
     
-    // document.querySelectorAll(".storyForm").forEach(form => {
-    //   form.addEventListener("submit", async function (e) {
-    //     e.preventDefault();
-
-    //     const formData = new FormData(this);
-    //     const response = await fetch("http://localhost:5000/admin/add-story", {
-    //       method: "POST",
-    //       credentials: "include",
-    //       body: formData
-    //     });
-
-    //     const result = await response.json();
-    //     if (response.ok) {
-    //       alert("Story added!");
-    //       this.reset();
-    //       loadStories(); // Refresh list
-    //     } else {
-    //       alert(result.error || "Failed to add story.");
-    //     }
-    //   });
-    // });
-    
     document.addEventListener('DOMContentLoaded', () => {
       if (document.getElementById("storyList")) loadStories();
     });
 
+    // Sort stories
+    function enableStorySorting() {
+      const container = document.querySelector('.story-box-container');
+      if (!container) return;
+      Sortable.create(container, {
+        animation: 150,
+        onEnd: function () {
+          // Save the new order of story IDs to localStorage
+          const order = Array.from(container.querySelectorAll('.storyForm')).map(form => form.dataset.id);
+          localStorage.setItem('storyOrder', JSON.stringify(order));
+        }
+      });
+    }
     async function loadStories() {
       const res = await fetch(`${API_BASE}/admin/stories`);
       const stories = await res.json();
+
+      // Get saved order from localStorage
+      const savedOrder = JSON.parse(localStorage.getItem('storyOrder') || '[]');
+      // Sort stories according to saved order
+      const orderedStories = savedOrder.length
+        ? savedOrder
+            .map(id => stories.find(story => String(story.id) === String(id)))
+            .filter(Boolean)
+            .concat(stories.filter(story => !savedOrder.includes(String(story.id))))
+        : stories;
 
       const container = document.querySelector('.story-box-container');
       const addButton = document.querySelector(".add-story-box");
       container.innerHTML = ""; // Clear current story boxes
 
-      stories.forEach(story => {
+      orderedStories.forEach(story => {
+        let imgSrc;
+        if (story.image_url) {
+          imgSrc = story.image_url.startsWith('http')
+            ? story.image_url
+            : `${API_BASE}${story.image_url}`;
+        } else {
+          imgSrc = 'img/placeholder.png';
+        }
+
         const box = document.createElement("div");
         box.className = "story-box";
         box.innerHTML = `
@@ -1540,7 +1633,7 @@
             <label>Image</label>
             <div class="image-upload-wrapper" style="display: flex; align-items: center; gap: 10px;">
               <input type="file" name="athleteImage" accept="image/*" class="image-input" style="display:none;" />
-              <img class="image-preview" src="${story.image_url || 'img/placeholder.png'}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 2px solid #ff4800;" />
+              <img class="image-preview" src="${imgSrc}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 2px solid #ff4800;" />
               <button type="button" class="choose-image-btn" style="margin-left: 10px;">Choose Image</button>
             </div>
 
@@ -1552,6 +1645,7 @@
       });
 
       if (addButton) container.appendChild(addButton);
+      enableStorySorting(); // Enable sorting after loading stories
     }
 
     function addStoryBox() {
@@ -1668,7 +1762,6 @@
         const preview = form.querySelector('.image-preview');
         const reader = new FileReader();
 
-        // Check environment: use crop modal locally, direct preview for Supabase (production)
         if (window.location.hostname === "localhost") {
           // Local: open crop modal
           currentImageInput = input;
@@ -1692,6 +1785,7 @@
           // Production/Supabase: show direct preview
           reader.onload = function(evt) {
             preview.src = evt.target.result;
+            preview.style.display = 'block';
           };
           reader.readAsDataURL(file);
         }
@@ -1724,8 +1818,6 @@
           cropper.destroy();
           cropper = null;
         }
-        // Optionally clear file input if you want
-        // if (currentImageInput) currentImageInput.value = '';
       });
 
     });
@@ -1733,12 +1825,6 @@
     
     // Allow clicking preview to replace image
     document.body.addEventListener('click', function(e) {
-      // // Click image to re-crop
-      // if (e.target.classList.contains('image-preview')) {
-      //   const form = e.target.closest('form');
-      //   const input = form.querySelector('.image-input');
-      //   if (input) input.click();
-      // }
       // Click "Choose Image" button
       if (e.target.classList.contains('choose-image-btn')) {
         const form = e.target.closest('form');
@@ -1825,12 +1911,11 @@
       <div style="background:#222; padding:24px 24px 16px 24px; border-radius:12px; max-width:90vw; max-height:90vh; text-align:center; position:relative;">
         <img id="cropImage" style="max-width:70vw; max-height:60vh; background:#fff; border-radius:8px;" />
         <div style="margin-top:16px;">
-          <button id="confirmCropBtn" style="margin-right:10px;">Confirm Crop</button>
-          <button id="cancelCropBtn">Cancel</button>
+          <button id="confirmCropBtn" style="padding:10px 20px; background:#28a745; color:white; border:none; border-radius:5px; cursor:pointer;">Confirm Crop</button>
+          <button id="cancelCropBtn" style="padding:10px 20px; background:#dc3545; color:white; border:none; border-radius:5px; cursor:pointer;">Cancel</button>
         </div>
       </div>
     </div>
+
 </body>
 </html>
-
-

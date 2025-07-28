@@ -167,64 +167,78 @@ router.delete('/delete-story/:id', async (req, res) => {
 // Create a new package
 router.post('/create-package', async (req, res) => {
   try {
-    const { packageTitle, price, sessionNumber, description } = req.body;
+    const { packageTitle, price, sessionNumber, description, features} = req.body;
 
-    const cleanedDescription = Array.isArray(description)
-      ? description.map(d => d.trim()).filter(d => d !== '')
+    const cleanedDescription = typeof description === 'string' ? description.trim() : '';
+
+    if (!cleanedDescription) {
+      return res.status(400).json({ error: 'Package must include a description.' });
+    }
+
+    const cleanedFeatures = Array.isArray(features)
+      ? features.map(f => f.trim()).filter(f => f !== '')
       : [];
 
-    if (cleanedDescription.length === 0) {
-      return res.status(400).json({ error: 'Package must include at least one description item.' });
+    if (cleanedFeatures.length === 0) {
+      return res.status(400).json({ error: 'Package must include at least one feature.' });
     }
 
     const result = await pool.query(
-      `INSERT INTO packages (name, price, description, sessions_included)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO packages (name, price, description, features, sessions_included)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [packageTitle, price, cleanedDescription, sessionNumber]
+      [packageTitle, price, cleanedDescription, cleanedFeatures, sessionNumber]
     );
 
     res.status(201).json({ message: 'Package created', package: result.rows[0] });
   } catch (err) {
     console.error('Error creating package:', err);
+    alert('Failed to save package: ' + (result.error || 'Unknown error'));
     res.status(500).json({ error: 'Server error creating package' });
   }
 });
 
 // Update an existing package by ID
 router.put('/update-package/:id', async (req, res) => {
-    const { id } = req.params;
-    const { packageTitle, sessionNumber, price, description } = req.body;
-  
-    const cleanedDescription = Array.isArray(description)
-      ? description.map(d => d.trim()).filter(d => d !== '')
-      : [];
-  
-    if (cleanedDescription.length === 0) {
-      return res.status(400).json({ error: 'Package must include at least one description item.' });
+  const { id } = req.params;
+  const { packageTitle, sessionNumber, price, description, features } = req.body;
+
+  const cleanedDescription = typeof description === 'string' ? description.trim() : '';
+
+  const cleanedFeatures = Array.isArray(features)
+    ? features.map(f => f.trim()).filter(f => f !== '')
+    : [];
+
+  if (!cleanedDescription) {
+    return res.status(400).json({ error: 'Package must include a description.' });
+  }
+
+  if (cleanedFeatures.length === 0) {
+    return res.status(400).json({ error: 'Package must include at least one feature.' });
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE packages
+       SET name = $1,
+           sessions_included = $2,
+           price = $3,
+           description = $4,
+           features = $5
+       WHERE id = $6
+       RETURNING *`,
+      [packageTitle, sessionNumber, price, cleanedDescription, cleanedFeatures, id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Package not found.' });
     }
-  
-    try {
-      const result = await pool.query(
-        `UPDATE packages
-         SET name = $1,
-             sessions_included = $2,
-             price = $3,
-             description = $4
-         WHERE id = $5
-         RETURNING *`,
-        [packageTitle, sessionNumber, price, cleanedDescription, id]
-      );
-  
-      if (result.rowCount === 0) {
-        return res.status(404).json({ error: 'Package not found.' });
-      }
-  
-      res.json({ message: 'Package updated successfully.', package: result.rows[0] });
-    } catch (err) {
-      console.error('Error updating package:', err);
-      res.status(500).json({ error: 'Failed to update package.' });
-    }
+
+    res.json({ message: 'Package updated successfully.', package: result.rows[0] });
+  } catch (err) {
+    console.error('Error updating package:', err);
+    res.status(500).json({ error: 'Failed to update package.' });
+  }
 });
 
 // Delete a package by ID
@@ -254,7 +268,8 @@ router.get('/get-packages', async (req, res) => {
           name AS package_title,
           sessions_included AS session_number,
           price,
-          description  -- already a TEXT[] array
+          description,
+          features
         FROM packages
       `);
   
@@ -263,9 +278,8 @@ router.get('/get-packages', async (req, res) => {
         title: pkg.package_title,
         sessions: pkg.session_number,
         price: pkg.price,
-        description: Array.isArray(pkg.description)
-          ? pkg.description.map(d => d.trim()).filter(d => d !== '')
-          : []
+        description: typeof pkg.description === 'string' ? pkg.description : '',
+        features: Array.isArray(pkg.features) ? pkg.features : []
       }));
   
       res.json(packages);

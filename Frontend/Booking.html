@@ -146,17 +146,18 @@
     }
 
     .booking .box p {
-        padding-top: 10px;
-        font-size: 16px;
+        padding-top: -4px;
+        font-size: 14px;
         text-align: left;
-        /* margin-bottom: 10px; */
+        margin-bottom: 10px;
         color: white;
     }
     
     .booking .box ul {
         text-align: left;
         padding-left: 20px;
-        font-size: 12px;
+        margin-bottom: 10px;
+        font-size: 14px;
     }
 
     .booking a ul, .booking a ul li {
@@ -609,21 +610,35 @@
     // Package Selection
     document.addEventListener('DOMContentLoaded', async () => {
       try {
-        const response = await fetch(`${API_BASE}/admin/get-packages`);
+        const response = await fetch(`${API_BASE}/admin/get-packages`, {
+          credentials: 'include'
+        });
         const packages = await response.json();
         const container = document.getElementById('packageContainer');
         container.innerHTML = '';
-  
-        packages.forEach(pkg => {
+
+        // Get saved order from localStorage
+        const savedOrder = JSON.parse(localStorage.getItem('packageOrder') || '[]');
+        // Sort packages according to saved order
+        const orderedPackages = savedOrder.length
+          ? savedOrder
+              .map(id => packages.find(pkg => String(pkg.id) === String(id)))
+              .filter(Boolean)
+              .concat(packages.filter(pkg => !savedOrder.includes(String(pkg.id))))
+          : packages;
+
+        orderedPackages.forEach(pkg => {
           const box = document.createElement('a');
           box.className = 'box';
           box.innerHTML = `
             <div class="icon"><i class="fa-solid fa-dumbbell"></i></div>
             <div class="topic">${pkg.title}</div>
             <h3 class="sub-heading">Description:</h3>
-            <ul>${pkg.description.map(item => `<li>${item}</li>`).join('')}</ul>
-            <p>Sessions: ${pkg.sessions}</p>
-            <p>Price: $${pkg.price}</p>
+            <p>${pkg.description}</p>
+            <h3 class="sub-heading">Features:</h3>
+            <ul>${(pkg.features || []).map(feature => `<li>${feature}</li>`).join('')}</ul>
+            <p><strong style="font-size: 16px; font-style: italic;">Sessions:</strong>&nbsp;&nbsp;<span style="font-size: 16px; font-weight: normal;"> ${pkg.sessions}</span></p>
+            <p><strong style="font-size: 16px; font-style: italic;">Price:</strong>&nbsp;&nbsp;<span style="font-size: 16px; font-weight: normal;"> $${pkg.price}</span></p>
             <div class="view-more"><span class="bouncy-text">Click to Choose Sessions</span></div>
           `;
   

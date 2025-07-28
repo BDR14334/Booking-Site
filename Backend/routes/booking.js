@@ -7,7 +7,6 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { v4: uuidv4 } = require('uuid');
 const bodyParser = require('body-parser'); // Add at the top if not already present
 
-
 // GET availability by package packageId
 router.get('/availability/by-package/:packageId', async (req, res) => {
   const { packageId } = req.params;
