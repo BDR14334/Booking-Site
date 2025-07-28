@@ -1,6 +1,25 @@
 const express = require('express');
 const pool = require('../db');
+const { authenticateToken } = require('./auth'); // Adjust path if needed
 const router = express.Router();
+
+router.get('/me', authenticateToken, async (req, res) => {
+  console.log('req.user:', req.user); // <--- Add this
+  const userId = req.user.id;
+  try {
+    const result = await pool.query(
+      'SELECT first_name, last_name, email FROM customer WHERE user_id = $1 LIMIT 1',
+      [userId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error fetching customer:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // Create a new customer (athlete)
 router.post('/create', async (req, res) => {
@@ -281,5 +300,7 @@ router.get('/booked-timeslots/by-customer/:customerId', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+
 
 module.exports = router;

@@ -40,14 +40,17 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+// Serve static HTML + image assets
+app.use(express.static(path.join(__dirname, '../Frontend')));
+app.use('/img', express.static(path.join(__dirname, '../Frontend/img')));
+
 // Mount routes
-app.use('/auth', authRoutes);
+app.use('/auth', authRoutes.router);
 app.use('/coach', coachRoutes); 
 app.use('/athlete', athleteRoutes); 
 app.use('/admin', adminRoutes);
 app.use('/booking', bookingRoutes);
 app.use('/timeslot', timeslotRoutes);
-app.use('/img', express.static(path.join(__dirname, '../Frontend/img')));
 app.use('/contact', contactRoutes); 
 
 // NEW: Stripe payment intent route
