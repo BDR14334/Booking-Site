@@ -492,7 +492,19 @@
           // Now render the cards
           const container = document.getElementById("storyCards");
           container.innerHTML = "";
-          stories.forEach(story => {
+
+          // Get saved order from localStorage
+          const savedOrder = JSON.parse(localStorage.getItem('storyOrder') || '[]');
+
+          // Sort stories according to saved order
+          const orderedStories = savedOrder.length
+            ? savedOrder
+                .map(id => stories.find(story => String(story.id) === String(id)))
+                .filter(Boolean)
+                .concat(stories.filter(story => !savedOrder.includes(String(story.id))))
+            : stories;
+
+          orderedStories.forEach(story => {
             let imgSrc;
             if (story.image_url) {
               // If image_url starts with http, it's a Supabase/public URL
