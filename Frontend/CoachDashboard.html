@@ -365,6 +365,10 @@
   <script src="authStatus.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar/index.global.min.js"></script>
   <script>
+  // Redirect to login if not authenticated
+  if (!localStorage.getItem("token")) {
+    window.location.href = "Login.html";
+  }
   // Global variables to store logged-in user ID, FullCalendar instance, and coach ID
   let userId = null;
   let calendar = null;
