@@ -12,6 +12,20 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const validRoles = ['admin', 'coach', 'athlete'];
 const ADMIN_SECRET_ID = process.env.ADMIN_SECRET_ID;
 
+// Add near the top, after your requires
+function authenticateToken(req, res, next) {
+  const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token provided' });
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res.status(403).json({ error: 'Invalid token' });
+  }
+}
+
 // Password validation
 function isValidPassword(password) {
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()\-_=+\[\]{}|;:'",.<>?/])[A-Za-z\d!@#$%^&*()\-_=+\[\]{}|;:'",.<>?/]{8,64}$/;
@@ -23,9 +37,28 @@ function isValidEmail(email) {
   return emailRegex.test(email);
 }
 
+function isValidUsername(username) {
+  return /^[a-zA-Z0-9_]{3,30}$/.test(username);
+}
+
+// GET current logged-in user
+router.get('/me', (req, res) => {
+  try {
+    const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'Not logged in' });
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+    res.status(200).json({ user: decoded });
+  } catch (err) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+});
+
 // REGISTER
 router.post('/register', async (req, res) => {
-  const { first_name, last_name, email, password, role, admin_id } = req.body;
+  const { first_name, last_name, username, email, password, role, admin_id } = req.body;
+
+  console.log('Register body:', req.body);
 
   if (!validRoles.includes(role)) {
     return res.status(400).json({ error: 'Invalid or missing role. Must be admin, coach, or athlete.' });
@@ -41,23 +74,31 @@ router.post('/register', async (req, res) => {
     return res.status(400).json({ error: 'Invalid email format.' });
   }
 
+  if (!isValidUsername(username)) {
+    return res.status(400).json({ error: 'Username must be 3-30 characters and contain only letters, numbers, or underscores.' });
+  }
+
   if (role === 'admin' && admin_id !== ADMIN_SECRET_ID) {
     return res.status(403).json({ error: 'Invalid Admin ID.' });
   }
 
   try {
-    const existingUser = await pool.query(`SELECT * FROM public.users WHERE LOWER(email) = LOWER($1)`, [email]);
-    if (existingUser.rows.length > 0) {
-      return res.status(400).json({ error: 'An account with this email already exists.' });
+    // Check for existing user with same username or email
+    const existing = await pool.query(
+      'SELECT * FROM public.users WHERE LOWER(username) = LOWER($1) OR LOWER(email) = LOWER($2)',
+      [username, email]
+    );
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: 'Username or email already taken.' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await pool.query(
-      `INSERT INTO public.users (first_name, last_name, email, password_hash, role) 
-       VALUES ($1, $2, $3, $4, $5) 
-       RETURNING id, email, role, created_at`,
-      [first_name, last_name, email, hashedPassword, role]
+      `INSERT INTO public.users (first_name, last_name, username, email, password_hash, role) 
+       VALUES ($1, $2, $3, $4, $5, $6) 
+       RETURNING id, username, email, role, created_at`,
+      [first_name, last_name, username, email, hashedPassword, role]
     );
 
     if (role === 'admin') {
@@ -66,6 +107,12 @@ router.post('/register', async (req, res) => {
         `INSERT INTO public.admin_profile (user_id, first_name, last_name, phone, admin_id)
          VALUES ($1, $2, $3, $4, $5)`,
         [newUser.rows[0].id, first_name, last_name, '', hashedAdminId]
+      );
+    } else if (role === 'athlete') { //Submit values for athlete dashboard
+      await pool.query(
+        `INSERT INTO public.customer (first_name, last_name, email, user_id, phone)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [first_name, last_name, email, newUser.rows[0].id, '']
       );
     }
 
@@ -79,17 +126,18 @@ router.post('/register', async (req, res) => {
 
 // LOGIN
 router.post('/login', async (req, res) => {
-  const { email, password, admin_id } = req.body;
+  // const { email, password } = req.body;
+  const { identifier, password } = req.body;
 
-  if (!email || !password) {
+  if (!identifier || !password) {
     return res.status(400).json({ error: 'Email and password are required.' });
   }
 
   try {
     // Find user by email only
     const userQuery = await pool.query(
-      `SELECT * FROM public.users WHERE LOWER(email) = LOWER($1)`,
-      [email]
+      `SELECT * FROM public.users WHERE LOWER(username) = LOWER($1) OR LOWER(email) = LOWER($1)`,
+      [identifier]
     );
 
     if (userQuery.rows.length === 0) {
@@ -97,7 +145,6 @@ router.post('/login', async (req, res) => {
     }
 
     const user = userQuery.rows[0];
-    const role = user.role;
 
     // Check password
     const isPasswordMatch = await bcrypt.compare(password, user.password_hash);
@@ -175,18 +222,6 @@ router.get('/verify', (req, res) => {
     }
 });
 
-// GET current logged-in user
-router.get('/me', (req, res) => {
-  try {
-    const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'Not logged in' });
-
-    const decoded = jwt.verify(token, JWT_SECRET);
-    res.status(200).json({ user: decoded });
-  } catch (err) {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
 
 // sends password reset link to then update password
 router.post('/forgot-password', async (req, res) => {
@@ -270,4 +305,8 @@ router.post('/reset-password', async (req, res) => {
 });
 
 
-module.exports = router;
+
+module.exports = {
+  router,
+  authenticateToken
+};

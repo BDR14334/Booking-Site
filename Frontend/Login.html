@@ -16,6 +16,9 @@
         background-attachment: fixed;
         overflow-y: auto; /* Allows vertical scroll if needed */
     }
+    .wrapper{
+        background: rgba(39, 39, 39, 0.7);
+    }
     
 </style>
 
@@ -79,7 +82,7 @@
 
             <!-- Login credentials -->
             <div class="input-box">
-                <input type="text" class="input-field" id="loginEmail" placeholder="Email">
+                <input type="text" class="input-field" id="loginIdentifier" placeholder="Username or Email">
                 <i class="bx bx-user"></i>
             </div>
 
@@ -141,6 +144,12 @@
                 </div>
             </div>
 
+            <!-- Username input -->
+            <div class="input-box">
+              <input type="text" class="input-field" id="registerUsername" placeholder="Username" required>
+              <i class="bx bx-user-circle"></i>
+            </div>
+
             <!-- Email and password -->
             <div class="input-box">
                 <input type="text" class="input-field" placeholder="Email">
@@ -184,17 +193,30 @@
         document.getElementById('customAlertPopup').style.display = 'none';
     }
 
+    document.addEventListener("DOMContentLoaded", async () => {
+        const token = localStorage.getItem("token");
+        if (token) {
+            try {
+            const res = await fetch(`${API_BASE}/auth/verify`, {
+                method: "GET",
+                headers: { "Authorization": `Bearer ${token}` },
+                credentials: "include"
+            });
+            const data = await res.json();
+            if (res.ok && data.user) {
+                window.location.href = "index.html"; // Redirect to home if already logged in
+                return;
+            }
+            } catch (err) {
+            console.warn("Token invalid or expired.");
+            }
+        }
+
+        // Not logged in → show login form
+        setTimeout(login, 0);
+    });
+
     document.addEventListener("DOMContentLoaded", () => {
-        // Login role-dependent input visibility
-        // const loginRoleSelect = document.getElementById("loginRoleSelect");
-        // const loginAdminIdContainer = document.getElementById("loginAdminIdContainer");
-        // const loginCoachIdContainer = document.getElementById("loginCoachIdContainer");
-
-        // loginRoleSelect.addEventListener("change", function () {
-        //     loginAdminIdContainer.style.display = (this.value === "admin") ? "block" : "none";
-        //     loginCoachIdContainer.style.display = (this.value === "coach") ? "block" : "none";
-        // });
-
         // Register role-dependent input visibility
         const registerRoleSelect = document.getElementById("registerRoleSelect");
         const registerAdminIdContainer = document.getElementById("registerAdminIdContainer");
@@ -207,45 +229,35 @@
         document.querySelector('#login .submit').addEventListener('click', async (e) => {
             e.preventDefault();
 
-            const email = document.getElementById("loginEmail").value.trim();
+            const identifier = document.getElementById("loginIdentifier").value.trim();
             const password = document.getElementById("loginPassword").value.trim();
 
-            if (!email || !password) {
-                showCustomAlert("Please enter both email and password.");
-                return;
-            }
+            const res = await fetch(`${API_BASE}/auth/login`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ identifier, password })
+            });
 
-            try {
-                const res = await fetch(`${API_BASE}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ email, password })
-                });
+            const data = await res.json();
+            if (res.ok) {
+                const { user, token } = data;
 
-                const data = await res.json();
-                if (res.ok) {
-                    const { user, token } = data;
+                // ✅ Store the token in localStorage for mobile compatibility
+                localStorage.setItem("token", token);
 
-                    // ✅ Store the token in localStorage for mobile compatibility
-                    localStorage.setItem("token", token);
-
-                    // Redirect based on user.role
-                    if (user.role === "athlete") {
-                        window.location.href = "AthleteDashboard.html";
-                    } else if (user.role === "coach") {
-                        window.location.href = "CoachDashboard.html";
-                    } else if (user.role === "admin") {
-                        window.location.href = "AdminDashboard.html";
-                    } else {
-                        window.location.href = "index.html"; // fallback
-                    }
+                // Redirect based on user.role
+                if (user.role === "athlete") {
+                    window.location.href = "AthleteDashboard.html";
+                } else if (user.role === "coach") {
+                    window.location.href = "CoachDashboard.html";
+                } else if (user.role === "admin") {
+                    window.location.href = "AdminDashboard.html";
                 } else {
-                    showCustomAlert(data.error || "Login failed.");
+                    window.location.href = "index.html"; // fallback
                 }
-            } catch (err) {
-                console.error(err);
-                showCustomAlert("Error logging in.");
+            } else {
+                showCustomAlert(data.error || "Login failed.");
             }
         });
 
@@ -260,16 +272,17 @@
             const email = document.querySelector('#register input[placeholder="Email"]').value.trim();
             const password = document.querySelector('#register input[placeholder="Password"]').value;
             const role = document.getElementById("registerRoleSelect").value;
+            const username = document.getElementById("registerUsername").value.trim();
 
             // Validate that the selected role is allowed
-            const validRoles = ['adult_athlete', 'parent_guardian'];
+            const validRoles = ['athlete'];
             if (!validRoles.includes(role)) {
                 showCustomAlert("Please select a valid role.");
                 return;
             }
 
             try {
-                const body = { first_name, last_name, email, password, role };
+                const body = { first_name, last_name, username, email, password, role };
 
                 // Send registration request
                 const res = await fetch(`${API_BASE}/auth/register`, {

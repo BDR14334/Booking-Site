@@ -37,6 +37,12 @@
             </div>
         </div>
 
+        <!-- Username input -->
+        <div class="input-box">
+          <input type="text" class="input-field" id="username" placeholder="Username" required>
+          <i class="bx bx-user-circle"></i>
+        </div>
+
         <!-- Email -->
         <div class="input-box">
           <input type="email" class="input-field" id="email" placeholder="Email" />
@@ -85,11 +91,12 @@
 
       const firstName = document.querySelector('input[placeholder="First Name"]').value.trim();
       const lastName = document.querySelector('input[placeholder="Last Name"]').value.trim();
+      const username = document.getElementById("username").value.trim();
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
       const confirmPassword = document.getElementById("confirmPassword").value;
 
-      if (!email || !password || !confirmPassword) {
+      if (!username || !email || !password || !confirmPassword) {
         showCustomAlert("Please fill in all fields.");
         return;
       }
@@ -103,7 +110,7 @@
         const res = await fetch(`${API_BASE}/auth/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({  first_name: firstName, last_name: lastName, email, password, role: "coach"})
+          body: JSON.stringify({ first_name: firstName, last_name: lastName, username, email, password, role: "coach" })
         });
 
         const data = await res.json();
