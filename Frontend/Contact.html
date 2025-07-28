@@ -107,6 +107,11 @@
       background-color: #e03e00;
     }
 
+    .contact-form input::placeholder {
+      color: #cccccc;
+      opacity: 0.75; /* Lower = more dim */
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
@@ -175,11 +180,11 @@
                 <div class="form-row">
                 <div>
                     <label for="firstName">Name *</label>
-                    <input type="text" id="firstName" placeholder="First Name" required>
+                    <input type="text" id="firstName" placeholder="First" required>
                 </div>
                 <div>
                     <label for="lastName">&nbsp;</label>
-                    <input type="text" id="lastName" placeholder="Last Name" required>
+                    <input type="text" id="lastName" placeholder="Last" required>
                 </div>
                 </div>
                 <label for="email">Email *</label>
