@@ -304,9 +304,18 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
-
+function requireAdmin(req, res, next) {
+  authenticateToken(req, res, function () {
+    if (req.user && req.user.role === 'admin') {
+      next();
+    } else {
+      res.status(403).json({ error: 'Admins only' });
+    }
+  });
+}
 
 module.exports = {
   router,
-  authenticateToken
+  authenticateToken,
+  requireAdmin
 };
