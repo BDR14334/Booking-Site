@@ -888,47 +888,38 @@
  
     async function loadExistingPackages() {
       try {
-        const token = localStorage.getItem("token");
         const response = await fetch(`${API_BASE}/admin/get-packages`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
           credentials: 'include'
         });
 
-        if (!response.ok) {
-          alert("You are not authorized. Please log in as admin.");
-          window.location.href = "Login.html";
-          return;
-        }
-
         const packages = await response.json();
-        if (!Array.isArray(packages)) {
-          alert("Unexpected response from server.");
-          return;
+        if (response.ok) {
+          const container = document.querySelector('.package-box-container');
+          const addButton = document.querySelector('.add-package-box');
+          container.innerHTML = '';
+
+          // Get saved order from localStorage
+          const savedOrder = JSON.parse(localStorage.getItem('packageOrder') || '[]');
+          // Sort packages according to saved order
+          const orderedPackages = savedOrder.length
+            ? savedOrder
+                .map(id => packages.find(pkg => String(pkg.id) === String(id)))
+                .filter(Boolean)
+                .concat(packages.filter(pkg => !savedOrder.includes(String(pkg.id))))
+            : packages;
+
+          orderedPackages.forEach(pkg => {
+            const box = createPackageForm(pkg);
+            // Make sure each form has a data-id for sorting
+            box.querySelector('form').dataset.id = pkg.id;
+            container.appendChild(box);
+          });
+          container.appendChild(addButton);
+
+          enablePackageSorting(); // Enable drag-and-drop after rendering
+        } else {
+          alert('Failed to load packages: ' + packages.error);
         }
-
-        const container = document.querySelector('.package-box-container');
-        const addButton = document.querySelector('.add-package-box');
-        container.innerHTML = '';
-
-        // Get saved order from localStorage
-        const savedOrder = JSON.parse(localStorage.getItem('packageOrder') || '[]');
-        // Sort packages according to saved order
-        const orderedPackages = savedOrder.length
-          ? savedOrder
-              .map(id => packages.find(pkg => String(pkg.id) === String(id)))
-              .filter(Boolean)
-              .concat(packages.filter(pkg => !savedOrder.includes(String(pkg.id))))
-          : packages;
-
-        orderedPackages.forEach(pkg => {
-          const box = createPackageForm(pkg);
-          // Make sure each form has a data-id for sorting
-          box.querySelector('form').dataset.id = pkg.id;
-          container.appendChild(box);
-        });
-        container.appendChild(addButton);
-
-        enablePackageSorting(); // Enable drag-and-drop after rendering
       } catch (err) {
         console.error('Error loading packages:', err);
       }
@@ -949,9 +940,7 @@
 
       async function loadTimeslots(packageId) {
         try {
-          const token = localStorage.getItem("token");
           const res = await fetch(`${API_BASE}/timeslot/by-package/${packageId}`, {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
             credentials: 'include'
           });
           const data = await res.json();
@@ -1239,44 +1228,25 @@
     //Assign Coaches
     async function loadCoachAssignments() {
       const container = document.getElementById('coachAssignmentsContainer');
-      container.innerHTML = '';
+      container.innerHTML = ''; // Clear previous content
 
       try {
-        const token = localStorage.getItem("token");
         const [coachesRes, packagesRes] = await Promise.all([
-          fetch(`${API_BASE}/admin/coaches`, {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-            credentials: "include"
-          }),
-          fetch(`${API_BASE}/admin/get-packages`, {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-            credentials: "include"
-          })
+          fetch(`${API_BASE}/admin/coaches`),
+          fetch(`${API_BASE}/admin/get-packages`)
         ]);
 
-        if (!coachesRes.ok || !packagesRes.ok) {
-          alert("You are not authorized. Please log in as admin.");
-          window.location.href = "Login.html";
-          return;
-        }
 
         const coaches = await coachesRes.json();
         const packages = await packagesRes.json();
 
-        if (!Array.isArray(coaches) || !Array.isArray(packages)) {
-          alert("Unexpected response from server.");
-          return;
-        }
 
-        // 🔽 Place the code here:
         for (const coach of coaches) {
-          // Get currently assigned packages for this coach
-          const assignedRes = await fetch(`${API_BASE}/admin/coach-packages/${coach.id}`, {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-            credentials: "include"
-          });
+          // Get currently assigned packages
+          const assignedRes = await fetch(`${API_BASE}/admin/coach-packages/${coach.id}`);
           const assigned = await assignedRes.json();
-          const assignedIds = Array.isArray(assigned) ? assigned.map(pkg => pkg.id) : [];
+          const assignedIds = assigned.map(pkg => pkg.id);
+
 
           const box = document.createElement('div');
           box.className = 'assign-box';
@@ -1361,9 +1331,7 @@
             // Add this helper function to load timeslots for a specific coach/package combo
             async function loadCoachTimeslots(calendar, packageId, coachId) {
               try {
-                const token = localStorage.getItem("token");
                 const res = await fetch(`${API_BASE}/timeslot/by-package-with-coaches/${packageId}?coachId=${coachId}`, {
-                  headers: token ? { Authorization: `Bearer ${token}` } : {},
                   credentials: 'include'
                 });
 
@@ -1381,13 +1349,13 @@
                   const [sh, sm, ss] = slot.start_time.split(':').map(Number);
                   const [eh, em, es] = slot.end_time.split(':').map(Number);
 
+                  const assignedCoaches = slot.assigned_coaches || []; // This is now an array of objects with coach info
 
-                  let isPending = false;
+                  const assignedCoachObj = assignedCoaches.find(c => c.coach_id === coach.id);
+
                   let isAssigned = false;
-                  let status = '';
-
-                  // Find the assigned coach object if it exists
-                  const assignedCoachObj = assigned.find(a => a.package_id === slot.package_id)?.coach;
+                  let isPending = false;
+                  let status = 'unassigned';
 
                   if (assignedCoachObj) {
                     status = assignedCoachObj.status || 'assigned';
@@ -1510,10 +1478,7 @@
 
                     const res = await fetch(url, {
                       method: isAssigned ? 'DELETE' : 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        ...(token ? { Authorization: `Bearer ${token}` } : {})
-                      },
+                      headers: { 'Content-Type': 'application/json' },
                       credentials: 'include',
                       body: JSON.stringify({
                         coach_id: coach.id,
@@ -1627,21 +1592,8 @@
       });
     }
     async function loadStories() {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE}/admin/stories`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        credentials: "include"
-      });
-      if (!res.ok) {
-        alert("You are not authorized. Please log in as admin.");
-        window.location.href = "Login.html";
-        return;
-      }
+      const res = await fetch(`${API_BASE}/admin/stories`);
       const stories = await res.json();
-      if (!Array.isArray(stories)) {
-        alert("Unexpected response from server.");
-        return;
-      }
 
       // Get saved order from localStorage
       const savedOrder = JSON.parse(localStorage.getItem('storyOrder') || '[]');
@@ -1816,6 +1768,9 @@
           currentForm = form;
           currentPreview = preview;
           reader.onload = function(evt) {
+            const cropModal = document.getElementById('cropModal');
+            const cropImage = document.getElementById('cropImage');
+            cropImage.src = evt.target.result;
             cropModal.style.display = 'flex';
 
             if (cropper) cropper.destroy();

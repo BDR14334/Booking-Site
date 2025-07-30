@@ -6,7 +6,6 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
-const { requireAdmin } = require('./auth');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
@@ -26,8 +25,6 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
-
-router.use(requireAdmin); // All admin routes now require admin
 
 // Athlete Stories Section
 // Adds new success story to database
