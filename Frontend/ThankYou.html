@@ -4,27 +4,35 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <title>Thank You</title>
   <style>
     html, body {
+      height: 100%;
       margin: 0;
       padding: 0;
-      height: 100%;
+      overflow: hidden;
     }
     
     .wrapper-homepage {
       min-height: 100vh;
+      height: 100vh;         /* Add this line */
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
 
     .thankYouDiv {
-      flex: 1;
+      flex: 1 1 auto;
       display: flex;
       justify-content: center;
       align-items: center;
       background-color: #343a40;
+      position: relative;
+      width: 100vw;
+      overflow: hidden;
+      min-height: 0;
     }
 
     .thankYouBox {
@@ -73,66 +81,6 @@
       font-weight: bold;
     }
 
-    #userRole {
-      color: white;
-      padding-left: 20px; /* Tab Affect */
-      padding-bottom: 10px;
-      padding-top: 5px;
-    }
-
-    .user-name {
-      color: #ff4800;
-      font-weight: bold;
-      font-size: 18px;
-    }
-
-    /* Sidebar styling */
-    .sidebar {
-      position: fixed;
-      top: 0;
-      right: 0;
-      width: 275px;
-      height: 100%;
-      background-color: #343a40;
-      box-shadow: -10px 0 20px #24282c;
-      padding-top: 1rem;
-      display: none;
-      z-index: 999;
-      transition: all 0.3s ease-in-out;
-    }
-
-    .sidebar a {
-      padding: 10px 20px;
-      color: white;
-      display: block;
-      text-decoration: none;
-      transition: background-color 0.3s ease;
-    }
-
-    .sidebar a:hover {
-      background-color: #495057;
-    }
-
-    .sidebar .btn {
-      margin-left: auto;
-      margin-right: 1rem;
-    }
-
-    .profile-btn {
-      background-color: rgba(255, 255, 255, 0.2);
-      color: white;
-      padding: 10px;
-      border: none;
-      cursor: pointer;
-      margin-left: 10px;
-      /* margin-top: 2rem; 
-      display: none; */
-    }
-
-    .profile-btn:hover {
-      background-color: rgba(255, 72, 0);
-    }
-
     .footer {
       background-color: #222;
       color: white;
@@ -155,7 +103,6 @@
         <div class="nav-logo">
           <p>ZSP</p>
         </div>
-
         <div class="nav-menu" id="navMenu">
           <ul>
             <li><a href="index.html" class="link">Home</a></li>
@@ -164,14 +111,12 @@
             <li><a href="Contact.html" class="link">Contact</a></li>
           </ul>
         </div>
-
         <div class="nav-button" id="authButtons">
           <button class="btn white-btn" id="loginBtn" onclick="login()">Login</button>
           <button class="btn" id="registerBtn" onclick="register()">Register</button>
         </div>
-
         <div class="nav-menu-btn">
-          <i class="bx bx-menu" onclick="myMenuFunction()"></i>
+          <i class="bx bx-menu" onclick="toggleMenuSidebar()"></i>
         </div>
     </nav>
 
@@ -189,6 +134,25 @@
       </div>
     </div>
 
+    <div id="profileSidebar" class="sidebar bg-dark text-white">
+      <button class="btn btn-sm btn-outline-light ms-2 mt-2 close-btn" onclick="toggleSidebar()">× Close</button>
+      <div class="mt-4 d-flex flex-column">
+        <p id="userRole" class="px-3 text-white"></p>
+        <div id="sidebarLinksContainer"></div>
+        <a href="#" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none" style="display:none;">🚪 Logout</a>
+      </div>
+    </div>
+
+    <div id="menuSidebar" class="sidebar bg-dark text-white" style="left:0; right:auto;">
+      <button class="btn btn-sm btn-outline-light ms-2 mt-2 close-btn" onclick="toggleMenuSidebar()">× Close</button>
+      <h4 style="margin-left:1.5rem; color:#fff;">Menu</h4>
+      <div class="mt-4 d-flex flex-column">
+        <a href="index.html" class="text-white px-3 py-2 text-decoration-none">🏠 Home</a>
+        <a href="About.html" class="text-white px-3 py-2 text-decoration-none">ℹ️ About</a>
+        <a href="Booking.html" class="text-white px-3 py-2 text-decoration-none">📅 Book</a>
+        <a href="Contact.html" class="text-white px-3 py-2 text-decoration-none">✉️ Contact</a>
+      </div>
+    </div>
         
   </div>
 
@@ -203,20 +167,117 @@
       window.location.href = "Login.html?register=true";
     }
 
-    function myMenuFunction() {
-      var nav = document.getElementById("navMenu");
-      nav.classList.toggle("responsive");
+    function toggleSidebar() {
+      const sidebar = document.getElementById("profileSidebar");
+      sidebar.style.display = sidebar.style.display === "block" ? "none" : "block";
     }
 
+    function toggleMenuSidebar() {
+      const sidebar = document.getElementById("menuSidebar");
+      sidebar.style.display = sidebar.style.display === "block" ? "none" : "block";
+    }
+
+    // Hamburger menu icon click
+    document.querySelector('.nav-menu-btn i').onclick = toggleMenuSidebar;
+
+    // Hide menu sidebar when clicking outside
+    document.addEventListener("click", function (event) {
+      const menuSidebar = document.getElementById("menuSidebar");
+      const menuBtn = document.querySelector('.nav-menu-btn i');
+      if (
+        menuSidebar.style.display === "block" &&
+        !menuSidebar.contains(event.target) &&
+        !(menuBtn && menuBtn.contains(event.target))
+      ) {
+        menuSidebar.style.display = "none";
+      }
+    });
+
+    // Hide profile sidebar when clicking outside
     document.addEventListener("click", function (event) {
       const sidebar = document.getElementById("profileSidebar");
       const profileBtn = document.getElementById("profileBtn");
-      if(sidebar.style.display === "block" && 
-          !sidebar.contains(event.target) &&
-          !(profileBtn && profileBtn.contains(event.target))) {
+      if (
+        sidebar.style.display === "block" &&
+        !sidebar.contains(event.target) &&
+        !(profileBtn && profileBtn.contains(event.target))
+      ) {
         sidebar.style.display = "none";
       }
     });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const box = document.querySelector('.thankYouBox');
+      if (!box) return;
+      const rect = box.getBoundingClientRect();
+
+      // Setup canvas
+      const canvas = Object.assign(document.createElement('canvas'), {
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+      Object.assign(canvas.style, {
+        position: 'fixed', left: 0, top: 0, width: '100vw', height: '100vh',
+        pointerEvents: 'none', zIndex: 999
+      });
+      document.body.appendChild(canvas);
+      const ctx = canvas.getContext('2d');
+      const colors = ['#ff4800', '#50C878', '#0F52BA', '#E0115F', '#0F52BA', '#9966CC'];
+
+      // Firework burst
+      function firework(x, y) {
+        const ps = Array.from({length: 20}, (_, i) => {
+          const a = (Math.PI * 2 * i) / 20, s = 2 + Math.random() * 3;
+          return {
+            x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+            alpha: 1, color: colors[Math.random() * colors.length | 0], r: 2 + Math.random() * 2
+          };
+        });
+        let f = 0;
+        (function anim() {
+          ctx.globalCompositeOperation = 'darker';
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          let alive = false;
+          for (const p of ps) {
+            if (p.alpha > 0.01) {
+              alive = true;
+              ctx.globalAlpha = p.alpha * 5; // 0.5 = 50% opacity, adjust as needed
+              ctx.beginPath();
+              ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+              ctx.fillStyle = p.color;
+              ctx.fill();
+              p.x += p.vx; p.y += p.vy;
+              p.vx *= 0.98; p.vy = p.vy * 0.98 + 0.04;
+              p.alpha *= 0.96;
+            }
+          }
+          ctx.globalAlpha = 1;
+          if (alive && f++ < 60) requestAnimationFrame(anim);
+        })();
+      }
+
+      // Launch fireworks at random box edge
+      function launch() {
+        const bursts = Math.floor(Math.random() * 5) + 2; // Number of fireworks per launch (increase for more)
+        for (let i = 0; i < bursts; i++) {
+          const s = Math.floor(Math.random() * 4);
+          let x = rect.left, y = rect.top;
+          if (s === 0) x = Math.random() * (rect.right - rect.left) + rect.left;
+          if (s === 1) { x = rect.right; y = Math.random() * (rect.bottom - rect.top) + rect.top; }
+          if (s === 2) { x = Math.random() * (rect.right - rect.left) + rect.left; y = rect.bottom; }
+          if (s === 3) y = Math.random() * (rect.bottom - rect.top) + rect.top;
+          firework(x, y);
+        }
+      }
+
+      // Run for 10 seconds
+      const interval = setInterval(launch, 650 + Math.random() * 650); // launches every 1-2 seconds
+      setTimeout(() => {
+        clearInterval(interval);
+        setTimeout(() => { ctx.clearRect(0, 0, canvas.width, canvas.height); canvas.remove(); }, 2000);
+      }, 10000);
+    });
   </script>
+ 
 </body>
 </html>

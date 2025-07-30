@@ -334,6 +334,24 @@
         text-align: center;
       }
     }
+
+    #payNowBtn {
+      width: 100%;
+      background-color: #ff4800;
+      color: white;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer; /* Add pointer cursor */
+      transition: background 0.2s, color 0.2s;
+    }
+
+    #payNowBtn:hover,
+    #payNowBtn:focus {
+      background-color: #e03e00;
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -456,7 +474,7 @@
             <label for="postal-code" style="color: white;">ZIP / Postal Code</label>
             <input id="postal-code" type="text" style="width: 100%; padding: 10px; margin-bottom: 20px; border-radius: 8px; border: none;" placeholder="12345">
 
-            <button id="payNowBtn" style="width: 100%; background-color: #ff4800; color: white; padding: 12px; font-size: 16px; border-radius: 10px; border: none;">Pay $<span id="payNowAmountText"></span></button>
+            <button id="payNowBtn">Pay $<span id="payNowAmountText"></span></button>
           </div>
         </div>
       </section>
