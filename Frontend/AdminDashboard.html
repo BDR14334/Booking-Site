@@ -949,7 +949,9 @@
 
       async function loadTimeslots(packageId) {
         try {
+          const token = localStorage.getItem("token");
           const res = await fetch(`${API_BASE}/timeslot/by-package/${packageId}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
             credentials: 'include'
           });
           const data = await res.json();
@@ -1237,7 +1239,7 @@
     //Assign Coaches
     async function loadCoachAssignments() {
       const container = document.getElementById('coachAssignmentsContainer');
-      container.innerHTML = ''; // Clear previous content
+      container.innerHTML = '';
 
       try {
         const token = localStorage.getItem("token");
@@ -1266,12 +1268,15 @@
           return;
         }
 
+        // 🔽 Place the code here:
         for (const coach of coaches) {
-          // Get currently assigned packages
-          const assignedRes = await fetch(`${API_BASE}/admin/coach-packages/${coach.id}`);
+          // Get currently assigned packages for this coach
+          const assignedRes = await fetch(`${API_BASE}/admin/coach-packages/${coach.id}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            credentials: "include"
+          });
           const assigned = await assignedRes.json();
-          const assignedIds = assigned.map(pkg => pkg.id);
-
+          const assignedIds = Array.isArray(assigned) ? assigned.map(pkg => pkg.id) : [];
 
           const box = document.createElement('div');
           box.className = 'assign-box';
@@ -1356,7 +1361,9 @@
             // Add this helper function to load timeslots for a specific coach/package combo
             async function loadCoachTimeslots(calendar, packageId, coachId) {
               try {
+                const token = localStorage.getItem("token");
                 const res = await fetch(`${API_BASE}/timeslot/by-package-with-coaches/${packageId}?coachId=${coachId}`, {
+                  headers: token ? { Authorization: `Bearer ${token}` } : {},
                   credentials: 'include'
                 });
 
@@ -1503,7 +1510,10 @@
 
                     const res = await fetch(url, {
                       method: isAssigned ? 'DELETE' : 'POST',
-                      headers: { 'Content-Type': 'application/json' },
+                      headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { Authorization: `Bearer ${token}` } : {})
+                      },
                       credentials: 'include',
                       body: JSON.stringify({
                         coach_id: coach.id,
@@ -1806,9 +1816,6 @@
           currentForm = form;
           currentPreview = preview;
           reader.onload = function(evt) {
-            const cropModal = document.getElementById('cropModal');
-            const cropImage = document.getElementById('cropImage');
-            cropImage.src = evt.target.result;
             cropModal.style.display = 'flex';
 
             if (cropper) cropper.destroy();
