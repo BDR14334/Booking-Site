@@ -1592,8 +1592,21 @@
       });
     }
     async function loadStories() {
-      const res = await fetch(`${API_BASE}/admin/stories`);
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE}/admin/stories`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: "include"
+      });
+      if (!res.ok) {
+        alert("You are not authorized. Please log in as admin.");
+        window.location.href = "Login.html";
+        return;
+      }
       const stories = await res.json();
+      if (!Array.isArray(stories)) {
+        alert("Unexpected response from server.");
+        return;
+      }
 
       // Get saved order from localStorage
       const savedOrder = JSON.parse(localStorage.getItem('storyOrder') || '[]');
