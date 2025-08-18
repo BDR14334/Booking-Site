@@ -15,7 +15,7 @@
       height: auto;
       justify-content: flex-start;
       align-items: stretch;
-      background: #343a40;
+      background: #000; /* Make the whole wrapper black */
     }
 
     .coach-video-section {
@@ -52,9 +52,17 @@
       position: relative;
       background: #000;
       color: white;
-      padding: 3rem 0;
+      padding: 1.5rem 0;
       border-bottom: 2px solid #000;
       margin: 0;
+      opacity: 0;
+      transform: translateY(60px);
+      transition: opacity 2s ease, transform 2s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    .coach-profile.visible {
+      opacity: 1;
+      transform: translateY(0);
     }
 
     .section-inner {
@@ -109,7 +117,7 @@
       background: #000;
       border-radius: 1rem;
       padding: 0;
-      min-height: 900px;
+      min-height: unset; /* Remove or set to a smaller value */
       overflow: hidden;
     }
 
@@ -123,12 +131,14 @@
     }
 
     .coach-image-large {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+      width: 80%;      /* Shrink image to 80% of its container */
+      height: 80%;     /* Shrink image to 80% of its container */
+      object-fit: contain;
+      background: #000;
       border-radius: 0;
       border: none;
       display: block;
+      margin: auto;    /* Center the image horizontally and vertically */
     }
 
     .coach-desc-col {
@@ -198,6 +208,37 @@
       }
     }
 
+    .about-intro {
+      background: #000;
+      color: white;
+      text-align: center;
+      padding: 4rem 2rem 4rem 2rem;
+      padding-top: 5.5rem;   /* Add space INSIDE the section */
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 1s ease, transform 1s ease;
+    }
+
+    .about-intro.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .about-intro p {
+      font-size: 1.2rem;
+      line-height: 1.8;
+      margin-bottom: 1.5rem;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .about-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #ff4d00;
+      margin-bottom: 1rem;
+    }
   </style>
 </head>
 <body>
@@ -247,52 +288,69 @@
       </div>
     </div>
 
+    <section class="about-intro">
+      <div class="section-inner">
+        <h2 class="about-title">About Us</h2>
+        <p>
+          Zephyrs Strength and Performance was born from a conversation over a breakfast fit for champions—steak and eggs. 
+          Our founders, former collegiate athletes and long-time volunteer coaches with the Zephyrs Track Club, saw firsthand 
+          the impact they were making on athletes within the club. They knew they could offer that same value to a wider community.
+        </p>
+        <p>
+          We are scientists, technicians, and technologists with a shared passion for sports performance. Over the years, we’ve helped 
+          develop top-tier athletes through science-based training designed to complement and enhance the work athletes are already doing 
+          with their teams and coaches.
+        </p>
+        <p>
+          We are Zephyrs Strength and Performance. <br>
+          <strong>Meet our founders below:</strong>
+        </p>
+      </div>
+    </section>
+    
     <!-- First coach (image left, text right) -->
-    <section class="coach-profile" id="coach-dennis">
+    <section class="coach-profile" id="coach-warren">
       <div class="section-inner">
         <div class="coach-profile-flex">
-          <div class="coach-image-col">
-            <img src="img/dennis.jpg" alt="Coach Dennis" class="coach-image-large">
-          </div>
+
           <div class="coach-desc-col">
-            <h2 class="coach-name">Dennis D. Robinson</h2>
+            <h2 class="coach-name">Warren Archer</h2>
             <div class="coach-desc">
               <p>
-                Dennis D. Robinson is a seasoned coach and strategist with over 14 years of experience developing high-performing athletes in track and field. As Co-founder of ZSP and a driving force behind the Zephyrs Youth Club, Dennis has coached youth ages 5–18, guiding more than 19 All-Americans and three national champions to success. His coaching tenure includes over three years at the high school level within Proviso Township, Illinois, where he continues to foster grit, growth, and excellence.
-                <br><br>
-                Dennis is USATF Level 1 and Level 2 trained, with specialized certifications in Energy Systems and Biomotor Abilities for Optimal Performance—credentials that reflect his commitment to science-based training and athlete development. These qualifications enhance his ability to tailor programs that maximize speed, strength, and endurance across all age groups.
-                <br><br>
-                Beyond athletics, Dennis brings more than two decades of professional leadership experience, including roles as Director of Global Digital at McDonald’s Corp and Director of PMO at Apartments.com. He holds a BA in Political Science from Carthage College and an MBA from the University of Illinois at Urbana-Champaign.
-                <br><br>
-                Dennis’s approach blends strategic insight with a passion for mentorship, making him a trusted leader in both business and sport.
+                Coach Warren is a USATF track & field coach and performance training specialist with extensive experience developing athletes from youth to high school. As a Chicagoland Zephyrs Track Club coach, Warren designs speed, strength, and movement programs that emphasize long-term development, injury prevention, and progressive performance gains.<br><br>
+                His expertise spans sprint mechanics, Olympic lifting fundamentals, agility, conditioning, and recovery protocols, creating well-rounded athletes prepared for competition. Warren has guided athletes from beginners to national champions, including an AAU national titleholder and multiple All-Americans.<br><br>
+                His philosophy—building the athlete first, event specialist second—blends evidence-based training with mentorship, helping athletes grow stronger, faster, and more resilient on and off the track.
               </p>
             </div>
+          </div>
+          <div class="coach-image-col">
+            <img src="img/warren.jpg" alt="Coach Warren" class="coach-image-large">
           </div>
         </div>
       </div>
     </section>
 
     <!-- Second coach (text left, image right) -->
-    <section class="coach-profile" id="coach-darrel">
+    <section class="coach-profile" id="coach-dennis">
       <div class="section-inner">
         <div class="coach-profile-flex">
           <div class="coach-desc-col">
-            <h2 class="coach-name">Darrel Smith</h2>
+            <h2 class="coach-name">Dennis Robinson</h2>
             <div class="coach-desc">
               <p>
-                Darrel Smith is the Co-Founder and Head Performance Coach at Zephyrs Strength & Performance. With over 15 years of experience in athletic development, Darrel has trained youth and collegiate athletes across Illinois. Specializing in speed, agility, and injury prevention, he creates programs that balance sports science and intuitive coaching.
-                <br><br>
-                Known for his high-energy sessions and deep care for individual growth, Darrel believes that athletic performance begins with character. As a father, mentor, and respected leader in the Illinois sports community, he’s driven by the mission to help athletes become not only stronger—but more disciplined, resilient, and confident in every arena of life.
+                Coach Dennis is a seasoned strategist with 14+ years developing high-performing track and field athletes. As ZSP Co-founder and Zephyrs Youth Club leader, he’s coached ages 5–18, producing 19+ All-Americans and three national champions, and spent three years coaching at the high school level in Proviso Township, Illinois.<br><br>
+                Dennis is USATF Level 1 & 2 trained, with certifications in Energy Systems and Biomotor Abilities, enabling him to design science-based programs for speed, strength, and endurance. Beyond athletics, Dennis has 20+ years of leadership experience, including Director roles at McDonald’s Corp and Apartments.com. He holds a BA from Carthage College and an MBA from the University of Illinois.<br><br>
+                Dennis’s approach combines strategic insight and mentorship, making him a trusted leader in sport and business.
               </p>
             </div>
           </div>
           <div class="coach-image-col">
-            <img src="img/fotor-ai-20250528154636.jpg" alt="Coach Darrel" class="coach-image-large">
+            <img src="img/dennis.jpg" alt="Coach Darrel" class="coach-image-large">
           </div>
         </div>
       </div>
     </section>
-    
+
 
 
      <!-- Right-Aligned Sidebar -->
@@ -350,6 +408,35 @@
           !(profileBtn && profileBtn.contains(event.target))) {
         sidebar.style.display = "none";
       }
+    });
+
+    // Fade-in for about-intro section
+    document.addEventListener("DOMContentLoaded", function () {
+      const intro = document.querySelector('.about-intro');
+      if (intro) {
+        function onScrollIntro() {
+          const rect = intro.getBoundingClientRect();
+          if (rect.top < window.innerHeight - 100) {
+            intro.classList.add('visible');
+            window.removeEventListener('scroll', onScrollIntro);
+          }
+        }
+        window.addEventListener('scroll', onScrollIntro);
+        onScrollIntro();
+      }
+
+      // Fade-in for coach-profile sections (slower)
+      const coachProfiles = document.querySelectorAll('.coach-profile');
+      function onScrollCoach() {
+        coachProfiles.forEach(section => {
+          const rect = section.getBoundingClientRect();
+          if (rect.top < window.innerHeight - 100) {
+            section.classList.add('visible');
+          }
+        });
+      }
+      window.addEventListener('scroll', onScrollCoach);
+      onScrollCoach();
     });
   </script>
 

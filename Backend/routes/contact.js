@@ -16,7 +16,7 @@ router.post('/', async (req, res) => {
 
   const mailOptions = {
     from: email,
-    to: 'robinsontech30@gmail.com',
+    to: 'info@Zephyrsstrengthandperformance.com',
     subject: 'New Contact Form Submission',
     text: `
       Name: ${firstName} ${lastName}
