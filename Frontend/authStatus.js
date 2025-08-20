@@ -1,10 +1,12 @@
 console.log("authStatus.js loaded");
 
 // Use local backend if running locally, otherwise use deployed backend
-const API_BASE = window.location.hostname === "localhost"
-  ? "http://localhost:5000"
-  : "https://booking-site-rz5b.onrender.com";
-
+const API_BASE = (()=>{
+  const host = window.location.hostname;
+  if (host === "localhost") return "http://localhost:5000";
+  if (host === "www.zephyrsstrengthandperformance.com") return "https://booking-site-rz5b.onrender.com"; // backend URL stays on Render
+  return "https://booking-site-rz5b.onrender.com"; // default fallback
+})();
 // === Global Functions ===
 
 // Sidebar toggle function
@@ -54,6 +56,12 @@ function buildSidebarLinks(role) {
       <a href="AthleteDashboard.html#athleteInfo" class="text-white px-3 py-2 text-decoration-none">➕ Add Athlete</a>
       <a href="AthleteDashboard.html#viewSessions" class="text-white px-3 py-2 text-decoration-none">📅 View Sessions</a>
       <a href="AthleteDashboard.html#receipts" class="text-white px-3 py-2 text-decoration-none">🧾 Receipts</a>
+    `);
+  } else if (role === "adult-athlete") {
+    sidebarLinksContainer.insertAdjacentHTML('beforeend', `
+      <a href="AdultAthleteDashboard.html#athleteInfo" class="text-white px-3 py-2 text-decoration-none">📋 Edit Info</a>
+      <a href="AdultAthleteDashboard.html#viewSessions" class="text-white px-3 py-2 text-decoration-none">📅 View Sessions</a>
+      <a href="AdultAthleteDashboard.html#receipts" class="text-white px-3 py-2 text-decoration-none">🧾 Receipts</a>
     `);
   }
 }
