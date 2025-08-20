@@ -3,6 +3,15 @@ const pool = require('../db');
 const { authenticateToken } = require('./auth'); // Adjust path if needed
 const router = express.Router();
 
+function requireRole(expectedRole) {
+  return (req, res, next) => {
+    if (!req.user || req.user.role !== expectedRole) {
+      return res.status(403).json({ error: 'Not authorized for this dashboard' });
+    }
+    next();
+  };
+}
+
 router.get('/me', authenticateToken, async (req, res) => {
   console.log('req.user:', req.user); // <--- Add this
   const userId = req.user.id;
@@ -301,6 +310,185 @@ router.get('/booked-timeslots/by-customer/:customerId', async (req, res) => {
   }
 });
 
+// Create adult athlete (with dob)
+router.post('/adult-athlete/create', async (req, res) => {
+  const { first_name, last_name, dob, email, phone, user_id, sport } = req.body;
+  try {
+    // Insert into customer table with dob
+    const customerRes = await pool.query(
+      `INSERT INTO public.customer (first_name, last_name, dob, email, phone, user_id)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [first_name, last_name, dob, email, phone, user_id]
+    );
+    const customerId = customerRes.rows[0].id;
 
+    // Calculate age group from dob
+    function getAgeGroup(dob) {
+      const birthDate = new Date(dob);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      if (age <= 8) return "8 & Under";
+      if (age <= 10) return "9-10";
+      if (age <= 12) return "11-12";
+      if (age <= 14) return "13-14";
+      if (age <= 16) return "15-16";
+      if (age <= 18) return "17-18";
+      return "18+";
+    }
+    const age_group = getAgeGroup(dob);
+
+    // Insert into athlete table
+    const athleteRes = await pool.query(
+      `INSERT INTO athlete (customer_id, first_name, last_name, age_group, sport)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *`,
+      [customerId, first_name, last_name, age_group, sport]
+    );
+
+    res.status(201).json({ customer: customerRes.rows[0], athlete: athleteRes.rows[0] });
+  } catch (err) {
+    console.error('Error creating adult athlete:', err.message);
+    res.status(500).json({ error: 'Error creating adult athlete' });
+  }
+});
+
+// Update adult athlete
+router.put('/adult-athlete/update/:id', async (req, res) => {
+  const { id } = req.params;
+  const { first_name, last_name, dob, email, phone, user_id, sport } = req.body;
+  try {
+    // Update customer table with dob
+    const customerRes = await pool.query(
+      `UPDATE public.customer
+       SET first_name = $1, last_name = $2, dob = $3, email = $4, phone = $5, user_id = $6
+       WHERE id = $7
+       RETURNING *`,
+      [first_name, last_name, dob, email, phone, user_id, id]
+    );
+
+    // Calculate age_group from dob
+    function getAgeGroup(dob) {
+      const birthDate = new Date(dob);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      if (age <= 8) return "8 & Under";
+      if (age <= 10) return "9-10";
+      if (age <= 12) return "11-12";
+      if (age <= 14) return "13-14";
+      if (age <= 16) return "15-16";
+      if (age <= 18) return "17-18";
+      return "18+";
+    }
+    const age_group = getAgeGroup(dob);
+
+    // Check if athlete row exists
+    const athleteCheck = await pool.query(
+      `SELECT id FROM athlete WHERE customer_id = $1 LIMIT 1`,
+      [id]
+    );
+
+    let athleteRes;
+    if (athleteCheck.rows.length > 0) {
+      // Update athlete
+      athleteRes = await pool.query(
+        `UPDATE athlete
+         SET sport = $1, age_group = $2, first_name = $3, last_name = $4
+         WHERE customer_id = $5
+         RETURNING *`,
+        [sport, age_group, first_name, last_name, id]
+      );
+    } else {
+      // Insert athlete if not exists
+      athleteRes = await pool.query(
+        `INSERT INTO athlete (customer_id, first_name, last_name, age_group, sport)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *`,
+        [id, first_name, last_name, age_group, sport]
+      );
+    }
+
+    res.status(200).json({ customer: customerRes.rows[0], athlete: athleteRes.rows[0] });
+  } catch (err) {
+    console.error('Error updating adult athlete:', err.message);
+    res.status(500).json({ error: 'Error updating adult athlete' });
+  }
+});
+
+router.get('/adult-athlete/by-user/:user_id', authenticateToken, requireRole('adult-athlete'), async (req, res) => {
+  const { user_id } = req.params;
+  try {
+    const customerRes = await pool.query(
+      `SELECT * FROM public.customer WHERE user_id = $1 LIMIT 1`,
+      [user_id]
+    );
+    if (customerRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+    const customer = customerRes.rows[0];
+
+    // Get athlete info for this customer
+    const athleteRes = await pool.query(
+      `SELECT * FROM athlete WHERE customer_id = $1 LIMIT 1`,
+      [customer.id]
+    );
+    const athlete = athleteRes.rows[0] || {};
+
+    // Calculate actual age from dob
+    function getAge(dob) {
+      if (!dob) return '';
+      const birthDate = new Date(dob);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      return age;
+    }
+
+    res.json({
+      customer_id: customer.id,
+      first_name: customer.first_name,
+      last_name: customer.last_name,
+      dob: customer.dob,
+      age: getAge(customer.dob), // <-- Add this line
+      email: customer.email,
+      phone: customer.phone,
+      sport: athlete.sport || '',
+      age_group: athlete.age_group || ''
+    });
+  } catch (err) {
+    console.error('Error fetching adult athlete:', err.message);
+    res.status(500).json({ error: 'Error fetching adult athlete' });
+  }
+});
+
+// Youth Athlete dashboard
+router.get('/by-user/:user_id', authenticateToken, requireRole('athlete'), async (req, res) => {
+  const { user_id } = req.params;
+  try {
+    const result = await pool.query(
+      `SELECT * FROM public.customer WHERE user_id = $1 LIMIT 1`,
+      [user_id]
+    );
+    if (result.rows.length > 0) {
+      res.status(200).json({ customer: result.rows[0] });
+    } else {
+      res.status(404).json({ error: 'Client not found' });
+    }
+  } catch (err) {
+    console.error('Error fetching Client:', err.message);
+    res.status(500).json({ error: 'Error fetching Client data' });
+  }
+});
 
 module.exports = router;

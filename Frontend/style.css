@@ -499,20 +499,6 @@ header{
     }
 }
 
-/* Sidebar styles */
-/* .sidebar {
-  position: fixed;
-  top: 0;
-  width: 275px;
-  height: 100%;
-  background-color: #343a40;
-  box-shadow: 10px 0 20px #24282c;
-  padding-top: 1rem;
-  display: none;
-  z-index: 999;
-  transition: all 0.3s ease-in-out;
-} */
-
 .sidebar {
     position: fixed;
     top: 0;
@@ -581,8 +567,4 @@ header{
   left: auto;
   box-shadow: -10px 0 20px #24282c;
 }
-
-
-
-
 

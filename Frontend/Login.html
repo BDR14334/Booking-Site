@@ -10,7 +10,7 @@
 </head>
 <style>
     body {
-        background: url("img/Background.jpg");
+        background: url("img/GYM.jpg");
         background-size: cover;
         background-repeat: no-repeat;
         background-attachment: fixed;
@@ -120,7 +120,7 @@
             <div class="input-box">
                 <select class="input-field" id="registerRoleSelect">
                     <option value="" disabled selected>Select Role</option>
-                    <option value="athlete">Adult Athlete</option>
+                    <option value="adult-athlete">Adult Athlete</option>
                     <option value="athlete">Parent/Guardian</option>
                 </select>
                 <i class='bx bx-user-check'></i>
@@ -247,7 +247,9 @@
                 localStorage.setItem("token", token);
 
                 // Redirect based on user.role
-                if (user.role === "athlete") {
+                if (user.role === "adult-athlete") {
+                    window.location.href = "AdultAthleteDashboard.html";
+                } else if (user.role === "athlete") {
                     window.location.href = "AthleteDashboard.html";
                 } else if (user.role === "coach") {
                     window.location.href = "CoachDashboard.html";
@@ -275,7 +277,7 @@
             const username = document.getElementById("registerUsername").value.trim();
 
             // Validate that the selected role is allowed
-            const validRoles = ['athlete'];
+            const validRoles = ['adult-athlete', 'athlete'];
             if (!validRoles.includes(role)) {
                 showCustomAlert("Please select a valid role.");
                 return;

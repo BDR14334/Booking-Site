@@ -66,6 +66,15 @@
       color: #fff;
     }
 
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start; /* Left-align labels and fields */
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
     form label {
       display: block;
       margin: 10px 0 5px 8px;
@@ -103,12 +112,11 @@
     }
 
     select {
-      width: 102%;
       padding: 0.5rem;
       margin-top: 0.25rem;
       border-radius: 0.5rem;
       background-color: white;
-      font-size: 1rem;
+      font-size: 1rem; 
       margin-bottom: 15px;
     }
 
@@ -178,48 +186,6 @@
       transform: none;
     }
 
-    /* Athlete Box Styles */
-    .athlete-box-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-    }
-
-    .athlete-box {
-      position: relative;
-      background-color: #2a2f36;
-      border: 2px solid #ff4800;
-      border-radius: 12px;
-      padding: 20px;
-      width: 300px;
-      box-sizing: border-box;
-      color: white;
-    }
-
-    .athlete-box input[name="athleteName"] {
-      width: 95%; /* or any smaller value you want */
-    }
-
-    .add-athlete-box {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 300px;
-      height: 400px;
-      border: 2px dashed #ff4800;
-      border-radius: 12px;
-      font-size: 200px;
-      font-weight: 50px;
-      color: #ff4800;
-      cursor: pointer;
-      background-color: transparent;
-    }
-
-    .add-athlete-box:hover{
-      background-color: #ff4800;
-      color: #2a2f36;
-    }
-
     .back-btn {
       font-family: Arial, Helvetica, sans-serif;
       position: fixed;
@@ -272,7 +238,6 @@
         padding: 14px;
       }
       select {
-        width: 105%;
         color:#000;
         -webkit-appearance: none;
         appearance: none;
@@ -404,8 +369,7 @@
 <header>
   <h1>Athlete Dashboard</h1>
   <nav id="sidebarLinksContainer">
-    <a href="#editInfo">📋 Edit Info</a>
-    <a href="#athleteInfo">➕ Add Athlete</a>
+    <a href="#athleteInfo">📋 Edit Info</a>
     <a href="#viewSessions">📅 View Sessions</a>
     <a href="#receipts">🧾 Receipts</a>
     <a href="#" id="sidebarLogoutBtn" class="text-danger px-3 py-2 text-decoration-none">🚪 Logout</a>
@@ -418,8 +382,7 @@
 <div id="profileSidebar" class="sidebar bg-dark text-white" style="display:none;">
   <button class="btn btn-sm btn-outline-light ms-2 mt-2 close-btn" onclick="toggleSidebar()">× Close</button>
   <div class="mt-4 d-flex flex-column">
-    <a style="margin-top: 20px;" href="#editInfo">📋 Edit Info</a>
-    <a href="#athleteInfo">➕ Add Athlete</a>
+    <a style="margin-top: 20px;" href="#athleteInfo">📋 Edit Info</a>
     <a href="#viewSessions">📅 View Sessions</a>
     <a href="#receipts">🧾 Receipts</a>
     <a href="#" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none">🚪 Logout</a>
@@ -430,65 +393,33 @@
   <i class="fas fa-arrow-left">Back to Home</i>
 </div>
 
-<!-- Edit Personal Info -->
-<section id="editInfo">
-  <h1>Parent/Guardian Info</h1>
-  <form id="infoForm">
-    <label for="Name">Name</label>
-    <input type="text" id="name" name="name" />
+<!-- Add Athlete Info -->
+<section id="athleteInfo">
+  <h1>Personal Info for Booking</h1>
+  <form id="athleteForm">
+    <label for="athleteName">Name</label>
+    <input type="text" id="athleteName" name="athleteName" required />
 
-    <label for="Email">Email</label>
-    <input type="email" id="email" name="email" />
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" required />
 
-    <label for="Phone">Phone</label>
-    <input type="tel" id="phone" name="phone" />
+    <label for="phone">Phone</label>
+    <input type="tel" id="phone" name="phone" required />
+
+    <label for="dob">Date of Birth</label>
+    <input type="date" id="dob" name="dob" required />
+  
+
+    <label for="sport">Level of Activity Daily</label>
+    <select id="sport" name="sport" required>
+      <option value="" selected>--</option>
+      <option value="Highly Active">Highly Active</option>
+      <option value="Moderately Active">Moderately Active</option>
+      <option value="Not Active">Not Active</option>
+    </select>
 
     <button type="submit">Save Info</button>
   </form>
-</section>
-
-<!-- Add Athlete Info -->
-<section id="athleteInfo">
-  <h1>Add Athlete For Booking</h1>
-  <div class="athlete-box-container">
-    <!-- First Athlete Form -->
-    <div class="athlete-box">
-      <form class="athleteInfoForm">
-        <label for="athleteName">Name</label>
-        <input type="text" id="athleteName" name="athleteName" />
-
-        <label for="ageGroup">Age Group</label>
-        <select id="ageGroup" name="ageGroup">
-          <option value="" selected>--</option>
-          <option value="8 & Under">8 & Under</option>
-          <option value="9-10">9 - 10 years old</option>
-          <option value="11-12">11 - 12 years old</option>
-          <option value="13-14">13 - 14 years old</option>
-          <option value="15-16">15 - 16 years old</option>
-          <option value="17-18">17 - 18 years old</option>
-          <option value="18+">18+ years old</option>
-        </select>
-
-        <label for="sport">Sport</label>
-        <select id="sport" name="sport">
-          <option value="" selected>--</option>
-          <option value="Track & Field">Track & Field</option>
-          <option value="Cross Country">Cross Country</option>
-          <option value="Football">Football</option>
-          <option value="Lacrosse">Lacrosse</option>
-          <option value="Basketball/Softball">Basketball/Softball</option>
-          <option value="Baseball">Baseball</option>
-          <option value="Soccer">Soccer</option>
-          <option value="Other">Other</option>
-        </select>
-
-        <button type="submit">Save Info</button>
-      </form>
-    </div>
-
-    <!-- Add Athlete Button -->
-    <div class="add-athlete-box" onclick="addAthleteBox()">+</div>
-  </div>
 </section>
 
 <!-- Sessions -->
@@ -521,8 +452,8 @@
     headers: { Authorization: `Bearer ${token}` }
   });
   const data = await res.json();
-  if (!data.user || data.user.role !== 'athlete') {
-    alert('Not authorized for Youth Athlete Dashboard');
+  if (!data.user || data.user.role !== 'adult-athlete') {
+    alert('Not authorized for Adult Athlete Dashboard');
     window.location.href = "Login.html";
   }
 })();
@@ -617,106 +548,76 @@
     }
   }
 
-
-  async function handleAthleteSubmit(e) {
+  document.getElementById('athleteForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const form = e.target;
-    const athleteId = form.dataset.athleteId;
 
-    const fullName = form.querySelector('input[name="athleteName"]').value.trim();
+    const fullName = document.getElementById("athleteName").value.trim();
     const [first_name, ...lastNameParts] = fullName.split(' ');
     const last_name = lastNameParts.join(' ') || '';
-    const age_group = form.querySelector('select[name="ageGroup"]').value;
-    const sport = form.querySelector('select[name="sport"]').value;
+    const email = document.getElementById("email").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const dob = document.getElementById("dob").value;
+    const sport = document.getElementById("sport").value;
 
-    if (!customerId) {
-      alert("Please save customer info first.");
-      return;
+    function getAge(dob) {
+      if (!dob) return '';
+      const birthDate = new Date(dob);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      return age;
     }
 
-    const method = athleteId ? 'PUT' : 'POST';
-    const url = athleteId
-      ? `${API_BASE}/athlete/${athleteId}`
-      : `${API_BASE}/athlete`;
+    const age = getAge(dob);
+
+    function getAgeGroup(age) {
+      if (age <= 8) return "8 & Under";
+      if (age <= 10) return "9-10";
+      if (age <= 12) return "11-12";
+      if (age <= 14) return "13-14";
+      if (age <= 16) return "15-16";
+      if (age <= 18) return "17-18";
+      return "18+";
+    }
+    const age_group = getAgeGroup(age);
+
+    const method = customerId ? 'PUT' : 'POST';
+    const url = customerId
+      ? `${API_BASE}/athlete/adult-athlete/update/${customerId}`
+      : `${API_BASE}/athlete/adult-athlete/create`;
 
     try {
-      const res = await fetch(url, {
+      const response = await fetch(url, {
         method,
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customer_id: customerId, first_name, last_name, age_group, sport })
+        body: JSON.stringify({
+          first_name,
+          last_name,
+          dob,
+          email,
+          phone,
+          sport,
+          age_group,
+          user_id: userId
+        }),
       });
 
-      const data = await res.json();
-      if (res.ok) {
-        alert('Athlete saved!');
-        if (!athleteId) loadAthleteData(); // Refresh list after new insert
+      const data = await response.json();
+      if (response.ok) {
+        alert('Athlete info saved successfully!');
+        customerId = data.customer?.id || customerId; // update customerId if needed
       } else {
         alert('Error: ' + data.error);
       }
-    } catch (err) {
-      console.error('Error saving athlete:', err);
+    } catch (error) {
+      console.error('Fetch error:', error);
+      alert('Something went wrong saving athlete info!');
     }
-  }
-
-
-  function addAthleteBox() {
-    const container = document.querySelector('.athlete-box-container');
-    const athleteBoxes = document.querySelectorAll('.athlete-box');
-    const original = athleteBoxes[0];
-    const clone = original.cloneNode(true);
-
-    const form = clone.querySelector('form');
-    form.reset();
-    delete form.dataset.athleteId;
-
-    const newForm = form.cloneNode(true);
-    form.replaceWith(newForm);
-    newForm.addEventListener('submit', handleAthleteSubmit);
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.innerHTML = '<span class="material-symbols-outlined">close</span>';
-    deleteBtn.className = 'delete-athlete-btn';
-    deleteBtn.style = `
-      position: absolute;
-      top: -5px;
-      right: -12.5px;
-      background: none;
-      border: none;
-      font-size: 30px;
-      color: #ff4800;
-      cursor: pointer;
-    `;
-    deleteBtn.onmouseover = () => deleteBtn.style.color = 'red';
-    deleteBtn.onmouseout = () => deleteBtn.style.color = '#ff4800';
-    deleteBtn.addEventListener('click', () => clone.remove());
-
-    clone.appendChild(deleteBtn);
-
-    const addButton = document.querySelector('.add-athlete-box');
-    container.insertBefore(clone, addButton);
-  }
-
-  async function deleteAthlete(athleteId) {
-    try {
-      const res = await fetch(`${API_BASE}/athlete/${athleteId}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        alert('Delete failed: ' + err.error);
-      } else {
-        alert('Athlete deleted');
-      }
-    } catch (err) {
-      console.error('Error deleting athlete:', err);
-      alert('Delete failed');
-    }
-  }
-
-
+  });
 
   // Fetch logged-in user
   async function fetchLoggedInUser() {
@@ -758,114 +659,6 @@
       }
     } catch (error) {
       console.error('Error loading client data:', error);
-    }
-  }
-
-  // Handle client form submission
-  document.getElementById('infoForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    await fetchLoggedInUser();
-
-    const fullName = document.getElementById("name").value.trim();
-    const [first_name, ...lastNameParts] = fullName.split(' ');
-    const last_name = lastNameParts.join(' ') || '';
-    const email = document.getElementById("email").value.trim();
-    const phone = document.getElementById("phone").value.trim();
-
-    try {
-      const method = customerId ? 'PUT' : 'POST';
-      const url = customerId
-        ? `${API_BASE}/athlete/update/${customerId}`
-        : `${API_BASE}/athlete/create`;
-
-      const response = await fetch(url, {
-        method,
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          first_name,
-          last_name,
-          email: email,
-          phone: phone,
-          user_id: userId
-        }),
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        alert('Client profile saved successfully!');
-        getUserDetails(); // <-- Update welcome message
-        if (!customerId) customerId = data.customer.id;
-      } else {
-        alert('Error: ' + data.error);
-      }
-    } catch (error) {
-      console.error('Fetch error:', error);
-      alert('Something went wrong saving profile!');
-    }
-  });
-
-  async function loadAthleteData() {
-    if (!customerId) return;
-
-    try {
-      const res = await fetch(`${API_BASE}/athlete/${customerId}`, { credentials: 'include' });
-      const athletes = await res.json();
-
-      const container = document.querySelector('.athlete-box-container');
-      const original = document.querySelector('.athlete-box');
-      const addButton = document.querySelector('.add-athlete-box');
-
-      // Remove all clones (except the original template)
-      container.querySelectorAll('.athlete-box:not(:first-child)').forEach(el => el.remove());
-
-      // Populate original box with first athlete or reset
-      if (athletes.length > 0) {
-        const first = athletes[0];
-        const form = original.querySelector('form');
-        form.dataset.athleteId = first.id; // Save athlete ID for updates
-
-        form.querySelector('input[name="athleteName"]').value = `${first.first_name} ${first.last_name}`;
-        form.querySelector('select[name="ageGroup"]').value = first.age_group;
-        form.querySelector('select[name="sport"]').value = first.sport;
-      }
-
-      // Add additional athlete forms
-      for (let i = 1; i < athletes.length; i++) {
-        const athlete = athletes[i];
-        const clone = original.cloneNode(true);
-        const form = clone.querySelector('form');
-
-        form.dataset.athleteId = athlete.id;
-        form.addEventListener('submit', handleAthleteSubmit);
-
-        form.querySelector('input[name="athleteName"]').value = `${athlete.first_name} ${athlete.last_name}`;
-        form.querySelector('select[name="ageGroup"]').value = athlete.age_group;
-        form.querySelector('select[name="sport"]').value = athlete.sport;
-
-        // Add delete button
-        const deleteBtn = document.createElement('button');
-        deleteBtn.innerHTML = '<span class="material-symbols-outlined">close</span>';
-        deleteBtn.className = 'delete-athlete-btn';
-        deleteBtn.style = 'position:absolute; top:-5px; right:-12.5px; background:none; border:none; font-size:30px; color:#ff4800; cursor:pointer;';
-        deleteBtn.onmouseover = () => deleteBtn.style.color = 'red';
-        deleteBtn.onmouseout = () => deleteBtn.style.color = '#ff4800';
-
-        deleteBtn.addEventListener('click', async () => {
-          if (confirm('Are you sure you want to delete this athlete?')) {
-            await deleteAthlete(athlete.id);
-            clone.remove();
-          }
-        });
-
-        clone.appendChild(deleteBtn);
-        container.appendChild(clone);
-        container.appendChild(addButton); // Ensure it's always the last element
-
-        form.addEventListener('submit', handleAthleteSubmit);
-      }
-    } catch (err) {
-      console.error('Error loading athletes:', err);
     }
   }
 
@@ -952,8 +745,30 @@
   }
 
   document.addEventListener('DOMContentLoaded', async () => {
-    await loadCustomerData(); // Sets customerId
-    await loadAthleteData();  // Loads athletes for that customer
+    await fetchLoggedInUser(); // Sets userId
+
+    // Fetch athlete/customer data for this user
+    try {
+      const res = await fetch(`${API_BASE}/athlete/adult-athlete/by-user/${userId}`, {
+        credentials: 'include'
+      });
+      if (!res.ok) throw new Error('Failed to load athlete info');
+      const data = await res.json();
+
+      // Fill the form fields
+      document.getElementById("athleteName").value = `${data.first_name || ""} ${data.last_name || ""}`;
+      document.getElementById("email").value = data.email || "";
+      document.getElementById("phone").value = data.phone || "";
+      document.getElementById("dob").value = data.dob ? data.dob.substring(0, 10) : ""; // Format as YYYY-MM-DD
+      document.getElementById("sport").value = data.sport || "";
+
+      // Save customerId if needed for other requests
+      customerId = data.customer_id;
+    } catch (err) {
+      console.error('Error loading athlete/customer data:', err);
+    }
+
+    // Load other dashboard data
     await loadBookedSessionsToCalendar();
     await loadReceipts();
 
@@ -967,10 +782,8 @@
     });
   });
 
-
-
-  async function autofillParentInfoIfFirstLogin() {
-    if (localStorage.getItem("parentAutofilled") === "true") {
+  async function autofillAthleteInfoIfFirstLogin() {
+    if (localStorage.getItem("athleteAutofilled") === "true") {
       return; // Already autofilled once
     }
 
@@ -988,23 +801,25 @@
       const data = await res.json();
 
       // Only autofill if fields are empty (don't overwrite user edits)
-      const firstNameInput = document.getElementById("parentFirstName");
-      const lastNameInput = document.getElementById("parentLastName");
-      const emailInput = document.getElementById("parentEmail");
+      const nameInput = document.getElementById("athleteName");
+      const emailInput = document.getElementById("email");
 
-      if (firstNameInput && !firstNameInput.value) firstNameInput.value = data.first_name || "";
-      if (lastNameInput && !lastNameInput.value) lastNameInput.value = data.last_name || "";
-      if (emailInput && !emailInput.value) emailInput.value = data.email || "";
+      if (nameInput && !nameInput.value) {
+        nameInput.value = `${data.first_name || ""} ${data.last_name || ""}`.trim();
+      }
+      if (emailInput && !emailInput.value) {
+        emailInput.value = data.email || "";
+      }
 
       // Set flag so this logic only runs once
-      localStorage.setItem("parentAutofilled", "true");
+      localStorage.setItem("athleteAutofilled", "true");
     } catch (err) {
-      console.error("Failed to autofill parent info", err);
+      console.error("Failed to autofill athlete info", err);
     }
   }
 
   document.addEventListener("DOMContentLoaded", () => {
-    autofillParentInfoIfFirstLogin();
+    autofillAthleteInfoIfFirstLogin();
   });
 </script>
 

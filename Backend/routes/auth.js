@@ -9,7 +9,7 @@ const nodemailer = require('nodemailer');
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
-const validRoles = ['admin', 'coach', 'athlete'];
+const validRoles = ['admin', 'coach', 'athlete', 'adult-athlete'];
 const ADMIN_SECRET_ID = process.env.ADMIN_SECRET_ID;
 
 // Add near the top, after your requires
@@ -108,7 +108,7 @@ router.post('/register', async (req, res) => {
          VALUES ($1, $2, $3, $4, $5)`,
         [newUser.rows[0].id, first_name, last_name, '', hashedAdminId]
       );
-    } else if (role === 'athlete') { //Submit values for athlete dashboard
+    } else if (role === 'athlete' || role === 'adult-athlete') { // <-- Add adult-athlete here
       await pool.query(
         `INSERT INTO public.customer (first_name, last_name, email, user_id, phone)
          VALUES ($1, $2, $3, $4, $5)`,
@@ -304,6 +304,21 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
+router.get('/auth/me', authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, email, role, first_name, last_name FROM public.users WHERE id = $1 LIMIT 1',
+      [req.user.id]
+    );
+    if (!result.rows.length) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ user: result.rows[0] });
+  } catch (err) {
+    console.error('Error fetching user:', err.message);
+    res.status(500).json({ error: 'Error fetching user' });
+  }
+});
 
 
 module.exports = {

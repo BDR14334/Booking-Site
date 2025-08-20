@@ -687,8 +687,68 @@
                 const user = userData.user;
 
                 // Not an athlete
-                if (!user || user.role !== "athlete") {
+                if (!user || (user.role !== "athlete" && user.role !== "adult-athlete")) {
                   document.getElementById("notAthletePopup").style.display = "block";
+                  return;
+                }
+
+                // Check for adult-athlete role
+                if (user.role === "adult-athlete") {
+                  // Fetch adult athlete info
+                  const customerRes = await fetch(`${API_BASE}/athlete/adult-athlete/by-user/${user.id}`, {
+                    credentials: 'include'
+                  });
+                  const customerData = await customerRes.json();
+                  if (!customerData.customer_id) {
+                    alert("Please complete your profile before booking.");
+                    window.location.href = "AdultAthleteDashboard.html#athleteInfo";
+                    return;
+                  }
+                  customerId = customerData.customer_id;
+
+                  // Calculate age group from dob
+                  function getAgeGroup(dob) {
+                    const birthDate = new Date(dob);
+                    const today = new Date();
+                    let age = today.getFullYear() - birthDate.getFullYear();
+                    const m = today.getMonth() - birthDate.getMonth();
+                    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                      age--;
+                    }
+                    if (age <= 8) return "8 & Under";
+                    if (age <= 10) return "9-10";
+                    if (age <= 12) return "11-12";
+                    if (age <= 14) return "13-14";
+                    if (age <= 16) return "15-16";
+                    if (age <= 18) return "17-18";
+                    return "18+";
+                  }
+                  const ageGroup = getAgeGroup(customerData.dob);
+
+                  // Show only the adult athlete as the "athlete"
+                  const athleteContainer = document.getElementById('athleteContainer');
+                  athleteContainer.innerHTML = '';
+                  const athleteBox = document.createElement('a');
+                  athleteBox.className = 'box selected'; // Auto-selected
+                  const isAdultAthlete = user.role === "adult-athlete";
+                  athleteBox.innerHTML = `
+                    <div class="icon"><i class="fa-solid fa-user"></i></div>
+                    <div class="topic">${customerData.first_name} ${customerData.last_name}</div>
+                    <p>Age: ${customerData.age}</p>
+                    <p>Level of Activity Daily: ${customerData.sport || ''}</p>
+                  `;
+                  athleteContainer.appendChild(athleteBox);
+
+                  // Set selectedAthleteIds to just this customerId
+                  selectedAthleteIds = [customerId];
+
+                  // Hide selection logic (optional: skip to calendar)
+                  document.getElementById('athleteSection').style.display = 'block';
+                  document.getElementById('nextToCalendarBtn').style.display = 'inline-block';
+
+                  goToStep(1);
+                  // Optionally, auto-advance to calendar:
+                  // goToStep(2); loadCalendar();
                   return;
                 }
 
