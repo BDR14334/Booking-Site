@@ -22,7 +22,8 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const allowedOrigins = [
   'http://localhost:5500',       // dev
-  'https://booking-site-frontend.onrender.com' // 🚀 your deployed frontend
+  'https://booking-site-frontend.onrender.com', // 🚀 your deployed frontend
+  'https://www.zephyrsstrengthandperformance.com'
 ];
 
 // CORS config to allow credentials (cookies) from frontend
@@ -43,6 +44,7 @@ app.use(cookieParser());
 // Serve static HTML + image assets
 app.use(express.static(path.join(__dirname, '../Frontend')));
 app.use('/img', express.static(path.join(__dirname, '../Frontend/img')));
+
 
 // Mount routes
 app.use('/auth', authRoutes.router);
