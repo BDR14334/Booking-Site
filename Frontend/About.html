@@ -18,6 +18,38 @@
       background: #000; /* Make the whole wrapper black */
     }
 
+    .about-intro {
+      background: #000;
+      color: white;
+      text-align: center;
+      padding: 4rem 2rem 4rem 2rem;
+      padding-top: 5.5rem;   /* Add space INSIDE the section */
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 1s ease, transform 1s ease;
+    }
+
+    .about-intro.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .about-intro p {
+      font-size: 1.2rem;
+      line-height: 1.8;
+      margin-bottom: 1.5rem;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .about-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #ff4d00;
+      margin-bottom: 1rem;
+    }
+
     .coach-video-section {
       background-color: black; /* temporary for visibility */
       position: relative;
@@ -175,6 +207,7 @@
         font-size: 0.85rem;
         align-items: center;
         text-align: center;
+        max-width: 650px;
       }
       .coach-image-col {
         order: 1;
@@ -207,6 +240,7 @@
         padding: 1.5rem;
       }
       .about-intro {
+        margin-top: 70px;
         padding: 2rem 1rem 2rem 1rem !important;
       }
       .about-title {
@@ -218,39 +252,8 @@
         line-height: 1.8 !important;
         text-align: center !important;
         margin-bottom: 1.2rem !important;
+        max-width: 650px;
       }
-    }
-
-    .about-intro {
-      background: #000;
-      color: white;
-      text-align: center;
-      padding: 4rem 2rem 4rem 2rem;
-      padding-top: 5.5rem;   /* Add space INSIDE the section */
-      opacity: 0;
-      transform: translateY(40px);
-      transition: opacity 1s ease, transform 1s ease;
-    }
-
-    .about-intro.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .about-intro p {
-      font-size: 1.2rem;
-      line-height: 1.8;
-      margin-bottom: 1.5rem;
-      max-width: 800px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .about-title {
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: #ff4d00;
-      margin-bottom: 1rem;
     }
   </style>
 </head>
