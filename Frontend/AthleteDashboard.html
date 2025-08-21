@@ -438,10 +438,30 @@
     <input type="text" id="name" name="name" />
 
     <label for="Email">Email</label>
-    <input type="email" id="email" name="email" />
+    <input
+      type="email"
+      id="email"
+      name="email"
+      required
+      pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+      placeholder="Enter your email"
+      oninvalid="this.setCustomValidity('Please enter a valid email address.')"
+      oninput="this.setCustomValidity('')"
+    />
 
     <label for="Phone">Phone</label>
-    <input type="tel" id="phone" name="phone" />
+    <input
+      type="tel"
+      id="phone"
+      name="phone"
+      pattern="^\d{10,15}$"
+      inputmode="tel"
+      maxlength="15"
+      required
+      placeholder="Enter phone number (digits only)"
+      oninvalid="this.setCustomValidity('Please enter a valid phone number (digits only, 10-15 digits).')"
+      oninput="this.setCustomValidity('')"
+    />
 
     <button type="submit">Save Info</button>
   </form>
@@ -771,6 +791,16 @@
     const last_name = lastNameParts.join(' ') || '';
     const email = document.getElementById("email").value.trim();
     const phone = document.getElementById("phone").value.trim();
+    const phoneRegex = /^\d{10,15}$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!phoneRegex.test(phone)) {
+      alert("Please enter a valid phone number (digits only, 10-15 digits).");
+      return;
+    }
+    if (!emailRegex.test(email)) {
+      alert("Please enter a valid email address.");
+      return;
+    }
 
     try {
       const method = customerId ? 'PUT' : 'POST';
@@ -952,8 +982,8 @@
   }
 
   document.addEventListener('DOMContentLoaded', async () => {
-    await loadCustomerData(); // Sets customerId
-    await loadAthleteData();  // Loads athletes for that customer
+    await loadCustomerData();
+    await loadAthleteData();
     await loadBookedSessionsToCalendar();
     await loadReceipts();
 
@@ -965,6 +995,12 @@
       e.preventDefault();
       handleLogout();
     });
+
+    // FIX: Bind submit event to the first athlete form
+    const firstAthleteForm = document.querySelector('.athlete-box form');
+    if (firstAthleteForm) {
+      firstAthleteForm.addEventListener('submit', handleAthleteSubmit);
+    }
   });
 
 

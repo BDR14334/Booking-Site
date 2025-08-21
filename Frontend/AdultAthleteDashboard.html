@@ -401,10 +401,30 @@
     <input type="text" id="athleteName" name="athleteName" required />
 
     <label for="email">Email</label>
-    <input type="email" id="email" name="email" required />
+    <input
+      type="email"
+      id="email"
+      name="email"
+      required
+      pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+      placeholder="Enter your email"
+      oninvalid="this.setCustomValidity('Please enter a valid email address.')"
+      oninput="this.setCustomValidity('')"
+    />
 
     <label for="phone">Phone</label>
-    <input type="tel" id="phone" name="phone" required />
+    <input
+      type="tel"
+      id="phone"
+      name="phone"
+      required
+      pattern="^\d{10,15}$"
+      inputmode="tel"
+      maxlength="15"
+      placeholder="Enter phone number (digits only)"
+      oninvalid="this.setCustomValidity('Please enter a valid phone number (digits only, 10-15 digits).')"
+      oninput="this.setCustomValidity('')"
+    />
 
     <label for="dob">Date of Birth</label>
     <input type="date" id="dob" name="dob" required />
@@ -558,6 +578,16 @@
     const phone = document.getElementById("phone").value.trim();
     const dob = document.getElementById("dob").value;
     const sport = document.getElementById("sport").value;
+    const phoneRegex = /^\d{10,15}$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!phoneRegex.test(phone)) {
+      alert("Please enter a valid phone number (digits only, 10-15 digits).");
+      return;
+    }
+    if (!emailRegex.test(email)) {
+      alert("Please enter a valid email address.");
+      return;
+    }
 
     function getAge(dob) {
       if (!dob) return '';
