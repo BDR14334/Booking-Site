@@ -1,0 +1,15 @@
+/about     /About.html     200
+/contact   /Contact.html   200
+/book      /Booking.html   200
+/          /index.html     200
+/login     /Login.html     200
+/parent/dashboard    /AthleteDashboard.html     200
+/adult/dashboard    /AdultAthleteDashboard.html     200
+/coach/dashboard    /CoachDashboard.html     200
+/login              /Login.html              200
+/forgot-password    /ForgotPassword.html     200
+/reset-password     /ResetPassword.html      200
+/login/coach        /CoachLogin.html         200
+/login/admin        /AdminLogin.html         200
+/thankyou           /ThankYou.html           200
+/admin/dashboard    /AdminDashboard.html     200
