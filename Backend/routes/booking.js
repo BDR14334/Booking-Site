@@ -93,7 +93,7 @@ router.get('/coach-timeslots', async (req, res) => {
           GROUP BY timeslot_id
         ) b ON ts.id = b.timeslot_id
         WHERE ts.user_id = $1
-          AND (ts.date > CURRENT_DATE OR (ts.date = CURRENT_DATE AND ts.start_time > CURRENT_TIME))
+          AND (ts.date > CURRENT_DATE OR (ts.date = CURRENT_DATE && ts.start_time > CURRENT_TIME))
         ORDER BY ts.date, ts.start_time`,
       [coachId]
     );
@@ -114,16 +114,15 @@ router.get('/coach-timeslots', async (req, res) => {
 router.post('/booking', async (req, res) => {
   const { customer_id, athleteIds, timeslot_ids, package_id, payment } = req.body;
 
-  // ✅ Add validation right after destructuring
   if (!Array.isArray(athleteIds) || athleteIds.length === 0) {
-      return res.status(400).json({ error: 'No athletes provided' });
+    return res.status(400).json({ error: 'No athletes provided' });
   }
-  
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
 
-    // ✅ Step 1: Create order and capture order ID (whether or not payment exists)
+    // Step 1: Create order
     const orderStatus = payment ? 'paid' : 'pending';
     const orderRes = await client.query(
       `INSERT INTO orders (customer_id, package_id, status, order_date)
@@ -133,52 +132,72 @@ router.post('/booking', async (req, res) => {
     );
     const orderId = orderRes.rows[0].id;
 
-    // ✅ Step 2: Validate capacity and insert bookings
-    for (const timeslot_id of timeslot_ids) {
-      const timeslot = await client.query(
-        'SELECT max_capacity FROM timeslots WHERE id = $1 FOR UPDATE',
-        [timeslot_id]
-      );
-
-      if (timeslot.rows.length === 0) {
-        throw new Error('Timeslot not found');
-      }
-
-      const maxCapacity = timeslot.rows[0].max_capacity;
-
-      const bookingCountResult = await client.query(
-        'SELECT COUNT(*) FROM booking WHERE timeslot_id = $1',
-        [timeslot_id]
-      );
-      const currentCount = parseInt(bookingCountResult.rows[0].count);
-
-      if (currentCount + athleteIds.length > maxCapacity) {
-        throw new Error(`Timeslot ${timeslot_id} exceeds capacity`);
-      }
-
-      for (const athlete_id of athleteIds) {
-        const existing = await client.query(
-          'SELECT id FROM booking WHERE athlete_id = $1 AND timeslot_id = $2',
-          [athlete_id, timeslot_id]
+    // Step 2: Handle timeslot bookings (legacy, if needed)
+    if (Array.isArray(timeslot_ids) && timeslot_ids.length > 0) {
+      for (const timeslot_id of timeslot_ids) {
+        const timeslot = await client.query(
+          'SELECT max_capacity FROM timeslots WHERE id = $1 FOR UPDATE',
+          [timeslot_id]
         );
-        if (existing.rows.length > 0) continue;
+        if (timeslot.rows.length === 0) throw new Error('Timeslot not found');
 
-        await client.query(
-          `INSERT INTO booking (customer_id, athlete_id, timeslot_id, package_id, order_id)
-           VALUES ($1, $2, $3, $4, $5)`,
-          [customer_id, athlete_id, timeslot_id, package_id, orderId]
+        const maxCapacity = timeslot.rows[0].max_capacity;
+        const bookingCountResult = await client.query(
+          'SELECT COUNT(*) FROM booking WHERE timeslot_id = $1',
+          [timeslot_id]
         );
+        const currentCount = parseInt(bookingCountResult.rows[0].count);
+
+        if (currentCount + athleteIds.length > maxCapacity) {
+          throw new Error(`Timeslot ${timeslot_id} exceeds capacity`);
+        }
+
+        for (const athlete_id of athleteIds) {
+          const existing = await client.query(
+            'SELECT id FROM booking WHERE athlete_id = $1 AND timeslot_id = $2',
+            [athlete_id, timeslot_id]
+          );
+          if (existing.rows.length > 0) continue;
+
+          await client.query(
+            `INSERT INTO booking (customer_id, athlete_id, timeslot_id, package_id, order_id)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [customer_id, athlete_id, timeslot_id, package_id, orderId]
+          );
+        }
       }
     }
 
-    // ✅ Step 3: Save payment if provided
+    // Step 3: Save payment if provided
     if (payment) {
       await client.query(
         `INSERT INTO payments (order_id, amount, payment_method, transaction_id, payment_status)
          VALUES ($1, $2, $3, $4, $5)`,
         [orderId, payment.amount, payment.method, payment.transaction_id, payment.status]
       );
-    }      
+
+      // Fetch sessions_included from the package
+      const pkgRes = await client.query(
+        "SELECT sessions_included FROM packages WHERE id = $1",
+        [package_id]
+      );
+      if (pkgRes.rows.length === 0) throw new Error("Package not found");
+      const sessions_included = pkgRes.rows[0].sessions_included;
+
+      // Update package_usage for each athlete
+      for (const athlete_id of athleteIds) {
+        await client.query(
+          `INSERT INTO package_usage (customer_id, athlete_id, package_id, sessions_remaining, sessions_purchased)
+           VALUES ($1, $2, $3, $4, $4)
+           ON CONFLICT (customer_id, athlete_id, package_id)
+           DO UPDATE SET
+             sessions_remaining = package_usage.sessions_remaining + EXCLUDED.sessions_remaining,
+             sessions_purchased = package_usage.sessions_purchased + EXCLUDED.sessions_purchased
+          `,
+          [customer_id, athlete_id, package_id, sessions_included]
+        );
+      }
+    }
 
     await client.query('COMMIT');
     res.status(200).json({ message: 'Booking successful' });
@@ -193,53 +212,32 @@ router.post('/booking', async (req, res) => {
 
 // Post everthing for the checkout session 
 router.post('/create-checkout-session', async (req, res) => {
-  const { customerId, packageId, timeslotIds, athleteIds } = req.body;
+  const { customerId, packageId, athleteIds } = req.body;
 
   try {
-    console.log("🟡 Incoming payload:", { customerId, packageId, timeslotIds, athleteIds });
-
+    // 1. Fetch package
     const pkgRes = await pool.query(
-      'SELECT id, name, price FROM packages WHERE id = $1',
+      'SELECT id, name, price, calendly_url FROM packages WHERE id = $1',
       [packageId]
     );
 
-    console.log("🟢 Package query result:", pkgRes.rows);
-
     if (pkgRes.rows.length === 0) {
-      console.error("❌ Package not found for ID:", packageId);
       return res.status(400).json({ error: 'Invalid package selected' });
     }
 
     const pkg = pkgRes.rows[0];
-    console.log("📦 Selected package:", pkg);
+    const priceCents = Math.round(parseFloat(pkg.price) * 100);
 
-    const priceRaw = pkg.price;
-    const priceCents = Math.round(parseFloat(priceRaw) * 100);
-
-    console.log("💵 Parsed priceCents:", priceCents);
-
-    if (isNaN(priceCents)) {
-      console.error("❌ Invalid price (NaN):", priceRaw);
-      return res.status(400).json({ error: "Invalid package price" });
-    }
-    
-    // ✅ ADD THE LOG HERE
-    console.log("Creating Stripe session with:", {
-      name: pkg.name,
-      price: pkg.price,
-      unit_amount: priceCents
-    });
-
+    // 2. Insert order (pending until payment succeeds)
     const orderRes = await pool.query(
       `INSERT INTO orders (customer_id, package_id, status, order_date)
        VALUES ($1, $2, 'pending', NOW())
        RETURNING id`,
       [customerId, packageId]
     );
-
     const orderId = orderRes.rows[0].id;
 
-    // 2. Create Stripe session
+    // 3. Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [{
@@ -257,12 +255,11 @@ router.post('/create-checkout-session', async (req, res) => {
         order_id: orderId,
         customer_id: customerId,
         package_id: packageId,
-        timeslot_ids: JSON.stringify(timeslotIds),
         athlete_ids: JSON.stringify(athleteIds)
       }
     });
 
-    // 3. Store session ID in the order
+    // Save session ID
     await pool.query(
       'UPDATE orders SET stripe_session_id = $1 WHERE id = $2',
       [session.id, orderId]
@@ -322,8 +319,6 @@ router.get('/payment-success', async (req, res) => {
     const orderId = metadata.order_id;
     const customerId = metadata.customer_id;
     const packageId = metadata.package_id;
-    const athleteIds = JSON.parse(metadata.athlete_ids);
-    const timeslotIds = JSON.parse(metadata.timeslot_ids);
 
     // 1. Mark order as paid
     await pool.query(
@@ -338,18 +333,56 @@ router.get('/payment-success', async (req, res) => {
       [orderId, session.amount_total / 100, 'card', session_id, session.payment_status]
     );
 
-    // 3. Insert confirmed bookings
-    for (const timeslotId of timeslotIds) {
-      for (const athleteId of athleteIds) {
-        await pool.query(
-          `INSERT INTO booking (customer_id, athlete_id, timeslot_id, package_id, order_id)
-           VALUES ($1, $2, $3, $4, $5)`,
-          [customerId, athleteId, timeslotId, packageId, orderId]
-        );
+    // 3. Fetch package (with Calendly link and sessions_included)
+    const pkgRes = await pool.query(
+      'SELECT name, calendly_url, sessions_included FROM packages WHERE id = $1',
+      [packageId]
+    );
+    if (pkgRes.rows.length === 0) throw new Error("Package not found");
+    const pkg = pkgRes.rows[0];
+    const sessions_included = pkg.sessions_included;
+
+    // 4. Fetch customer email
+    const customerRes = await pool.query(`
+      SELECT u.email, u.first_name
+      FROM customers c
+      JOIN users u ON c.user_id = u.id
+      WHERE c.id = $1`, [customerId]);
+    const customerEmail = customerRes.rows[0].email;
+    const customerName = customerRes.rows[0].first_name;
+
+    // 5. Send email with Calendly link
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: 'robinsontech30@gmail.com',
+        pass: process.env.GMAIL_APP_PASSWORD
       }
+    });
+
+    // 6. Insert or update package_usage for each athlete
+    const athleteIds = JSON.parse(metadata.athlete_ids);
+
+    for (const athlete_id of athleteIds) {
+      await pool.query(
+        `INSERT INTO package_usage (customer_id, athlete_id, package_id, sessions_remaining, sessions_purchased)
+         VALUES ($1, $2, $3, $4, $4)
+         ON CONFLICT (customer_id, athlete_id, package_id)
+         DO UPDATE SET
+           sessions_remaining = package_usage.sessions_remaining + EXCLUDED.sessions_remaining,
+           sessions_purchased = package_usage.sessions_purchased + EXCLUDED.sessions_purchased
+        `,
+        [customerId, athlete_id, packageId, sessions_included]
+      );
     }
 
-    // 4. Redirect to thank you or home page
+    await transporter.sendMail({
+      from: 'robinsontech30@gmail.com',
+      to: customerEmail,
+      subject: `Your ZSP Package: ${pkg.name}`,
+      text: `Hi ${customerName},\n\nThank you for purchasing the "${pkg.name}" package.\n\nYou can now schedule your sessions using this link:\n${pkg.calendly_url}\n\nSee you soon!\n\n– ZSP Team`
+    });
+
     res.redirect('/ThankYou.html');
 
   } catch (err) {
@@ -358,13 +391,12 @@ router.get('/payment-success', async (req, res) => {
   }
 });
 
-// Stripe webhook (must be before express.json() middleware is applied)
+// ✅ Step 3: Stripe Webhook (optional safety net)
 router.post('/webhook', bodyParser.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   let event;
-
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
   } catch (err) {
@@ -372,111 +404,14 @@ router.post('/webhook', bodyParser.raw({ type: 'application/json' }), async (req
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // ✅ Handle successful payment intent
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     const metadata = session.metadata;
 
     try {
       const orderId = metadata.order_id;
-      const customerId = metadata.customer_id;
-      const packageId = metadata.package_id;
-      const athleteIds = JSON.parse(metadata.athlete_ids);
-      const timeslotIds = JSON.parse(metadata.timeslot_ids);
-
-      // 1. Mark order as paid
-      await pool.query(
-        `UPDATE orders SET status = 'paid' WHERE id = $1`,
-        [orderId]
-      );
-
-      // 2. Record payment
-      await pool.query(
-        `INSERT INTO payments (order_id, amount, payment_method, transaction_id, payment_status)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [orderId, session.amount_total / 100, 'card', session.id, session.payment_status]
-      );
-
-      // 3. Add bookings
-      for (const timeslotId of timeslotIds) {
-        for (const athleteId of athleteIds) {
-          await pool.query(
-            `INSERT INTO booking (customer_id, athlete_id, timeslot_id, package_id, order_id)
-            VALUES ($1, $2, $3, $4, $5)
-            ON CONFLICT (athlete_id, timeslot_id) DO NOTHING`, 
-            [customerId, athleteId, timeslotId, packageId, orderId]
-          );
-        }
-      }
-
-      // nodemailer functionality
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: 'robinsontech30@gmail.com',
-          pass: process.env.GMAIL_APP_PASSWORD
-        }
-      });
-
-      // Fetch package
-      const pkgRes = await pool.query(`SELECT title, location FROM packages WHERE id = $1`, [packageId]);
-      const packageTitle = pkgRes.rows[0].title;
-      const packageLocation = pkgRes.rows[0].location || "TBD";
-
-      // Get detailed timeslot info + coaches
-      const timeslotDetailsRes = await pool.query(`
-        SELECT ts.date, ts.start_time, ts.end_time,
-               u.first_name AS coach_first, u.last_name AS coach_last, u.email AS coach_email
-        FROM timeslots ts
-        JOIN timeslot_assignments ta ON ts.id = ta.timeslot_id
-        JOIN users u ON ta.coach_user_id = u.id
-        WHERE ts.id = ANY($1::int[])`, [timeslotIds]);
-
-      const sessionLines = timeslotDetailsRes.rows.map(row => {
-        const date = new Date(row.date).toLocaleDateString('en-US', {
-          month: 'long', day: 'numeric', year: 'numeric'
-        });
-        const startTime = row.start_time.slice(0, 5);
-        return `• ${date} at ${startTime}`;
-      }).join('\n');
-
-      const customerRes = await pool.query(`
-        SELECT u.email, u.first_name
-        FROM customers c
-        JOIN users u ON c.user_id = u.id
-        WHERE c.id = $1`, [customerId]);
-      const customerEmail = customerRes.rows[0].email;
-      const customerName = customerRes.rows[0].first_name;
-
-      // Send email to athlete
-      await transporter.sendMail({
-        from: 'robinsontech30@gmail.com',
-        to: customerEmail,
-        subject: `Your ZSP Booking for ${packageTitle}`,
-        text: `Hi ${customerName},\n\nThank you for booking with ZSP!\n\nYou have training sessions for "${packageTitle}" on:\n${sessionLines}\n\nLocation: ${packageLocation}\n\nSee you soon!\n\n– ZSP Team`
-      });
-
-      // Email each coach once
-      const coachEmailMap = {};
-      timeslotDetailsRes.rows.forEach(row => {
-        if (!coachEmailMap[row.coach_email]) {
-          coachEmailMap[row.coach_email] = { name: `${row.coach_first} ${row.coach_last}`, count: 1 };
-        } else {
-          coachEmailMap[row.coach_email].count++;
-        }
-      });
-
-      for (const [email, data] of Object.entries(coachEmailMap)) {
-        await transporter.sendMail({
-          from: 'robinsontech30@gmail.com',
-          to: email,
-          subject: `New Athlete Booking – ${packageTitle}`,
-          text: `Hi ${data.name},\n\nYou have a new athlete assigned to you for ${data.count} session(s) under the "${packageTitle}" package.\n\nCheck your dashboard for more details.\n\n– ZSP Team`
-        });
-      }
-
-      console.log(`✅ Booking confirmed for Order #${orderId}`);
-
+      await pool.query(`UPDATE orders SET status = 'paid' WHERE id = $1`, [orderId]);
+      console.log(`✅ Order ${orderId} marked as paid (via webhook)`);
     } catch (err) {
       console.error('❌ Error handling webhook booking:', err.message);
       return res.status(500).send('Internal Server Error');
@@ -485,7 +420,6 @@ router.post('/webhook', bodyParser.raw({ type: 'application/json' }), async (req
 
   res.status(200).send('Webhook received');
 });
-
 
 // Export the router to be used in app.js
 module.exports = router;

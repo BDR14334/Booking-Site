@@ -277,36 +277,32 @@ router.get('/receipts/by-customer/:customerId', async (req, res) => {
   }
 });
 
-router.get('/booked-timeslots/by-customer/:customerId', async (req, res) => {
+// --- REMOVE all timeslot/calendar endpoints ---
+// Remove: /booked-timeslots/by-customer/:customerId
+// Remove timeslot/session logic from receipts if you want to fully decouple
+
+// --- ADD: Endpoint to get all paid packages for a customer (for both youth and adult dashboards) ---
+router.get('/paid-packages/:customerId', authenticateToken, async (req, res) => {
   const { customerId } = req.params;
   try {
     const result = await pool.query(
       `SELECT 
-          b.id AS booking_id,
-          ts.id AS timeslot_id,
-          ts.date,
-          ts.start_time,
-          ts.end_time,
-          pk.name AS package_name,
-          a.first_name AS athlete_first,
-          a.last_name AS athlete_last,
-          u.first_name AS coach_first,
-          u.last_name AS coach_last
-        FROM booking b
-        JOIN timeslots ts ON b.timeslot_id = ts.id
-        JOIN packages pk ON b.package_id = pk.id
-        JOIN athlete a ON b.athlete_id = a.id
-        JOIN customer c ON b.customer_id = c.id
-        LEFT JOIN timeslot_assignments ta ON ts.id = ta.timeslot_id
-        LEFT JOIN users u ON ta.coach_user_id = u.id
-        WHERE b.customer_id = $1
-        ORDER BY ts.date, ts.start_time`,
+          pu.id as usage_id,
+          p.id as package_id, 
+          p.name, 
+          p.calendly_url, 
+          pu.sessions_remaining,
+          pu.athlete_id
+       FROM package_usage pu
+       JOIN packages p ON pu.package_id = p.id
+       WHERE pu.customer_id = $1 AND pu.sessions_remaining > 0
+       ORDER BY pu.id DESC`,
       [customerId]
     );
     res.json(result.rows);
   } catch (err) {
-    console.error('Booked timeslots error:', err);
-    res.status(500).json({ error: err.message });
+    console.error('Error fetching paid packages:', err);
+    res.status(500).json({ error: 'Error fetching paid packages' });
   }
 });
 

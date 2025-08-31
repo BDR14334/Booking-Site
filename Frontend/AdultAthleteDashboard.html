@@ -4,14 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Athlete Dashboard</title>
-
   <!-- Poppins & Icons -->
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
-
   <style>
     body {
       font-family: 'Poppins', sans-serif;
@@ -20,7 +17,6 @@
       padding: 0;
       color: white;
     }
-
     header {
       background-color: #1e1e1e;
       padding: 10px 20px;
@@ -28,39 +24,31 @@
       justify-content: space-between;
       align-items: center;
     }
-
     header h1 {
       margin: 0;
       font-size: 28px;
     }
-
     section h1 {
       text-align: center;
       font-size: 30px
     }
-
     #sidebarLinksContainer a {
       margin-left: 15px;
       color: white;
       text-decoration: none;
       font-weight: 500;
       padding: 20px 8px;
-      /* border-radius: 6px; */
       transition: background 0.2s, color 0.2s;
     }
-
     #sidebarLinksContainer a:hover {
       background-color: #333940;
       color: #fff;
     }
-
-
     section {
       padding: 30px 20px;
       max-width: 1000px;
       margin: auto;
     }
-
     h2 {
       margin-bottom: 20px;
       color: #fff;
@@ -83,7 +71,6 @@
       text-align: left;
       width: 100%;
     }
-
     form input,
     form textarea,
     form select {
@@ -97,7 +84,6 @@
       background: #fff;
       color: #222;
     }
-
     button {
       padding: 10px 20px;
       background-color: #ff4800;
@@ -106,31 +92,27 @@
       border-radius: 5px;
       cursor: pointer;
     }
-
     button:hover {
       background-color: #e03e00;
     }
-
     select {
+      width: 102%;
       padding: 0.5rem;
       margin-top: 0.25rem;
       border-radius: 0.5rem;
       background-color: white;
-      font-size: 1rem; 
+      font-size: 1rem;
       margin-bottom: 15px;
     }
-
     select:focus {
       border-color: #ff4800;
       outline: none;
       background-color: white;
     }
-
     ul {
       list-style-type: none;
       padding: 0;
     }
-
     ul li {
       background: #444;
       padding: 10px;
@@ -142,50 +124,23 @@
       width: 97%;
       background-color: white;
       padding: 20px;
-      border-radius: 10px;
-      color: black;
-      height: 600px !important;
-      min-height: 600px !important;
+      width: 300px;
+      box-sizing: border-box;
+      color: white;
+      text-align: center;
     }
-
-    .fc-toolbar-title {
-      font-size: 24px;
-      font-weight: 600;
-      color: #000000;
-    }
-
-    .fc-day-today {
-      background-color: #ffa16291 !important;
-    }
-
-    .fc-daygrid-day, .fc-timegrid-col {
+    .book-calendly-btn {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #ff4800;
+      color: white;
+      border: none;
+      border-radius: 5px;
       cursor: pointer;
     }
-
-    .fc-event[data-tooltip]:hover:after {
-      content: attr(data-tooltip);
-      position: absolute;
-      left: 50%;
-      top: -30px;
-      /* transform: translateX(-50%); */
-      background: #222;
-      color: #fff;
-      font-size: 14px;
-      padding: 6px 10px;
-      border-radius: 6px;
-      z-index: 10000;
-      pointer-events: none;
+    .book-calendly-btn:hover {
+      background-color: #e03e00;
     }
-    /* test*/
-    .fc-event[data-tooltip]:hover:after {
-      white-space: normal;
-      max-width: 180px;
-      overflow-wrap: break-word;
-      right: 0;
-      left: auto;
-      transform: none;
-    }
-
     .back-btn {
       font-family: Arial, Helvetica, sans-serif;
       position: fixed;
@@ -197,24 +152,20 @@
       text-shadow: 0 2px 8px rgb(0, 0, 0); 
       z-index: 99;
     }
-
     .back-btn:hover{
       color:#ff4800;
     }
-
     #editInfo {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 60vh; /* Adjust as needed */
+      min-height: 60vh;
     }
     #infoForm {
       width: 60%;
-      /* max-width: 400px; */
       margin: 0 auto;
     }
-
     @media (max-width: 400px) {
       .athlete-box-container {
         display: flex;
@@ -223,7 +174,6 @@
         justify-content: center;
       }
     }
-
     @media (max-width: 1024px) {
       .material-symbols-outlined {
         font-size: 2.5rem !important;
@@ -249,13 +199,6 @@
       .athlete-box {
         padding: 45px;
         width: 350px;
-        margin-left: auto;
-        margin-right: auto;
-      }
-
-      .add-athlete-box {
-        width: 350px;
-        height: 450px;
         margin-left: auto;
         margin-right: auto;
       }
@@ -287,7 +230,6 @@
           z-index: 999;
           transition: all 0.3s ease-in-out;
       }
-
       .sidebar a {
           padding: 10px 20px;
           color: white;
@@ -295,15 +237,12 @@
           text-decoration: none;
           transition: background-color 0.3s ease;
       }
-
       .sidebar a:hover {
           background-color: #495057;
       }
-
       .sidebar-link-margin {
           margin-top: 0.6rem !important;
       }
-
       .close-btn {
           background-color: #ff4800;
           color: white;
@@ -320,58 +259,28 @@
       #profileBtn {
         display: inline-block !important;
       }
-      #calendar {
-        width: 97%;
-        background-color: white;
-        padding: 20px;
-        border-radius: 10px;
-        color: black;
-        height: 500px !important;
-        min-height: 500px !important;
-      }
+    }
 
-      .fc-toolbar-title {
-        font-size: 12px;
-        font-weight: 600;
-        color: #000000;
-      }
-      .fc-toolbar {
-        display: flex !important;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-      }
-
-      .fc-toolbar-chunk {
-        flex: 1 1 0;
-      }
-
-      .fc-toolbar-title {
-        min-width: 180px; /* Adjust as needed for longest month name */
-        text-align: center;
-        flex: 2 1 0;
-      }
-
-      .fc-day-today {
-        background-color: #ffa16291 !important;
-      }
-
-      .fc-daygrid-day, .fc-timegrid-col {
-        cursor: pointer;
-      }
-
+    .booking-btn {
+      background-color: #ff4800;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .booking-btn:hover {
+      background-color: #e03e00;
+      color: #fff;
     }
   </style>
 </head>
-
 <body>
-
 <header>
   <h1>Athlete Dashboard</h1>
   <nav id="sidebarLinksContainer">
-    <a href="#athleteInfo">📋 Edit Info</a>
-    <a href="#viewSessions">📅 View Sessions</a>
-    <a href="#receipts">🧾 Receipts</a>
+    <a href="#editInfo">📋 Edit Info</a>
+    <a href="#bookSessions">📦 Book Sessions</a>
     <a href="#" id="sidebarLogoutBtn" class="text-danger px-3 py-2 text-decoration-none">🚪 Logout</a>
   </nav>
   <button id="profileBtn" class="btn btn-outline-light" style="display:none;">
@@ -382,9 +291,8 @@
 <div id="profileSidebar" class="sidebar bg-dark text-white" style="display:none;">
   <button class="btn btn-sm btn-outline-light ms-2 mt-2 close-btn" onclick="toggleSidebar()">× Close</button>
   <div class="mt-4 d-flex flex-column">
-    <a style="margin-top: 20px;" href="#athleteInfo">📋 Edit Info</a>
-    <a href="#viewSessions">📅 View Sessions</a>
-    <a href="#receipts">🧾 Receipts</a>
+    <a style="margin-top: 20px;" href="#editInfo">📋 Edit Info</a>
+    <a href="#bookSessions">📦 Book Sessions</a>
     <a href="#" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none">🚪 Logout</a>
   </div>
 </div>
@@ -393,8 +301,8 @@
   <i class="fas fa-arrow-left">Back to Home</i>
 </div>
 
-<!-- Add Athlete Info -->
-<section id="athleteInfo">
+<!-- Edit Personal Info -->
+<section id="editInfo">
   <h1>Personal Info for Booking</h1>
   <form id="athleteForm">
     <label for="athleteName">Name</label>
@@ -429,7 +337,6 @@
     <label for="dob">Date of Birth</label>
     <input type="date" id="dob" name="dob" required />
   
-
     <label for="sport">Level of Activity Daily</label>
     <select id="sport" name="sport" required>
       <option value="" selected>--</option>
@@ -442,23 +349,22 @@
   </form>
 </section>
 
-<!-- Sessions -->
-<section id="viewSessions">
-  <h1>Upcoming Sessions</h1>
-  <div id="calendar"></div>
+<!-- Book Sessions (PAID PACKAGES ONLY) -->
+<section id="bookSessions">
+  <h1>Book Your Sessions</h1>
+  <div id="packageBookingContainer" class="athlete-box-container"></div>
+  <div style="text-align:center; margin-top: 30px;">
+    <button
+      class="booking-btn"
+      onclick="window.location.href='Booking.html'"
+      style="font-size:1.2rem; padding:12px 32px; border-radius:8px; margin-top:10px;"
+    >
+      Click to Explore Packages
+    </button>
+  </div>
 </section>
 
-<!-- Receipts -->
-<section id="receipts">
-  <h1>Receipts</h1>
-  <ul id="receiptList">
-    <!--Receipts load here-->
-  </ul>
-</section>
-
-<!-- FullCalendar Script -->
 <script src="authStatus.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar/index.global.min.js"></script>
 <script>
   // Redirect to login if not authenticated
   if (!localStorage.getItem("token")) {
@@ -466,107 +372,24 @@
   }
 
   (async function checkRole() {
-  const token = localStorage.getItem("token");
-  const res = await fetch(`${API_BASE}/auth/me`, {
-    credentials: 'include',
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  const data = await res.json();
-  if (!data.user || data.user.role !== 'adult-athlete') {
-    alert('Not authorized for Adult Athlete Dashboard');
-    window.location.href = "Login.html";
-  }
-})();
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${API_BASE}/auth/me`, {
+      credentials: 'include',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (!data.user || data.user.role !== 'adult-athlete') {
+      alert('Not authorized for Adult Athlete Dashboard');
+      window.location.href = "Login.html";
+    }
+  })();
 
   function handleBackClick() {
      window.location.href = "index.html";
   }
 
-  window.addEventListener("DOMContentLoaded", () => {
-    const isFirstLogin = sessionStorage.getItem("isFirstLogin");
-
-    if (isFirstLogin === "true") {
-      const message = document.getElementById("firstLoginMessage");
-
-      // Custom message per role if needed
-      if (window.location.href.includes("AthleteDashboard")) {
-        message.textContent = "Welcome! Please fill in your parental/guardian info and add an athlete before booking.";
-      } else if (window.location.href.includes("CoachDashboard")) {
-        message.textContent = "Welcome! Please complete your profile to set availability for athlete training.";
-      }
-
-      document.getElementById("firstLoginPopup").style.display = "block";
-      sessionStorage.removeItem("isFirstLogin"); // Prevent future triggers
-    }
-  });
-
-  function closeFirstLoginPopup() {
-    document.getElementById("firstLoginPopup").style.display = "none";
-  }
-
-  // Initialize global variables for user ID, calendar instance, and customer ID
   let userId = null;
   let customerId = null;
-  let calendar = null;
-
-  async function loadBookedSessionsToCalendar() {
-    if (!customerId) return;
-    try {
-      const res = await fetch(`${API_BASE}/athlete/booked-timeslots/by-customer/${customerId}`, { credentials: 'include' });
-      const sessions = await res.json();
-      console.log('Sessions from backend:', sessions); // <-- Add this line
-
-      const extractTime = t => {
-        // Handles "05:00:00.000Z" or "05:00:00Z" or "05:00:00"
-        if (!t) return '';
-        // If t is "05:00:00.000Z" or "05:00:00Z", just take the first 8 chars
-        return t.substring(0, 8);
-      };
-
-
-      const events = sessions.map(s => {
-        const dateOnly = s.date.split('T')[0]; // Ensure we only take "YYYY-MM-DD"
-        const start = `${dateOnly}T${extractTime(s.start_time)}`;
-        const end = `${dateOnly}T${extractTime(s.end_time)}`;
-        return {
-          title: `${s.package_name} (${s.athlete_first} ${s.athlete_last})${s.coach_first ? ' w/ Coach ' + s.coach_first : ''}`,
-          start,
-          end,
-          backgroundColor: '#ff4800',
-          borderColor: '#ff4800'
-        };
-      });
-
-      console.log('Events for calendar:', events);
-
-      const calendarEl = document.getElementById('calendar');
-      if (!calendar) {
-        calendar = new FullCalendar.Calendar(calendarEl, {
-          initialView: 'dayGridMonth',
-          headerToolbar: {
-            start: 'prev,next today',
-            center: 'title',
-            end: 'dayGridMonth,timeGridWeek,timeGridDay'
-          },
-          events,
-          height: 'parent',
-          navLinks: true, // 👈 Enable day clicking
-          eventDidMount: function(info) {
-            info.el.setAttribute('data-tooltip', info.event.title);
-          },
-          dateClick: function(info) {
-            calendar.changeView('timeGridDay', info.dateStr);
-          }
-        });
-        calendar.render();
-      } else {
-        calendar.removeAllEvents();
-        events.forEach(ev => calendar.addEvent(ev));
-      }
-    } catch (err) {
-      console.error('Error loading booked sessions:', err);
-    }
-  }
 
   document.getElementById('athleteForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -639,7 +462,7 @@
       const data = await response.json();
       if (response.ok) {
         alert('Athlete info saved successfully!');
-        customerId = data.customer?.id || customerId; // update customerId if needed
+        customerId = data.customer?.id || customerId;
       } else {
         alert('Error: ' + data.error);
       }
@@ -681,54 +504,14 @@
       const athlete = await athleteRes.json();
 
       if (athleteRes.ok) {
-        customerId = athlete.customer.id; // ✅ FIXED: Store correct customer ID
+        customerId = athlete.customer.id;
 
-        document.getElementById("name").value = (athlete.customer.first_name || "") + (athlete.customer.last_name ? " " + athlete.customer.last_name : "");
+        document.getElementById("athleteName").value = (athlete.customer.first_name || "") + (athlete.customer.last_name ? " " + athlete.customer.last_name : "");
         document.getElementById("email").value = athlete.customer.email || "";
         document.getElementById("phone").value = athlete.customer.phone || "";
       }
     } catch (error) {
       console.error('Error loading client data:', error);
-    }
-  }
-
-  async function loadReceipts() {
-    if (!customerId) {
-      document.getElementById('receiptList').innerHTML = '<li>No customer found</li>';
-      return;
-    }
-
-    try {
-      const res = await fetch(`${API_BASE}/athlete/receipts/by-customer/${customerId}`, {credentials: 'include'});
-      const receipts = await res.json();
-      const receiptList = document.getElementById('receiptList');
-      receiptList.innerHTML = '';
-
-      if(!receipts.length){
-        receiptList.innerHTML = '<li>No receipts found.</li>';
-        return;
-      }
-
-      receipts.forEach(r => {
-        const dateStr = new Date(r.payment_date).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
-        const sessionsList = r.sessions ? r.sessions.join(', ') : '';
-        receiptList.innerHTML += `
-          <li>
-            <strong>Date:</strong> ${dateStr}<br>
-            <strong>Amount Paid:</strong> $${r.amount_paid}<br>
-            <strong>Nature:</strong> ${r.package_name}<br>
-            <strong>Description:</strong> ${r.package_description}<br>
-            <strong>Payer:</strong> ${r.customer_first} ${r.customer_last}<br>
-            <strong>Athlete:</strong> ${r.athlete_first} ${r.athlete_last}<br>
-            <strong>Coach:</strong> ${r.coach_first} ${r.coach_last}<br>
-            <strong>Sessions:</strong> ${sessionsList}<br>
-            <strong>Payment Method:</strong> ${r.payment_method} ${r.transaction_id ? '(Transaction ID: ' + r.transaction_id + ')' : ''}<br>
-            <strong>Status:</strong> ${r.payment_status}
-          </li>
-        `;
-      });
-    } catch (err) {
-      document.getElementById('receiptList').innerHTML = '<li>Error loading receipts.</li>';
     }
   }
 
@@ -753,10 +536,10 @@
   });
 
   async function handleLogout() {
-    try {
+    try {      // Hit your logout route to clear the cookie
+
       // Hit your logout route to clear the cookie
       const token = localStorage.getItem("token");
-
       fetch(`${API_BASE}/auth/logout`, {
         method: 'POST',
         credentials: 'include',
@@ -774,32 +557,43 @@
     window.location.href = "index.html";
   }
 
-  document.addEventListener('DOMContentLoaded', async () => {
-    await fetchLoggedInUser(); // Sets userId
-
-    // Fetch athlete/customer data for this user
+  // Load paid packages for booking
+  async function loadPaidPackages() {
+    if (!customerId) return;
     try {
-      const res = await fetch(`${API_BASE}/athlete/adult-athlete/by-user/${userId}`, {
-        credentials: 'include'
+      const res = await fetch(`${API_BASE}/athlete/paid-packages/${customerId}`, { credentials: 'include' });
+      const packages = await res.json();
+
+      const container = document.getElementById('packageBookingContainer');
+      container.innerHTML = '';
+
+      if (!packages.length) {
+        container.innerHTML = '<p>No paid packages found. Purchase a package to book sessions.</p>';
+        return;
+      }
+
+      packages.forEach(pkg => {
+        const box = document.createElement('div');
+        box.className = 'athlete-box';
+
+        box.innerHTML = `
+          <h3>${pkg.name}</h3>
+          <p>Sessions Remaining: ${pkg.sessions_remaining ?? 'N/A'}</p>
+          <button class="book-calendly-btn" onclick="window.open('${pkg.calendly_url}', '_blank')">
+            Book Sessions
+          </button>
+        `;
+        container.appendChild(box);
       });
-      if (!res.ok) throw new Error('Failed to load athlete info');
-      const data = await res.json();
-
-      // Fill the form fields
-      document.getElementById("athleteName").value = `${data.first_name || ""} ${data.last_name || ""}`;
-      document.getElementById("email").value = data.email || "";
-      document.getElementById("phone").value = data.phone || "";
-      document.getElementById("dob").value = data.dob ? data.dob.substring(0, 10) : ""; // Format as YYYY-MM-DD
-      document.getElementById("sport").value = data.sport || "";
-
-      // Save customerId if needed for other requests
-      customerId = data.customer_id;
     } catch (err) {
-      console.error('Error loading athlete/customer data:', err);
+      console.error('Error loading paid packages:', err);
+      document.getElementById('packageBookingContainer').innerHTML = '<p>Error loading packages.</p>';
     }
+  }
 
-    // Load other dashboard data
-    await loadBookedSessionsToCalendar();
+  document.addEventListener('DOMContentLoaded', async () => {
+    await loadCustomerData();
+    await loadPaidPackages();
     await loadReceipts();
 
     document.getElementById("logoutBtn")?.addEventListener("click", function(e) {
@@ -814,34 +608,25 @@
 
   async function autofillAthleteInfoIfFirstLogin() {
     if (localStorage.getItem("athleteAutofilled") === "true") {
-      return; // Already autofilled once
+      return;
     }
-
     const token = localStorage.getItem("token");
-
     try {
       const res = await fetch(`${API_BASE}/athlete/me`, {
         method: 'GET',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         credentials: 'include'
       });
-
       if (!res.ok) return;
-
       const data = await res.json();
-
-      // Only autofill if fields are empty (don't overwrite user edits)
       const nameInput = document.getElementById("athleteName");
       const emailInput = document.getElementById("email");
-
       if (nameInput && !nameInput.value) {
         nameInput.value = `${data.first_name || ""} ${data.last_name || ""}`.trim();
       }
       if (emailInput && !emailInput.value) {
         emailInput.value = data.email || "";
       }
-
-      // Set flag so this logic only runs once
       localStorage.setItem("athleteAutofilled", "true");
     } catch (err) {
       console.error("Failed to autofill athlete info", err);
@@ -853,34 +638,34 @@
   });
 </script>
 
-  <div id="firstLoginPopup" style="
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: #343a40;
+<div id="firstLoginPopup" style="
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #343a40;
+  color: white;
+  padding: 25px 30px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+  z-index: 9999;
+  font-size: 18px;
+  text-align: center;
+  max-width: 400px;
+">
+  <p id="firstLoginMessage">Welcome! Please complete your profile before booking sessions.</p>
+  <button onclick="closeFirstLoginPopup()" style="
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #ff4800;
     color: white;
-    padding: 25px 30px;
-    border-radius: 12px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
-    z-index: 9999;
-    font-size: 18px;
-    text-align: center;
-    max-width: 400px;
-  ">
-    <p id="firstLoginMessage">Welcome! Please complete your profile before booking sessions.</p>
-    <button onclick="closeFirstLoginPopup()" style="
-      margin-top: 20px;
-      padding: 10px 20px;
-      background-color: #ff4800;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 16px;
-    ">OK</button>
-  </div>
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+  ">OK</button>
+</div>
 
 </body>
 </html>

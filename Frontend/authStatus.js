@@ -54,14 +54,12 @@ function buildSidebarLinks(role) {
     sidebarLinksContainer.insertAdjacentHTML('beforeend', `
       <a href="AthleteDashboard.html#editInfo" class="text-white px-3 py-2 text-decoration-none">📋 Edit Info</a>
       <a href="AthleteDashboard.html#athleteInfo" class="text-white px-3 py-2 text-decoration-none">➕ Add Athlete</a>
-      <a href="AthleteDashboard.html#viewSessions" class="text-white px-3 py-2 text-decoration-none">📅 View Sessions</a>
-      <a href="AthleteDashboard.html#receipts" class="text-white px-3 py-2 text-decoration-none">🧾 Receipts</a>
+      <a href="AthleteDashboard.html#bookSessions" class="text-white px-3 py-2 text-decoration-none">📅 Book Sessions</a>
     `);
   } else if (role === "adult-athlete") {
     sidebarLinksContainer.insertAdjacentHTML('beforeend', `
       <a href="AdultAthleteDashboard.html#athleteInfo" class="text-white px-3 py-2 text-decoration-none">📋 Edit Info</a>
-      <a href="AdultAthleteDashboard.html#viewSessions" class="text-white px-3 py-2 text-decoration-none">📅 View Sessions</a>
-      <a href="AdultAthleteDashboard.html#receipts" class="text-white px-3 py-2 text-decoration-none">🧾 Receipts</a>
+      <a href="AdultAthleteDashboard.html#bookSessions" class="text-white px-3 py-2 text-decoration-none">📅 Book Sessions</a>
     `);
   }
 }

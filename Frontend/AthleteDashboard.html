@@ -4,14 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Athlete Dashboard</title>
-
   <!-- Poppins & Icons -->
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
-
   <style>
     body {
       font-family: 'Poppins', sans-serif;
@@ -130,55 +127,6 @@
       border-radius: 6px;
     }
 
-    #calendar {
-      width: 97%;
-      background-color: white;
-      padding: 20px;
-      border-radius: 10px;
-      color: black;
-      height: 600px !important;
-      min-height: 600px !important;
-    }
-
-    .fc-toolbar-title {
-      font-size: 24px;
-      font-weight: 600;
-      color: #000000;
-    }
-
-    .fc-day-today {
-      background-color: #ffa16291 !important;
-    }
-
-    .fc-daygrid-day, .fc-timegrid-col {
-      cursor: pointer;
-    }
-
-    .fc-event[data-tooltip]:hover:after {
-      content: attr(data-tooltip);
-      position: absolute;
-      left: 50%;
-      top: -30px;
-      /* transform: translateX(-50%); */
-      background: #222;
-      color: #fff;
-      font-size: 14px;
-      padding: 6px 10px;
-      border-radius: 6px;
-      z-index: 10000;
-      pointer-events: none;
-    }
-    /* test*/
-    .fc-event[data-tooltip]:hover:after {
-      white-space: normal;
-      max-width: 180px;
-      overflow-wrap: break-word;
-      right: 0;
-      left: auto;
-      transform: none;
-    }
-
-    /* Athlete Box Styles */
     .athlete-box-container {
       display: flex;
       flex-wrap: wrap;
@@ -194,6 +142,7 @@
       width: 300px;
       box-sizing: border-box;
       color: white;
+      text-align: center;
     }
 
     .athlete-box input[name="athleteName"] {
@@ -355,59 +304,29 @@
       #profileBtn {
         display: inline-block !important;
       }
-      #calendar {
-        width: 97%;
-        background-color: white;
-        padding: 20px;
-        border-radius: 10px;
-        color: black;
-        height: 500px !important;
-        min-height: 500px !important;
-      }
+    }
 
-      .fc-toolbar-title {
-        font-size: 12px;
-        font-weight: 600;
-        color: #000000;
-      }
-      .fc-toolbar {
-        display: flex !important;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-      }
-
-      .fc-toolbar-chunk {
-        flex: 1 1 0;
-      }
-
-      .fc-toolbar-title {
-        min-width: 180px; /* Adjust as needed for longest month name */
-        text-align: center;
-        flex: 2 1 0;
-      }
-
-      .fc-day-today {
-        background-color: #ffa16291 !important;
-      }
-
-      .fc-daygrid-day, .fc-timegrid-col {
-        cursor: pointer;
-      }
-
+    .booking-btn {
+      background-color: #ff4800;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .booking-btn:hover {
+      background-color: #e03e00;
+      color: #fff;
     }
   </style>
 </head>
-
 <body>
-
 <header>
   <h1>Athlete Dashboard</h1>
   <nav id="sidebarLinksContainer">
     <a href="#editInfo">📋 Edit Info</a>
     <a href="#athleteInfo">➕ Add Athlete</a>
-    <a href="#viewSessions">📅 View Sessions</a>
-    <a href="#receipts">🧾 Receipts</a>
+    <a href="#bookSessions">📦 Book Sessions</a>
     <a href="#" id="sidebarLogoutBtn" class="text-danger px-3 py-2 text-decoration-none">🚪 Logout</a>
   </nav>
   <button id="profileBtn" class="btn btn-outline-light" style="display:none;">
@@ -420,8 +339,7 @@
   <div class="mt-4 d-flex flex-column">
     <a style="margin-top: 20px;" href="#editInfo">📋 Edit Info</a>
     <a href="#athleteInfo">➕ Add Athlete</a>
-    <a href="#viewSessions">📅 View Sessions</a>
-    <a href="#receipts">🧾 Receipts</a>
+    <a href="#bookSessions">📦 Book Sessions</a>
     <a href="#" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none">🚪 Logout</a>
   </div>
 </div>
@@ -511,23 +429,22 @@
   </div>
 </section>
 
-<!-- Sessions -->
-<section id="viewSessions">
-  <h1>Upcoming Sessions</h1>
-  <div id="calendar"></div>
+<!-- Book Sessions (PAID PACKAGES ONLY) -->
+<section id="bookSessions">
+  <h1>Book Your Sessions</h1>
+  <div id="packageBookingContainer" class="athlete-box-container"></div>
+  <div style="text-align:center; margin-top: 30px;">
+    <button
+      class="booking-btn"
+      onclick="window.location.href='Booking.html'"
+      style="font-size:1.2rem; padding:12px 32px; border-radius:8px; margin-top:10px;"
+    >
+      Click to Explore Packages
+    </button>
+  </div>
 </section>
 
-<!-- Receipts -->
-<section id="receipts">
-  <h1>Receipts</h1>
-  <ul id="receiptList">
-    <!--Receipts load here-->
-  </ul>
-</section>
-
-<!-- FullCalendar Script -->
 <script src="authStatus.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar/index.global.min.js"></script>
 <script>
   // Redirect to login if not authenticated
   if (!localStorage.getItem("token")) {
@@ -576,67 +493,43 @@
   // Initialize global variables for user ID, calendar instance, and customer ID
   let userId = null;
   let customerId = null;
-  let calendar = null;
 
-  async function loadBookedSessionsToCalendar() {
-    if (!customerId) return;
-    try {
-      const res = await fetch(`${API_BASE}/athlete/booked-timeslots/by-customer/${customerId}`, { credentials: 'include' });
-      const sessions = await res.json();
-      console.log('Sessions from backend:', sessions); // <-- Add this line
+  async function loadPaidPackages() {
+  if (!customerId) return;
+  const token = localStorage.getItem("token");
+  try {
+    const res = await fetch(`${API_BASE}/athlete/paid-packages/${customerId}`, {
+      credentials: 'include',
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+    const packages = await res.json();
 
-      const extractTime = t => {
-        // Handles "05:00:00.000Z" or "05:00:00Z" or "05:00:00"
-        if (!t) return '';
-        // If t is "05:00:00.000Z" or "05:00:00Z", just take the first 8 chars
-        return t.substring(0, 8);
-      };
+    const container = document.getElementById('packageBookingContainer');
+    container.innerHTML = '';
 
-
-      const events = sessions.map(s => {
-        const dateOnly = s.date.split('T')[0]; // Ensure we only take "YYYY-MM-DD"
-        const start = `${dateOnly}T${extractTime(s.start_time)}`;
-        const end = `${dateOnly}T${extractTime(s.end_time)}`;
-        return {
-          title: `${s.package_name} (${s.athlete_first} ${s.athlete_last})${s.coach_first ? ' w/ Coach ' + s.coach_first : ''}`,
-          start,
-          end,
-          backgroundColor: '#ff4800',
-          borderColor: '#ff4800'
-        };
-      });
-
-      console.log('Events for calendar:', events);
-
-      const calendarEl = document.getElementById('calendar');
-      if (!calendar) {
-        calendar = new FullCalendar.Calendar(calendarEl, {
-          initialView: 'dayGridMonth',
-          headerToolbar: {
-            start: 'prev,next today',
-            center: 'title',
-            end: 'dayGridMonth,timeGridWeek,timeGridDay'
-          },
-          events,
-          height: 'parent',
-          navLinks: true, // 👈 Enable day clicking
-          eventDidMount: function(info) {
-            info.el.setAttribute('data-tooltip', info.event.title);
-          },
-          dateClick: function(info) {
-            calendar.changeView('timeGridDay', info.dateStr);
-          }
-        });
-        calendar.render();
-      } else {
-        calendar.removeAllEvents();
-        events.forEach(ev => calendar.addEvent(ev));
-      }
-    } catch (err) {
-      console.error('Error loading booked sessions:', err);
+    if (!packages.length) {
+      container.innerHTML = '<p>No paid packages found. Purchase a package to book sessions.</p>';
+      return;
     }
-  }
 
+    packages.forEach(pkg => {
+      const box = document.createElement('div');
+      box.className = 'athlete-box';
+
+      box.innerHTML = `
+        <h3>${pkg.name}</h3>
+        <p>Sessions Remaining: ${pkg.sessions_remaining ?? 'N/A'}</p>
+        <button class="book-calendly-btn" onclick="window.open('${pkg.calendly_url}', '_blank')">
+          Book Sessions
+        </button>
+      `;
+      container.appendChild(box);
+    });
+  } catch (err) {
+    console.error('Error loading paid packages:', err);
+    document.getElementById('packageBookingContainer').innerHTML = '<p>Error loading packages.</p>';
+  }
+}
 
   async function handleAthleteSubmit(e) {
     e.preventDefault();
@@ -801,7 +694,7 @@
       alert("Please enter a valid email address.");
       return;
     }
-
+    
     try {
       const method = customerId ? 'PUT' : 'POST';
       const url = customerId
@@ -899,46 +792,6 @@
     }
   }
 
-  async function loadReceipts() {
-    if (!customerId) {
-      document.getElementById('receiptList').innerHTML = '<li>No customer found</li>';
-      return;
-    }
-
-    try {
-      const res = await fetch(`${API_BASE}/athlete/receipts/by-customer/${customerId}`, {credentials: 'include'});
-      const receipts = await res.json();
-      const receiptList = document.getElementById('receiptList');
-      receiptList.innerHTML = '';
-
-      if(!receipts.length){
-        receiptList.innerHTML = '<li>No receipts found.</li>';
-        return;
-      }
-
-      receipts.forEach(r => {
-        const dateStr = new Date(r.payment_date).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
-        const sessionsList = r.sessions ? r.sessions.join(', ') : '';
-        receiptList.innerHTML += `
-          <li>
-            <strong>Date:</strong> ${dateStr}<br>
-            <strong>Amount Paid:</strong> $${r.amount_paid}<br>
-            <strong>Nature:</strong> ${r.package_name}<br>
-            <strong>Description:</strong> ${r.package_description}<br>
-            <strong>Payer:</strong> ${r.customer_first} ${r.customer_last}<br>
-            <strong>Athlete:</strong> ${r.athlete_first} ${r.athlete_last}<br>
-            <strong>Coach:</strong> ${r.coach_first} ${r.coach_last}<br>
-            <strong>Sessions:</strong> ${sessionsList}<br>
-            <strong>Payment Method:</strong> ${r.payment_method} ${r.transaction_id ? '(Transaction ID: ' + r.transaction_id + ')' : ''}<br>
-            <strong>Status:</strong> ${r.payment_status}
-          </li>
-        `;
-      });
-    } catch (err) {
-      document.getElementById('receiptList').innerHTML = '<li>Error loading receipts.</li>';
-    }
-  }
-
   function toggleSidebar() {
     const sidebar = document.getElementById("profileSidebar");
     sidebar.style.display = sidebar.style.display === "block" ? "none" : "block";
@@ -984,7 +837,7 @@
   document.addEventListener('DOMContentLoaded', async () => {
     await loadCustomerData();
     await loadAthleteData();
-    await loadBookedSessionsToCalendar();
+    await loadPaidPackages();
     await loadReceipts();
 
     document.getElementById("logoutBtn")?.addEventListener("click", function(e) {
@@ -1044,34 +897,34 @@
   });
 </script>
 
-  <div id="firstLoginPopup" style="
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: #343a40;
+<div id="firstLoginPopup" style="
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #343a40;
+  color: white;
+  padding: 25px 30px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+  z-index: 9999;
+  font-size: 18px;
+  text-align: center;
+  max-width: 400px;
+">
+  <p id="firstLoginMessage">Welcome! Please complete your profile before booking sessions.</p>
+  <button onclick="closeFirstLoginPopup()" style="
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #ff4800;
     color: white;
-    padding: 25px 30px;
-    border-radius: 12px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
-    z-index: 9999;
-    font-size: 18px;
-    text-align: center;
-    max-width: 400px;
-  ">
-    <p id="firstLoginMessage">Welcome! Please complete your profile before booking sessions.</p>
-    <button onclick="closeFirstLoginPopup()" style="
-      margin-top: 20px;
-      padding: 10px 20px;
-      background-color: #ff4800;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 16px;
-    ">OK</button>
-  </div>
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+  ">OK</button>
+</div>
 
 </body>
 </html>
