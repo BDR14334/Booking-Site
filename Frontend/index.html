@@ -325,10 +325,10 @@
       </div>
       <div class="nav-menu" id="navMenu">
         <ul>
-          <li><a href="index.html" class="link">Home</a></li>
-          <li><a href="About.html" class="link">About</a></li>
-          <li><a href="Booking.html" class="link">Book</a></li>
-          <li><a href="Contact.html" class="link">Contact</a></li>
+          <li><a href="/home" class="link">Home</a></li>
+          <li><a href="/about" class="link">About</a></li>
+          <li><a href="/booking" class="link">Book</a></li>
+          <li><a href="/contact" class="link">Contact</a></li>
         </ul>
       </div>
       <div class="nav-button" id="authButtons">
@@ -353,10 +353,10 @@
       <button class="btn btn-sm btn-outline-light ms-2 mt-2 close-btn" onclick="toggleMenuSidebar()">× Close</button>
       <h4 style="margin-left:1.5rem; color:#fff;">Menu</h4>
       <div class="mt-4 d-flex flex-column">
-        <a href="index.html" class="text-white px-3 py-2 text-decoration-none">🏠 Home</a>
-        <a href="About.html" class="text-white px-3 py-2 text-decoration-none">ℹ️ About</a>
-        <a href="Booking.html" class="text-white px-3 py-2 text-decoration-none">📅 Book</a>
-        <a href="Contact.html" class="text-white px-3 py-2 text-decoration-none">✉️ Contact</a>
+        <a href="/home" class="text-white px-3 py-2 text-decoration-none">🏠 Home</a>
+        <a href="/about" class="text-white px-3 py-2 text-decoration-none">ℹ️ About</a>
+        <a href="/booking" class="text-white px-3 py-2 text-decoration-none">📅 Book</a>
+        <a href="/contact" class="text-white px-3 py-2 text-decoration-none">✉️ Contact</a>
       </div>
     </div>
 
@@ -365,7 +365,7 @@
         <source src="video/ZSP.mp4" type="video/mp4" />
       </video>
       <div class="hero-overlay">
-        <button class="book-now-btn" onclick="window.location.href='Booking.html'">Book Now</button>
+        <button class="book-now-btn" onclick="window.location.href='/booking'">Book Now</button>
       </div>
     </section>
 
@@ -378,11 +378,11 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     function login() {
-      window.location.href = "Login.html";
+      window.location.href = "/login";
     }
 
     function register() {
-      window.location.href = "Login.html?register=true";
+      window.location.href = "/login?register=true";
     }
 
     function toggleMenuSidebar() {

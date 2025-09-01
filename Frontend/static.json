@@ -1,19 +1,20 @@
 {
   "clean_urls": true,
-  "redirects": [
-    { "source": "/athlete-dashboard", "destination": "/AthleteDashboard.html" },
-    { "source": "/adult-athlete-dashboard", "destination": "/AdultAthleteDashboard.html" },
-    { "source": "/booking", "destination": "/Booking.html" },
-    { "source": "/home", "destination": "/Home.html" },
-    { "source": "/about", "destination": "/About.html" },
-    { "source": "/admin-dashboard", "destination": "/AdminDashboard.html" },
-    { "source": "/contact", "destination": "/Contact.html" },
-    { "source": "/coach-dashboard", "destination": "/CoachDashboard.html" },
-    { "source": "/login", "destination": "/Login.html" },
-    { "source": "/register", "destination": "/Register.html" },
-    { "source": "/thank-you", "destination": "/ThankYou.html" },
-    { "source": "/forgot-password", "destination": "/ForgotPassword.html" },
-    { "source": "/reset-password", "destination": "/ResetPassword.html" }
+  "routes": [
+    { "source": "/athlete-dashboard", "destination": "/athlete-dashboard.html" },
+    { "source": "/adult-athlete-dashboard", "destination": "/adult-athlete-dashboard.html" },
+    { "source": "/booking", "destination": "/booking.html" },
+    { "source": "/home", "destination": "/index.html" },
+    { "source": "/about", "destination": "/about.html" },
+    { "source": "/admin-dashboard", "destination": "/admin-dashboard.html" },
+    { "source": "/contact", "destination": "/contact.html" },
+    { "source": "/coach-dashboard", "destination": "/coach-dashboard.html" },
+    { "source": "/login", "destination": "/login.html" },
+    { "source": "/register", "destination": "/register.html" },
+    { "source": "/thank-you", "destination": "/thank-you.html" },
+    { "source": "/forgot-password", "destination": "/forgot-password.html" },
+    { "source": "/reset-password", "destination": "/reset-password.html" }
   ]
 }
+
 
