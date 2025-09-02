@@ -304,7 +304,7 @@
       </button>
       <ul class="dropdown-menu dropdown-menu-end">
         <li><a class="dropdown-item" href="#" id="toggleSidebar">Admin Menu</a></li>
-        <li><a class="dropdown-item" href="/home" id="toggleSite">Website</a></li>
+        <li><a class="dropdown-item" href="/" id="toggleSite">Website</a></li>
         <li><a class="dropdown-item text-danger" href="#" onclick="logout()">Logout</a></li>
       </ul>
     </div>
@@ -452,7 +452,7 @@
       }
       localStorage.removeItem("token");
       sessionStorage.clear();
-      window.location.href = "/home";
+      window.location.href = "/";
     }
 
     document.addEventListener('DOMContentLoaded', async function () {
@@ -465,12 +465,12 @@
         });
         const data = await res.json();
         if (!res.ok || !data.loggedIn || data.user.role !== 'admin') {
-          window.location.href = "/home";
+          window.location.href = "/";
           return;
         }
       } catch (err) {
         console.error("Access check failed", err);
-        window.location.href = "/home";
+        window.location.href = "/";
         return;
       }
 

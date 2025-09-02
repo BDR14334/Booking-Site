@@ -4,7 +4,7 @@
     { "source": "/athlete-dashboard", "destination": "/athlete-dashboard.html" },
     { "source": "/adult-athlete-dashboard", "destination": "/adult-athlete-dashboard.html" },
     { "source": "/booking", "destination": "/booking.html" },
-    { "source": "/home", "destination": "/index.html" },
+    { "source": "/", "destination": "/index.html" },
     { "source": "/about", "destination": "/about.html" },
     { "source": "/admin-dashboard", "destination": "/admin-dashboard.html" },
     { "source": "/contact", "destination": "/contact.html" },

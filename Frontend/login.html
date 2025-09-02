@@ -33,7 +33,7 @@
         <!-- Navigation links -->
         <div class="nav-menu" id="navMenu">
             <ul>
-                <li><a href="/home" class="link">Home</a></li>
+                <li><a href="/" class="link">Home</a></li>
                 <li><a href="/about" class="link">About</a></li>
                 <li><a href="/booking" class="link">Book</a></li>
                 <li><a href="/contact" class="link">Contact</a></li>
@@ -65,7 +65,7 @@
       <button class="btn btn-sm btn-outline-light ms-2 mt-2 close-btn" onclick="toggleMenuSidebar()">× Close</button>
       <h4 style="margin-left:1.5rem; color:#fff;">Menu</h4>
       <div class="mt-4 d-flex flex-column">
-        <a href="/home" class="text-white px-3 py-2 text-decoration-none">🏠 Home</a>
+        <a href="/" class="text-white px-3 py-2 text-decoration-none">🏠 Home</a>
         <a href="/about" class="text-white px-3 py-2 text-decoration-none">ℹ️ About</a>
         <a href="/booking" class="text-white px-3 py-2 text-decoration-none">📅 Book</a>
         <a href="/contact" class="text-white px-3 py-2 text-decoration-none">✉️ Contact</a>
@@ -205,7 +205,7 @@
             });
             const data = await res.json();
             if (res.ok && data.user) {
-                window.location.href = "/home"; // Redirect to home if already logged in
+                window.location.href = "/"; // Redirect to home if already logged in
                 return;
             }
             } catch (err) {
@@ -257,7 +257,7 @@
                 } else if (user.role === "admin") {
                     window.location.href = "/admin-dashboard";
                 } else {
-                    window.location.href = "/home"; // fallback
+                    window.location.href = "/"; // fallback
                 }
             } else {
                 showCustomAlert(data.error || "Login failed.");
