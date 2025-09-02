@@ -304,7 +304,7 @@
       </button>
       <ul class="dropdown-menu dropdown-menu-end">
         <li><a class="dropdown-item" href="#" id="toggleSidebar">Admin Menu</a></li>
-        <li><a class="dropdown-item" href="index.html" id="toggleSite">Website</a></li>
+        <li><a class="dropdown-item" href="/home" id="toggleSite">Website</a></li>
         <li><a class="dropdown-item text-danger" href="#" onclick="logout()">Logout</a></li>
       </ul>
     </div>
@@ -436,7 +436,7 @@
     
     // Redirect to login if not authenticated
     if (!localStorage.getItem("token")) {
-      window.location.href = "Login.html";
+      window.location.href = "/login";
     }
 
     function logout() {
@@ -452,7 +452,7 @@
       }
       localStorage.removeItem("token");
       sessionStorage.clear();
-      window.location.href = "index.html";
+      window.location.href = "/home";
     }
 
     document.addEventListener('DOMContentLoaded', async function () {
@@ -465,12 +465,12 @@
         });
         const data = await res.json();
         if (!res.ok || !data.loggedIn || data.user.role !== 'admin') {
-          window.location.href = "index.html";
+          window.location.href = "/home";
           return;
         }
       } catch (err) {
         console.error("Access check failed", err);
-        window.location.href = "index.html";
+        window.location.href = "/home";
         return;
       }
 

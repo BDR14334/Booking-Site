@@ -33,10 +33,10 @@
         <!-- Navigation links -->
         <div class="nav-menu" id="navMenu">
             <ul>
-                <li><a href="index.html" class="link">Home</a></li>
-                <li><a href="About.html" class="link">About</a></li>
-                <li><a href="Booking.html" class="link">Book</a></li>
-                <li><a href="Contact.html" class="link">Contact</a></li>
+                <li><a href="/home" class="link">Home</a></li>
+                <li><a href="/about" class="link">About</a></li>
+                <li><a href="/booking" class="link">Book</a></li>
+                <li><a href="/contact" class="link">Contact</a></li>
             </ul>
         </div>
 
@@ -65,10 +65,10 @@
       <button class="btn btn-sm btn-outline-light ms-2 mt-2 close-btn" onclick="toggleMenuSidebar()">× Close</button>
       <h4 style="margin-left:1.5rem; color:#fff;">Menu</h4>
       <div class="mt-4 d-flex flex-column">
-        <a href="index.html" class="text-white px-3 py-2 text-decoration-none">🏠 Home</a>
-        <a href="About.html" class="text-white px-3 py-2 text-decoration-none">ℹ️ About</a>
-        <a href="Booking.html" class="text-white px-3 py-2 text-decoration-none">📅 Book</a>
-        <a href="Contact.html" class="text-white px-3 py-2 text-decoration-none">✉️ Contact</a>
+        <a href="/home" class="text-white px-3 py-2 text-decoration-none">🏠 Home</a>
+        <a href="/about" class="text-white px-3 py-2 text-decoration-none">ℹ️ About</a>
+        <a href="/booking" class="text-white px-3 py-2 text-decoration-none">📅 Book</a>
+        <a href="/contact" class="text-white px-3 py-2 text-decoration-none">✉️ Contact</a>
       </div>
     </div>
 
@@ -105,7 +105,7 @@
                     <label for="login-check"> Remember Me</label>
                 </div>
                 <div class="two">
-                    <label><a href="ForgotPassword.html">Forgot password?</a></label>
+                    <label><a href="/forgot-password">Forgot password?</a></label>
                 </div>
             </div>
         </div>
@@ -205,7 +205,7 @@
             });
             const data = await res.json();
             if (res.ok && data.user) {
-                window.location.href = "index.html"; // Redirect to home if already logged in
+                window.location.href = "/home"; // Redirect to home if already logged in
                 return;
             }
             } catch (err) {
@@ -249,15 +249,15 @@
 
                 // Redirect based on user.role
                 if (user.role === "adult-athlete") {
-                    window.location.href = "AdultAthleteDashboard.html";
+                    window.location.href = "/adult-athlete-dashboard";
                 } else if (user.role === "athlete") {
-                    window.location.href = "AthleteDashboard.html";
+                    window.location.href = "/athlete-dashboard";
                 } else if (user.role === "coach") {
-                    window.location.href = "CoachDashboard.html";
+                    window.location.href = "/coach-dashboard";
                 } else if (user.role === "admin") {
-                    window.location.href = "AdminDashboard.html";
+                    window.location.href = "/admin-dashboard";
                 } else {
-                    window.location.href = "index.html"; // fallback
+                    window.location.href = "/home"; // fallback
                 }
             } else {
                 showCustomAlert(data.error || "Login failed.");

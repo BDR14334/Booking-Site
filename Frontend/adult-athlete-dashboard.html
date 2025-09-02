@@ -356,7 +356,7 @@
   <div style="text-align:center; margin-top: 30px;">
     <button
       class="booking-btn"
-      onclick="window.location.href='Booking.html'"
+      onclick="window.location.href='/booking'"
       style="font-size:1.2rem; padding:12px 32px; border-radius:8px; margin-top:10px;"
     >
       Click to Explore Packages
@@ -368,7 +368,7 @@
 <script>
   // Redirect to login if not authenticated
   if (!localStorage.getItem("token")) {
-    window.location.href = "Login.html";
+    window.location.href = "/login";
   }
 
   (async function checkRole() {
@@ -380,12 +380,12 @@
     const data = await res.json();
     if (!data.user || data.user.role !== 'adult-athlete') {
       alert('Not authorized for Adult Athlete Dashboard');
-      window.location.href = "Login.html";
+      window.location.href = "/login";
     }
   })();
 
   function handleBackClick() {
-     window.location.href = "index.html";
+     window.location.href = "/home";
   }
 
   let userId = null;
@@ -489,7 +489,7 @@
       }
     } catch (error) {
       alert('Session expired or unauthorized. Please log in again.');
-      window.location.href = "Login.html";
+      window.location.href = "/login";
     }
   }
 
@@ -554,7 +554,7 @@
     sessionStorage.clear();
 
     // Redirect to homepage
-    window.location.href = "index.html";
+    window.location.href = "/home";
   }
 
   // Load paid packages for booking

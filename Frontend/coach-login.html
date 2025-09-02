@@ -115,7 +115,7 @@
 
         const data = await res.json();
         if (res.ok) {
-          window.location.href = "Login.html";
+          window.location.href = "/login";
         } else {
           showCustomAlert(data.error || "Registration failed.");
         }

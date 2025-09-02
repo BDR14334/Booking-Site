@@ -367,7 +367,7 @@
   <script>
   // Redirect to login if not authenticated
   if (!localStorage.getItem("token")) {
-    window.location.href = "Login.html";
+    window.location.href = "/login";
   }
   // Global variables to store logged-in user ID, FullCalendar instance, and coach ID
   let userId = null;
@@ -376,7 +376,7 @@
 
   // Back Button 
   function handleBackClick() {
-     window.location.href = "index.html";
+     window.location.href = "/home";
   }
 
   // if first login function
@@ -442,7 +442,7 @@
     } catch (error) {
       console.error('Error fetching user data:', error);
       alert('Session expired or unauthorized. Please log in again.');
-      window.location.href = "Login.html";
+      window.location.href = "/login";
     }
   }
 
@@ -790,7 +790,7 @@
       sessionStorage.clear();
 
       // Redirect to homepage
-      window.location.href = "index.html";
+      window.location.href = "/home";
     }
 
     document.getElementById("logoutBtn")?.addEventListener("click", function(e) {
