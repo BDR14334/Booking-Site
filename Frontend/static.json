@@ -13,7 +13,9 @@
     { "source": "/register", "destination": "/register.html" },
     { "source": "/thank-you", "destination": "/thank-you.html" },
     { "source": "/forgot-password", "destination": "/forgot-password.html" },
-    { "source": "/reset-password", "destination": "/reset-password.html" }
+    { "source": "/reset-password", "destination": "/reset-password.html" },
+    { "source": "/404", "destination": "/404.html" },
+    { "source": "/.*", "destination": "/404.html" }
   ]
 }
 
