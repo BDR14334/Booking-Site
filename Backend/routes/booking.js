@@ -200,7 +200,60 @@ router.post('/booking', async (req, res) => {
     }
 
     await client.query('COMMIT');
-    res.status(200).json({ message: 'Booking successful' });
+
+    // Fetch package info
+    const pkgRes = await pool.query(
+      'SELECT name, price, sessions_included FROM packages WHERE id = $1',
+      [package_id]
+    );
+    const pkg = pkgRes.rows[0];
+
+    // Fetch customer info
+    const custRes = await pool.query(`
+      SELECT u.email, u.first_name
+      FROM customer c
+      JOIN users u ON c.user_id = u.id
+      WHERE c.id = $1
+    `, [customer_id]);
+    const customerEmail = custRes.rows[0].email;
+    const customerName = custRes.rows[0].first_name;
+
+    // Send receipt email
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: 'robinsontech30@gmail.com',
+        pass: process.env.GMAIL_APP_PASSWORD
+      }
+    });
+
+    await transporter.sendMail({
+      from: 'robinsontech30@gmail.com',
+      to: customerEmail,
+      subject: `Your Receipt – ${pkg.name}`,
+      html: `
+        <h2>Payment Receipt</h2>
+        <p>Hi ${customerName},</p>
+        <p>Thank you for your purchase!</p>
+        <ul>
+          <li><b>Package:</b> ${pkg.name}</li>
+          <li><b>Price:</b> $${pkg.price}</li>
+          <li><b>Transaction ID:</b> ${payment.transaction_id}</li>
+          <li><b>Status:</b> ${payment.status}</li>
+          <li><b>Payment Date:</b> ${new Date().toLocaleString()}</li>
+        </ul>
+        <p><b>Ready to book sessions?</b>
+          <a href="https://booking-site-frontend.onrender.com/athlete-dashboard.html#bookSessions" 
+             target="_blank" style="color:#ff4800;font-weight:bold;">
+             Click here
+          </a>
+        </p>
+        <br/>
+        <p>– ZSP Team</p>
+      `
+    });
+
+    res.status(200).json({ message: 'Booking successful & receipt sent' });
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Booking error:', err.message);
@@ -345,13 +398,13 @@ router.get('/payment-success', async (req, res) => {
     // 4. Fetch customer email
     const customerRes = await pool.query(`
       SELECT u.email, u.first_name
-      FROM customers c
+      FROM customer c
       JOIN users u ON c.user_id = u.id
       WHERE c.id = $1`, [customerId]);
     const customerEmail = customerRes.rows[0].email;
     const customerName = customerRes.rows[0].first_name;
 
-    // 5. Send email with Calendly link
+    // 5. Send email with receipt link
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -359,6 +412,27 @@ router.get('/payment-success', async (req, res) => {
         pass: process.env.GMAIL_APP_PASSWORD
       }
     });
+
+    const htmlReceipt = `
+      <h2>Payment Receipt</h2>
+      <p>Hi ${customerName},</p>
+      <p>Thank you for your purchase! Here are your details:</p>
+      <ul>
+        <li><b>Package:</b> ${pkg.name}</li>
+        <li><b>Price:</b> $${(session.amount_total / 100).toFixed(2)}</li>
+        <li><b>Transaction ID:</b> ${session.payment_intent}</li>
+        <li><b>Status:</b> ${session.payment_status}</li>
+        <li><b>Payment Date:</b> ${new Date().toLocaleString()}</li>
+      </ul>
+      <p>
+        <b>Ready to book your sessions?</b><br>
+        <a href="https://booking-site-frontend.onrender.com/athlete-dashboard.html#bookSessions" target="_blank" style="color:#ff4800;font-weight:bold;">
+          Click here to choose your sessions
+        </a>
+      </p>
+      <br/>
+      <p>– ZSP Team</p>
+    `;
 
     // 6. Insert or update package_usage for each athlete
     const athleteIds = JSON.parse(metadata.athlete_ids);
@@ -376,14 +450,19 @@ router.get('/payment-success', async (req, res) => {
       );
     }
 
-    await transporter.sendMail({
-      from: 'robinsontech30@gmail.com',
-      to: customerEmail,
-      subject: `Your ZSP Package: ${pkg.name}`,
-      text: `Hi ${customerName},\n\nThank you for purchasing the "${pkg.name}" package.\n\nYou can now schedule your sessions using this link:\n${pkg.calendly_url}\n\nSee you soon!\n\n– ZSP Team`
-    });
+    try {
+      await transporter.sendMail({
+        from: 'robinsontech30@gmail.com',
+        to: customerEmail,
+        subject: `Your Receipt – ${pkg.name}`,
+        html: htmlReceipt
+      });
+      console.log('Receipt email sent to:', customerEmail);
+    } catch (emailErr) {
+      console.error('Email sending failed:', emailErr);
+    }
 
-    res.redirect('/ThankYou.html');
+    res.redirect('/thank-you');
 
   } catch (err) {
     console.error('Payment success handling failed:', err.message);
