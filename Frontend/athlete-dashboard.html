@@ -432,6 +432,9 @@
 <!-- Book Sessions (PAID PACKAGES ONLY) -->
 <section id="bookSessions">
   <h1>Book Your Sessions</h1>
+  <p style="text-align:center; max-width:550px; margin: 0 auto 24px auto; color:#fff; font-size:.9rem; text-shadow: 0 2px 8px #000;">
+    To book a session, click <strong>Book Session</strong> on your athlete’s package. Calendly will open choose your timeslot and confirm. <br><br>Need more sessions? Click <strong>Explore Packages</strong> below.
+  </p>
   <div id="packageBookingContainer" class="athlete-box-container"></div>
   <div style="text-align:center; margin-top: 30px;">
     <button
@@ -512,15 +515,29 @@
       return;
     }
 
+    // Fetch all athletes for this customer
+    let athleteMap = {};
+    try {
+      const athleteRes = await fetch(`${API_BASE}/athlete/${customerId}`, { credentials: 'include' });
+      const athletes = await athleteRes.json();
+      athletes.forEach(a => {
+        athleteMap[a.id] = `${a.first_name}`;
+      });
+    } catch (err) {
+      console.error('Error fetching athletes for package display:', err);
+    }
+
     packages.forEach(pkg => {
+      const athleteName = athleteMap[pkg.athlete_id] || 'Unknown Athlete';
       const box = document.createElement('div');
       box.className = 'athlete-box';
 
       box.innerHTML = `
         <h3>${pkg.name}</h3>
-        <p>Sessions Remaining: ${pkg.sessions_remaining ?? 'N/A'}</p>
-        <button class="book-calendly-btn" onclick="window.open('${pkg.calendly_url}', '_blank')">
-          Book Sessions
+        <strong style="margin-bottom:0;">${athleteName}</strong>
+        <p style="margin-top:2px;">Sessions Remaining: ${pkg.sessions_remaining ?? 'N/A'}</p>
+        <button style="margin-top:10px;"class="book-calendly-btn" onclick="window.open('${pkg.calendly_url}', '_blank')">
+          Book Session
         </button>
       `;
       container.appendChild(box);
