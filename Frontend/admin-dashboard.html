@@ -290,6 +290,25 @@
     .dropdown-content.show {
       display: block;
     }
+
+    .athlete-bubble {
+      display: inline-block;
+      background: #ff4800;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: bold;
+      border-radius: 50%;
+      padding: 4px 10px;
+      margin-left: 10px;
+      position: absolute;
+      top: 8px;
+      right: 18px;
+      z-index: 2;
+      box-shadow: 0 2px 6px #2222;
+    }
+    .dropdown-btn {
+      position: relative;
+    }
   </style>
 </head>
 <body>
@@ -317,7 +336,8 @@
       <a onclick="showSection('dashboard')">🏠 Dashboard</a>
       <a onclick="showSection('coachRegistry')">📋 Coach Registry</a>
       <a onclick="showSection('addPackages')">📦 Add Packages</a>
-      <a onclick="showSection('athlete-packages')">🎟️ Athlete Packages</a>
+      <a onclick="showSection('athlete-packages')">🎟️ Athletes To Packages</a>
+      <a onclick="showSection('stripe-section')">💳 Stripe Payments</a>
       <a onclick="showSection('manageStories')">🏅 Manage Success Stories</a>
       <button id="closeSidebarBtn" style="margin: 10px 0 0 0; color:white; cursor:pointer;">Close Sidebar</button>
     </div>
@@ -420,10 +440,21 @@
     </section>
 
     <section id="athlete-packages" class="page-section">
-      <h2>Athlete Packages</h2>
+      <h2>Manage Athlete Package Usage</h2>
+      <p>
+        This section displays all athletes assigned to each package. The orange bubble next to each package name shows how many athletes have remaining sessions for that package.<br>
+        Use the <span style="color:#ff4800;font-weight:bold;">–</span> button to subtract a session when an athlete attends, and the <span style="color:#28a745;font-weight:bold;">+</span> button to add sessions to an athlete if needed.
+      </p>
       <div id="package-dropdowns"></div>
     </section>
 
+    <section id="stripe-section" class="page-section">
+      <h2>Stripe Account</h2>
+      <p>Manage payments and view your Stripe dashboard.</p>
+      <a href="https://dashboard.stripe.com/login" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:1.2rem; padding:12px 32px; margin-top:20px;">
+        Go to Stripe Dashboard
+      </a>
+    </section>
 
   </div>
 
@@ -1283,7 +1314,17 @@ async function loadAthletePackages() {
       // Package header (clickable dropdown)
       const header = document.createElement('button');
       header.classList.add('dropdown-btn');
-      header.textContent = packageName;
+
+
+      // Count athletes with sessions_remaining > 0
+      const activeCount = athletes.filter(a => a.sessions_remaining > 0).length;
+
+      // Create the dropdown header with bubble
+      header.classList.add('dropdown-btn');
+      header.innerHTML = `
+        ${packageName}
+        <span class="athlete-bubble">${activeCount}</span>
+      `;
       header.onclick = () => {
         content.classList.toggle('show');
         // Update openDropdowns after toggle
