@@ -361,7 +361,7 @@
       id="email"
       name="email"
       required
-      pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+      pattern="^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$"
       placeholder="Enter your email"
       oninvalid="this.setCustomValidity('Please enter a valid email address.')"
       oninput="this.setCustomValidity('')"
@@ -838,7 +838,6 @@
     await loadCustomerData();
     await loadAthleteData();
     await loadPaidPackages();
-    await loadReceipts();
 
     document.getElementById("logoutBtn")?.addEventListener("click", function(e) {
       e.preventDefault();
@@ -849,11 +848,13 @@
       handleLogout();
     });
 
-    // FIX: Bind submit event to the first athlete form
-    const firstAthleteForm = document.querySelector('.athlete-box form');
-    if (firstAthleteForm) {
-      firstAthleteForm.addEventListener('submit', handleAthleteSubmit);
-    }
+    //Bind submit event to the first athlete form
+    setTimeout(() => {
+      const firstAthleteForm = document.querySelector('.athlete-box form');
+      if (firstAthleteForm) {
+        firstAthleteForm.addEventListener('submit', handleAthleteSubmit);
+      }
+    }, 0);
   });
 
 

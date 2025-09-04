@@ -594,7 +594,6 @@
   document.addEventListener('DOMContentLoaded', async () => {
     await loadCustomerData();
     await loadPaidPackages();
-    await loadReceipts();
 
     document.getElementById("logoutBtn")?.addEventListener("click", function(e) {
       e.preventDefault();
