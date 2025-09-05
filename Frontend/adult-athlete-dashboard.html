@@ -583,6 +583,13 @@
         if (prev && prev.tagName === "P" && prev.innerHTML.includes("Click to Schedule")) {
           prev.remove();
         }
+        // Show the "no packages" box
+        container.innerHTML = `
+          <div class="athlete-box">
+            No paid packages found.<br>
+            Click <strong>Explore Packages</strong> to purchase a package and schedule sessions.
+          </div>
+        `;
       }
 
       packages.forEach(pkg => {
