@@ -511,7 +511,12 @@
     container.innerHTML = '';
 
     if (!packages.length) {
-      container.innerHTML = '<p>No paid packages found. Click <strong>Explore Packages</strong> to purchase a package and schedule sessions.</p>';
+      container.innerHTML = `
+        <div class="athlete-box">
+          No paid packages found.<br>
+          Click <strong>Explore Packages</strong> to purchase a package and schedule sessions.
+        </div>
+      `;
       return;
     }
 
