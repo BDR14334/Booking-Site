@@ -29,6 +29,10 @@
       object-fit: cover;
     }
 
+    .hero-video::-webkit-media-controls {
+      display: none !important;
+    }
+
     .hero-overlay {
       position: absolute;
       bottom: 60px;
@@ -361,7 +365,7 @@
     </div>
 
     <section class="hero-section">
-      <video autoplay muted loop playsinline class="hero-video">
+      <video autoplay muted loop playsinline class="hero-video" preload="auto">
         <source src="video/ZSP.mp4" type="video/mp4" />
       </video>
       <div class="hero-overlay">
@@ -620,7 +624,14 @@
 
     loadHomeStories();
 
-
+    document.addEventListener("DOMContentLoaded", function() {
+      const video = document.querySelector(".hero-video");
+      if (video) {
+        video.play().catch(err => {
+          console.log("Autoplay blocked:", err);
+        });
+      }
+    });
   </script>
 </body>
 </html>
