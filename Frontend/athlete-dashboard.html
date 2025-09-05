@@ -432,9 +432,6 @@
 <!-- Book Sessions (PAID PACKAGES ONLY) -->
 <section id="bookSessions">
   <h1>Book Your Sessions</h1>
-  <p style="text-align:center; max-width:550px; margin: 0 auto 24px auto; color:#fff; font-size:.9rem; text-shadow: 0 2px 8px #000;">
-    Select<strong>"Click to Schedule"</strong> on your athlete’s package. Calendly will open choose your timeslot and confirm. <br><br>Need more sessions? Click <strong>Explore Packages</strong> below.
-  </p>
   <div id="packageBookingContainer" class="athlete-box-container"></div>
   <div style="text-align:center; margin-top: 30px;">
     <button
@@ -509,6 +506,25 @@
 
     const container = document.getElementById('packageBookingContainer');
     container.innerHTML = '';
+
+    // Show instructional text only if there are paid packages
+    if (packages.length > 0) {
+      const infoP = document.createElement('p');
+      infoP.style.textAlign = "center";
+      infoP.style.maxWidth = "550px";
+      infoP.style.margin = "0 auto 24px auto";
+      infoP.style.color = "#fff";
+      infoP.style.fontSize = ".9rem";
+      infoP.style.textShadow = "0 2px 8px #000";
+      infoP.innerHTML = `Select<strong>"Click to Schedule"</strong> on your athlete’s package. Calendly will open choose your timeslot and confirm. <br><br>Need more sessions? Click <strong>Explore Packages</strong> below.`;
+      container.parentNode.insertBefore(infoP, container);
+    } else {
+      // Remove the instructional text if present
+      const prev = container.previousElementSibling;
+      if (prev && prev.tagName === "P" && prev.innerHTML.includes("Click to Schedule")) {
+        prev.remove();
+      }
+    }
 
     if (!packages.length) {
       container.innerHTML = `
