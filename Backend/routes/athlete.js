@@ -131,6 +131,12 @@ router.get('/:customerId', async (req, res) => {
 // POST new athlete
 router.post('/', async (req, res) => {
     const { customer_id, first_name, last_name, age_group, sport } = req.body;
+
+    // Validation: require name, sport, and age_group
+    if (!first_name || !age_group || !sport) {
+        return res.status(400).json({ error: 'First name, age group, and sport are required.' });
+    }
+
     try {
         const result = await pool.query(
         `INSERT INTO athlete (customer_id, first_name, last_name, age_group, sport)
@@ -149,6 +155,11 @@ router.post('/', async (req, res) => {
 router.put('/:athleteId', async (req, res) => {
     const { athleteId } = req.params;
     const { customer_id, first_name, last_name, age_group, sport } = req.body;
+
+    // Validation: require name, sport, and age_group
+    if (!first_name || !age_group || !sport) {
+        return res.status(400).json({ error: 'First name, age group, and sport are required.' });
+    }
 
     try {
         // Check if athlete exists
@@ -419,52 +430,31 @@ router.put('/adult-athlete/update/:id', async (req, res) => {
   }
 });
 
-router.get('/adult-athlete/by-user/:user_id', authenticateToken, requireRole('adult-athlete'), async (req, res) => {
+// Get adult athlete by user_id (returns both customer and athlete)
+router.get('/adult-athlete/by-user/:user_id', async (req, res) => {
   const { user_id } = req.params;
   try {
-    const customerRes = await pool.query(
-      `SELECT * FROM public.customer WHERE user_id = $1 LIMIT 1`,
+    const result = await pool.query(
+      `SELECT 
+          c.id AS customer_id,
+          a.id AS athlete_id,
+          c.first_name, c.last_name, c.email, c.phone, c.dob,
+          a.sport, a.age_group
+       FROM customer c
+       JOIN athlete a ON c.id = a.customer_id
+       WHERE c.user_id = $1
+       LIMIT 1`,
       [user_id]
     );
-    if (customerRes.rows.length === 0) {
-      return res.status(404).json({ error: 'Customer not found' });
-    }
-    const customer = customerRes.rows[0];
 
-    // Get athlete info for this customer
-    const athleteRes = await pool.query(
-      `SELECT * FROM athlete WHERE customer_id = $1 LIMIT 1`,
-      [customer.id]
-    );
-    const athlete = athleteRes.rows[0] || {};
-
-    // Calculate actual age from dob
-    function getAge(dob) {
-      if (!dob) return '';
-      const birthDate = new Date(dob);
-      const today = new Date();
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const m = today.getMonth() - birthDate.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
-      return age;
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Adult athlete not found' });
     }
 
-    res.json({
-      customer_id: customer.id,
-      first_name: customer.first_name,
-      last_name: customer.last_name,
-      dob: customer.dob,
-      age: getAge(customer.dob), // <-- Add this line
-      email: customer.email,
-      phone: customer.phone,
-      sport: athlete.sport || '',
-      age_group: athlete.age_group || ''
-    });
+    res.json(result.rows[0]);
   } catch (err) {
     console.error('Error fetching adult athlete:', err.message);
-    res.status(500).json({ error: 'Error fetching adult athlete' });
+    res.status(500).json({ error: 'Error fetching adult athlete data' });
   }
 });
 

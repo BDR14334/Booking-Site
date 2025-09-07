@@ -186,6 +186,12 @@ router.post('/booking', async (req, res) => {
 
       // Update package_usage for each athlete
       for (const athlete_id of athleteIds) {
+        console.log('Inserting into package_usage:', {
+          customer_id,
+          athlete_id,
+          package_id,
+          sessions_included
+        });
         await client.query(
           `INSERT INTO package_usage (customer_id, athlete_id, package_id, sessions_remaining, sessions_purchased)
            VALUES ($1, $2, $3, $4, $4)

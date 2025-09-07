@@ -273,6 +273,30 @@
       background-color: #e03e00;
       color: #fff;
     }
+    
+    .athlete-box-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .athlete-box {
+      position: relative;
+      background-color: #2a2f36;
+      border: 2px solid #ff4800;
+      border-radius: 12px;
+      padding: 20px;
+      width: 300px;
+      box-sizing: border-box;
+      color: white;
+      text-align: center;
+      justify-content: center;
+    }
+
+    .athlete-box input[name="athleteName"] {
+      width: 95%; /* or any smaller value you want */
+    }
+
   </style>
 </head>
 <body>
@@ -314,7 +338,7 @@
       id="email"
       name="email"
       required
-      pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+      pattern="^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$"
       placeholder="Enter your email"
       oninvalid="this.setCustomValidity('Please enter a valid email address.')"
       oninput="this.setCustomValidity('')"
@@ -390,6 +414,7 @@
 
   let userId = null;
   let customerId = null;
+  let athleteId = null;
 
   document.getElementById('athleteForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -463,6 +488,7 @@
       if (response.ok) {
         alert('Athlete info saved successfully!');
         customerId = data.customer?.id || customerId;
+        athleteId = data.athlete?.id || athleteId; // ✅ store athleteId too
       } else {
         alert('Error: ' + data.error);
       }
@@ -496,20 +522,35 @@
   // Load athlete info
   async function loadCustomerData() {
     await fetchLoggedInUser();
+    const token = localStorage.getItem("token");
 
     try {
-      const athleteRes = await fetch(`${API_BASE}/athlete/by-user/${userId}`, {
-        credentials: 'include'
+      const athleteRes = await fetch(`${API_BASE}/athlete/adult-athlete/by-user/${userId}`, {
+        credentials: 'include',
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
       const athlete = await athleteRes.json();
 
-      if (athleteRes.ok) {
-        customerId = athlete.customer.id;
+      // ✅ Store both IDs
+      customerId = athlete.customer_id;
+      athleteId = athlete.athlete_id;
 
-        document.getElementById("athleteName").value = (athlete.customer.first_name || "") + (athlete.customer.last_name ? " " + athlete.customer.last_name : "");
-        document.getElementById("email").value = athlete.customer.email || "";
-        document.getElementById("phone").value = athlete.customer.phone || "";
-      }
+      // Populate form fields
+      document.getElementById("athleteName").value =
+        (athlete.first_name || "") + (athlete.last_name ? " " + athlete.last_name : "");
+      document.getElementById("email").value = athlete.email || "";
+      document.getElementById("phone").value = athlete.phone || "";
+      const dob = athlete.dob ? athlete.dob.split('T')[0] : "";
+      document.getElementById("dob").value = dob;
+
+      const sportMap = {
+        "highly active": "Highly Active",
+        "moderately active": "Moderately Active",
+        "moderatly active": "Moderately Active",
+        "not active": "Not Active"
+      };
+      const sportValue = sportMap[(athlete.sport || "").toLowerCase().trim()] || "";
+      document.getElementById("sport").value = sportValue;
     } catch (error) {
       console.error('Error loading client data:', error);
     }

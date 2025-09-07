@@ -652,6 +652,8 @@
                 const userData = await userRes.json();
                 const user = userData.user;
 
+                //console.log("Booking user:", user);
+
                 // Not an athlete
                 if (!user || (user.role !== "athlete" && user.role !== "adult-athlete")) {
                   document.getElementById("notAthletePopup").style.display = "block";
@@ -671,6 +673,7 @@
                     return;
                   }
                   customerId = customerData.customer_id;
+                  athleteId = customerData.athlete_id;
 
                   // Calculate age group from dob
                   function getAgeGroup(dob) {
@@ -706,7 +709,7 @@
                   athleteContainer.appendChild(athleteBox);
 
                   // Set selectedAthleteIds to just this customerId
-                  selectedAthleteIds = [customerId];
+                  selectedAthleteIds = [athleteId];
 
                   // Hide selection logic (optional: skip to calendar)
                   document.getElementById('athleteSection').style.display = 'block';
