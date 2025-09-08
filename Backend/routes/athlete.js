@@ -317,18 +317,31 @@ router.get('/paid-packages/:customerId', authenticateToken, async (req, res) => 
   }
 });
 
-// Create adult athlete (with dob)
+// Create or update adult athlete (with dob)
 router.post('/adult-athlete/create', async (req, res) => {
   const { first_name, last_name, dob, email, phone, user_id, sport } = req.body;
+
   try {
-    // Insert into customer table with dob
-    const customerRes = await pool.query(
-      `INSERT INTO public.customer (first_name, last_name, dob, email, phone, user_id)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
-      [first_name, last_name, dob, email, phone, user_id]
+    // Check if customer already exists for this user_id
+    const existingCustomer = await pool.query(
+      `SELECT id FROM public.customer WHERE user_id = $1 LIMIT 1`,
+      [user_id]
     );
-    const customerId = customerRes.rows[0].id;
+
+    let customerId;
+    if (existingCustomer.rows.length > 0) {
+      // ✅ Use the existing customer row
+      customerId = existingCustomer.rows[0].id;
+    } else {
+      // Insert into customer table
+      const customerRes = await pool.query(
+        `INSERT INTO public.customer (first_name, last_name, dob, email, phone, user_id)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING id`,
+        [first_name, last_name, dob, email, phone, user_id]
+      );
+      customerId = customerRes.rows[0].id;
+    }
 
     // Calculate age group from dob
     function getAgeGroup(dob) {
@@ -336,9 +349,7 @@ router.post('/adult-athlete/create', async (req, res) => {
       const today = new Date();
       let age = today.getFullYear() - birthDate.getFullYear();
       const m = today.getMonth() - birthDate.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
       if (age <= 8) return "8 & Under";
       if (age <= 10) return "9-10";
       if (age <= 12) return "11-12";
@@ -349,15 +360,35 @@ router.post('/adult-athlete/create', async (req, res) => {
     }
     const age_group = getAgeGroup(dob);
 
-    // Insert into athlete table
-    const athleteRes = await pool.query(
-      `INSERT INTO athlete (customer_id, first_name, last_name, age_group, sport)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING *`,
-      [customerId, first_name, last_name, age_group, sport]
+    // Check if athlete already exists
+    const existingAthlete = await pool.query(
+      `SELECT id FROM athlete WHERE customer_id = $1 LIMIT 1`,
+      [customerId]
     );
 
-    res.status(201).json({ customer: customerRes.rows[0], athlete: athleteRes.rows[0] });
+    let athlete;
+    if (existingAthlete.rows.length > 0) {
+      // Update athlete instead of inserting duplicate
+      const athleteRes = await pool.query(
+        `UPDATE athlete
+         SET first_name=$1, last_name=$2, age_group=$3, sport=$4
+         WHERE customer_id=$5
+         RETURNING *`,
+        [first_name, last_name, age_group, sport, customerId]
+      );
+      athlete = athleteRes.rows[0];
+    } else {
+      // Insert new athlete
+      const athleteRes = await pool.query(
+        `INSERT INTO athlete (customer_id, first_name, last_name, age_group, sport)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *`,
+        [customerId, first_name, last_name, age_group, sport]
+      );
+      athlete = athleteRes.rows[0];
+    }
+
+    res.status(201).json({ customer_id: customerId, athlete });
   } catch (err) {
     console.error('Error creating adult athlete:', err.message);
     res.status(500).json({ error: 'Error creating adult athlete' });
@@ -451,7 +482,20 @@ router.get('/adult-athlete/by-user/:user_id', async (req, res) => {
       return res.status(404).json({ error: 'Adult athlete not found' });
     }
 
-    res.json(result.rows[0]);
+    const row = result.rows[0];
+    // Calculate age from dob
+    let age = null;
+    if (row.dob) {
+      const birthDate = new Date(row.dob);
+      const today = new Date();
+      age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+    }
+
+    res.json({ ...row, age });
   } catch (err) {
     console.error('Error fetching adult athlete:', err.message);
     res.status(500).json({ error: 'Error fetching adult athlete data' });

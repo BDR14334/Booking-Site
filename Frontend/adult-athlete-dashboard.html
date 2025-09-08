@@ -278,6 +278,8 @@
       display: flex;
       flex-wrap: wrap;
       gap: 20px;
+      justify-content: center;   /* <-- Add this line */
+      align-items: center;        /* Optional: vertical centering */
     }
 
     .athlete-box {
@@ -328,6 +330,10 @@
 <!-- Edit Personal Info -->
 <section id="editInfo">
   <h1>Personal Info for Booking</h1>
+  <p style="text-align:center; max-width:600px; margin:0 auto 30px auto; color:#fff; font-size:.9rem; text-shadow:0 2px 8px #000;">
+    Please ensure your information is accurate to avoid booking issues. <br>
+    You can update this info anytime.
+  </p>
   <form id="athleteForm">
     <label for="athleteName">Name</label>
     <input type="text" id="athleteName" name="athleteName" required />
@@ -426,8 +432,10 @@
     const phone = document.getElementById("phone").value.trim();
     const dob = document.getElementById("dob").value;
     const sport = document.getElementById("sport").value;
+
     const phoneRegex = /^\d{10,15}$/;
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
     if (!phoneRegex.test(phone)) {
       alert("Please enter a valid phone number (digits only, 10-15 digits).");
       return;
@@ -437,30 +445,10 @@
       return;
     }
 
-    function getAge(dob) {
-      if (!dob) return '';
-      const birthDate = new Date(dob);
-      const today = new Date();
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const m = today.getMonth() - birthDate.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
-      return age;
+    // Make sure we have userId first
+    if (!userId) {
+      await fetchLoggedInUser();
     }
-
-    const age = getAge(dob);
-
-    function getAgeGroup(age) {
-      if (age <= 8) return "8 & Under";
-      if (age <= 10) return "9-10";
-      if (age <= 12) return "11-12";
-      if (age <= 14) return "13-14";
-      if (age <= 16) return "15-16";
-      if (age <= 18) return "17-18";
-      return "18+";
-    }
-    const age_group = getAgeGroup(age);
 
     const method = customerId ? 'PUT' : 'POST';
     const url = customerId
@@ -479,16 +467,17 @@
           email,
           phone,
           sport,
-          age_group,
           user_id: userId
         }),
       });
 
       const data = await response.json();
       if (response.ok) {
-        alert('Athlete info saved successfully!');
-        customerId = data.customer?.id || customerId;
-        athleteId = data.athlete?.id || athleteId; // ✅ store athleteId too
+        alert('✅ Athlete info saved successfully!');
+        customerId = data.customer?.id || data.customer?.customer_id || customerId;
+        athleteId = data.athlete?.id || data.athlete?.athlete_id || athleteId;
+
+        console.log("Saved adult athlete:", { customerId, athleteId });
       } else {
         alert('Error: ' + data.error);
       }
@@ -600,7 +589,16 @@
 
   // Load paid packages for booking
   async function loadPaidPackages() {
-    if (!customerId) return;
+    if (!customerId) {
+      const container = document.getElementById('packageBookingContainer');
+      container.innerHTML = `
+        <div class="athlete-box">
+          Please complete your profile before booking.<br>
+          Go to <strong>Personal Info</strong> above.
+        </div>
+      `;
+      return;
+    }
     try {
       const res = await fetch(`${API_BASE}/athlete/paid-packages/${customerId}`, { credentials: 'include' });
       const packages = await res.json();
@@ -616,7 +614,7 @@
         infoP.style.color = "#fff";
         infoP.style.fontSize = ".9rem";
         infoP.style.textShadow = "0 2px 8px #000";
-        infoP.innerHTML = `Select<strong>"Click to Schedule"</strong> on your package. Calendly will open choose your timeslot and confirm. <br><br>Need more sessions? Click <strong>Explore Packages</strong> below.`;
+        infoP.innerHTML = `Select<strong> "Click to Schedule"</strong> on your package. Calendly will open choose your timeslot and confirm. <br><br>Need more sessions? Click <strong>"Explore Packages"</strong> below.`;
         container.parentNode.insertBefore(infoP, container);
       } else {
         // Remove the instructional text if present
@@ -695,6 +693,19 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     autofillAthleteInfoIfFirstLogin();
+  });
+
+  document.addEventListener("DOMContentLoaded", function() {
+    if (window.location.hash === "#bookSessions") {
+      setTimeout(() => {
+        const el = document.getElementById("bookSessions");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+          // Optionally scroll a bit more:
+          setTimeout(() => window.scrollBy(0, 100), 400); // scroll 100px lower
+        }
+      }, 300);
+    }
   });
 </script>
 

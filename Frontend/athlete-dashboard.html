@@ -143,6 +143,8 @@
       box-sizing: border-box;
       color: white;
       text-align: center;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .athlete-box input[name="athleteName"] {
@@ -318,6 +320,13 @@
       background-color: #e03e00;
       color: #fff;
     }
+
+    #packageBookingContainer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 220px; /* or whatever height you want */
+    }
   </style>
 </head>
 <body>
@@ -351,6 +360,10 @@
 <!-- Edit Personal Info -->
 <section id="editInfo">
   <h1>Parent/Guardian Info</h1>
+  <p style="text-align:center; max-width:600px; margin:0 auto 30px auto; color:#fff; font-size:.9rem; text-shadow:0 2px 8px #000;">
+    Please ensure your information is accurate to avoid booking issues.<br>
+    Click <strong>"Save Info"</strong> below to update your information at any time.
+  </p>
   <form id="infoForm">
     <label for="Name">Name</label>
     <input type="text" id="name" name="name" />
@@ -388,6 +401,10 @@
 <!-- Add Athlete Info -->
 <section id="athleteInfo">
   <h1>Add Athlete For Booking</h1>
+  <p style="text-align:center; max-width:600px; margin:0 auto 30px auto; color:#fff; font-size:.9rem; text-shadow:0 2px 8px #000;">
+    Add your youth athlete(s) here. You can add multiple athletes if needed.
+    Click <strong>"Save Info"</strong> below to update their information at any time.
+  </p>
   <div class="athlete-box-container">
     <!-- First Athlete Form -->
     <div class="athlete-box">
@@ -516,7 +533,7 @@
       infoP.style.color = "#fff";
       infoP.style.fontSize = ".9rem";
       infoP.style.textShadow = "0 2px 8px #000";
-      infoP.innerHTML = `Select<strong>"Click to Schedule"</strong> on your athlete’s package. Calendly will open choose your timeslot and confirm. <br><br>Need more sessions? Click <strong>Explore Packages</strong> below.`;
+      infoP.innerHTML = `Select <strong>"Click to Schedule"</strong> on your athlete’s package. Calendly will open choose your timeslot and confirm. <br><br>Need more sessions? Click <strong>"Explore Packages"</strong> below.`;
       container.parentNode.insertBefore(infoP, container);
     } else {
       // Remove the instructional text if present
@@ -933,6 +950,19 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     autofillParentInfoIfFirstLogin();
+  });
+
+  document.addEventListener("DOMContentLoaded", function() {
+    if (window.location.hash === "#bookSessions") {
+      setTimeout(() => {
+        const el = document.getElementById("bookSessions");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+          // Optionally scroll a bit more:
+          setTimeout(() => window.scrollBy(0, 100), 400); // scroll 100px lower
+        }
+      }, 300);
+    }
   });
 </script>
 

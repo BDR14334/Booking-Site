@@ -128,7 +128,7 @@
           <!-- <p>Additional info on booking will be found in your <br>dashboard, and email.</p> -->
           <div class="thankYouBtnRow">
             <button><a href="/">Return to Home</a></button>
-            <button><a href="/athlete-dashboard#viewSessions">Go to Dashboard</a></button>
+            <button onclick="goToDashboard()"><strong>Go to Dashboard</strong></button>
           </div>
         </section>
       </div>
@@ -206,6 +206,35 @@
       }
     });
 
+    function goToDashboard() {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        window.location.href = "/login";
+        return;
+      }
+
+      fetch(`${API_BASE}/auth/me`, {
+        credentials: "include",
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          console.log("auth/me response:", data);
+          if (data.user && data.user.role === "adult-athlete") {
+            window.location.href = "/adult-athlete-dashboard#bookSessions";
+          } else if (data.user && data.user.role === "athlete") {
+            window.location.href = "/athlete-dashboard#bookSessions";
+          } else {
+            window.location.href = "/";
+          }
+        })
+        .catch((err) => {
+          console.error("auth/me fetch error:", err);
+          window.location.href = "/";
+        });
+    }
+
+
     document.addEventListener("DOMContentLoaded", () => {
       const box = document.querySelector('.thankYouBox');
       if (!box) return;
@@ -277,6 +306,8 @@
         setTimeout(() => { ctx.clearRect(0, 0, canvas.width, canvas.height); canvas.remove(); }, 2000);
       }, 10000);
     });
+
+ 
   </script>
  
 </body>
