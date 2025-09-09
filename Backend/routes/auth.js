@@ -6,11 +6,15 @@ const pool = require('../db');
 require('dotenv').config();
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const { allowedOrigins } = require('../config');
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
 const validRoles = ['admin', 'coach', 'athlete', 'adult-athlete'];
 const ADMIN_SECRET_ID = process.env.ADMIN_SECRET_ID;
+
+// Use the first allowed origin as the default FRONTEND_BASE_URL
+const FRONTEND_BASE_URL = process.env.FRONTEND_BASE_URL || allowedOrigins[0];
 
 // Add near the top, after your requires
 function authenticateToken(req, res, next) {
@@ -222,13 +226,16 @@ router.get('/verify', (req, res) => {
     }
 });
 
+// Helper to hash tokens
+function hashToken(token) {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
 
-// sends password reset link to then update password
+// Send password reset link
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
 
   try {
-    // Make the email check case-insensitive
     const userRes = await pool.query(
       `SELECT * FROM users WHERE LOWER(email) = LOWER($1)`, [email]
     );
@@ -237,8 +244,12 @@ router.post('/forgot-password', async (req, res) => {
     }
 
     const user = userRes.rows[0];
-    const token = crypto.randomBytes(32).toString('hex');
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const token = hashToken(rawToken);
     const expiresAt = new Date(Date.now() + 1000 * 60 * 15); // 15 minutes
+
+    // Cleanup expired tokens
+    await pool.query(`DELETE FROM password_resets WHERE expires_at <= NOW()`);
 
     await pool.query(`
       INSERT INTO password_resets (user_id, token, expires_at)
@@ -246,10 +257,9 @@ router.post('/forgot-password', async (req, res) => {
       ON CONFLICT (user_id) DO UPDATE SET token = EXCLUDED.token, expires_at = EXCLUDED.expires_at
     `, [user.id, token, expiresAt]);
 
-    const FRONTEND_BASE_URL = process.env.FRONTEND_BASE_URL || "http://localhost:5500/Booking-Site/Frontend";
-    const resetLink = `${FRONTEND_BASE_URL}/ResetPassword.html?token=${token}`;
+    const resetLink = `${FRONTEND_BASE_URL}/reset-password?token=${rawToken}`;
 
-    // Replace with real email service (e.g., SendGrid or SMTP)
+    // Send email (same as before)
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -272,7 +282,30 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
-// Updates password in database
+// Check if reset token is valid (for frontend)
+router.get('/check-reset-token', async (req, res) => {
+  const { token } = req.query;
+  if (!token) return res.status(400).json({ error: 'Token required' });
+
+  try {
+    // Cleanup expired tokens
+    await pool.query(`DELETE FROM password_resets WHERE expires_at <= NOW()`);
+
+    const hashed = hashToken(token);
+    const result = await pool.query(
+      `SELECT 1 FROM password_resets WHERE token = $1 AND expires_at > NOW()`,
+      [hashed]
+    );
+    if (result.rows.length === 0) {
+      return res.status(400).json({ error: 'Invalid or expired token' });
+    }
+    res.json({ valid: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Actually reset the password
 router.post('/reset-password', async (req, res) => {
   const { token, newPassword } = req.body;
 
@@ -283,9 +316,13 @@ router.post('/reset-password', async (req, res) => {
   }
 
   try {
+    // Cleanup expired tokens
+    await pool.query(`DELETE FROM password_resets WHERE expires_at <= NOW()`);
+
+    const hashed = hashToken(token);
     const resetRes = await pool.query(`
       SELECT * FROM password_resets WHERE token = $1 AND expires_at > NOW()
-    `, [token]);
+    `, [hashed]);
 
     if (resetRes.rows.length === 0) {
       return res.status(400).json({ error: 'Invalid or expired token.' });
