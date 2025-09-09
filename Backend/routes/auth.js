@@ -257,7 +257,10 @@ router.post('/forgot-password', async (req, res) => {
       ON CONFLICT (user_id) DO UPDATE SET token = EXCLUDED.token, expires_at = EXCLUDED.expires_at
     `, [user.id, token, expiresAt]);
 
-    const resetLink = `${FRONTEND_BASE_URL}/reset-password?token=${rawToken}`;
+    const origin = req.get('origin');
+    const isAllowed = allowedOrigins.includes(origin);
+    const baseUrl = isAllowed ? origin : allowedOrigins[1]; // fallback to your production URL
+    const resetLink = `${baseUrl}/reset-password?token=${rawToken}`;
 
     // Send email (same as before)
     const transporter = nodemailer.createTransport({
