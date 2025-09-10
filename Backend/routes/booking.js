@@ -122,15 +122,19 @@ router.post('/booking', async (req, res) => {
   try {
     await client.query('BEGIN');
 
+    // Generate a 6-digit random code for receipt
+    const receiptCode = Math.floor(100000 + Math.random() * 900000);
+
     // Step 1: Create order
     const orderStatus = payment ? 'paid' : 'pending';
     const orderRes = await client.query(
-      `INSERT INTO orders (customer_id, package_id, status, order_date)
-       VALUES ($1, $2, $3, NOW())
-       RETURNING id`,
-      [customer_id, package_id, orderStatus]
+      `INSERT INTO orders (customer_id, package_id, status, order_date, receipt_code)
+       VALUES ($1, $2, $3, NOW(), $4)
+       RETURNING id, receipt_code`,
+      [customer_id, package_id, orderStatus, receiptCode]
     );
     const orderId = orderRes.rows[0].id;
+    const receiptCodeStr = `ZSP-${orderRes.rows[0].receipt_code}`;
 
     // Step 2: Handle timeslot bookings (legacy, if needed)
     if (Array.isArray(timeslot_ids) && timeslot_ids.length > 0) {
@@ -244,7 +248,7 @@ router.post('/booking', async (req, res) => {
         <ul>
           <li><b>Package:</b> ${pkg.name}</li>
           <li><b>Price:</b> $${pkg.price}</li>
-          <li><b>Transaction ID:</b> ${payment.transaction_id}</li>
+          <li><b>Receipt Number:</b> ${receiptCodeStr}</li>
           <li><b>Status:</b> ${payment.status}</li>
           <li><b>Payment Date:</b> ${new Date().toLocaleString()}</li>
         </ul>
@@ -287,14 +291,18 @@ router.post('/create-checkout-session', async (req, res) => {
     const pkg = pkgRes.rows[0];
     const priceCents = Math.round(parseFloat(pkg.price) * 100);
 
+    // Generate a 6-digit random code for receipt
+    const receiptCode = Math.floor(100000 + Math.random() * 900000);
+
     // 2. Insert order (pending until payment succeeds)
     const orderRes = await pool.query(
-      `INSERT INTO orders (customer_id, package_id, status, order_date)
-       VALUES ($1, $2, 'pending', NOW())
-       RETURNING id`,
-      [customerId, packageId]
+      `INSERT INTO orders (customer_id, package_id, status, order_date, receipt_code)
+       VALUES ($1, $2, 'pending', NOW(), $3)
+       RETURNING id, receipt_code`,
+      [customerId, packageId, receiptCode]
     );
     const orderId = orderRes.rows[0].id;
+    const receiptCodeStr = `ZSP-${orderRes.rows[0].receipt_code}`;
 
     // 3. Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
@@ -314,7 +322,8 @@ router.post('/create-checkout-session', async (req, res) => {
         order_id: orderId,
         customer_id: customerId,
         package_id: packageId,
-        athlete_ids: JSON.stringify(athleteIds)
+        athlete_ids: JSON.stringify(athleteIds),
+        receipt_code: receiptCodeStr
       }
     });
 
@@ -426,8 +435,7 @@ router.get('/payment-success', async (req, res) => {
       <ul>
         <li><b>Package:</b> ${pkg.name}</li>
         <li><b>Price:</b> $${(session.amount_total / 100).toFixed(2)}</li>
-        <li><b>Transaction ID:</b> ${session.payment_intent}</li>
-        <li><b>Status:</b> ${session.payment_status}</li>
+        <li><b>Receipt Number:</b> ${session.metadata.receipt_code}</li>
         <li><b>Payment Date:</b> ${new Date().toLocaleString()}</li>
       </ul>
       <p>
