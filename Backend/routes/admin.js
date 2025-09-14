@@ -485,5 +485,51 @@ router.put('/athlete-packages/:id', async (req, res) => {
   }
 });
 
+// Get all active users
+router.get('/active-users', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        u.id,
+        u.first_name || ' ' || u.last_name AS full_name,
+        u.role,
+        u.email,
+        c.phone,
+      FROM users u
+      LEFT JOIN customer c ON u.id = c.user_id
+      ORDER BY u.first_name, u.last_name
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching active users:', err);
+    res.status(500).json({ error: 'Failed to load active users' });
+  }
+});
+
+
+// Get booking transactions with customer + payment details
+router.get('/transactions', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        o.id AS order_id,
+        c.first_name || ' ' || c.last_name AS customer_name,
+        c.email,
+        c.phone,
+        p.transaction_id,
+        o.receipt_code AS friendly_id,
+        o.order_date
+      FROM orders o
+      JOIN customer c ON o.customer_id = c.id
+      JOIN payments p ON p.order_id = o.id
+      ORDER BY o.order_date DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching transactions:', err);
+    res.status(500).json({ error: 'Failed to load transactions' });
+  }
+});
+
 module.exports = router;
 
