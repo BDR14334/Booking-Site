@@ -538,6 +538,39 @@
       sidebar.style.display = sidebar.style.display === "block" ? "none" : "block";
     }
 
+    function showLoading(show = true) {
+      const overlay = document.getElementById('loadingOverlay');
+      overlay.style.display = show ? 'flex' : 'none';
+      overlay.style.opacity = show ? '1' : '0';
+    }
+
+    function showCustomModal(message) {
+      document.getElementById('customModalMsg').innerHTML = message;
+      document.getElementById('customModal').style.display = 'block';
+      document.getElementById('customModal').style.opacity = '1';
+    }
+
+    function closeCustomModal() {
+      document.getElementById('customModal').style.opacity = '0';
+      setTimeout(() => {
+        document.getElementById('customModal').style.display = 'none';
+      }, 300);
+    }
+
+    function showBookingConfirmedOverlay() {
+      const overlay = document.getElementById('bookingConfirmedOverlay');
+      overlay.style.display = 'flex';
+      overlay.style.opacity = '1';
+    }
+
+    function hideBookingConfirmedOverlay() {
+      const overlay = document.getElementById('bookingConfirmedOverlay');
+      overlay.style.opacity = '0';
+      setTimeout(() => {
+        overlay.style.display = 'none';
+      }, 300);
+    }
+
     // Update your hamburger icon to call this function:
     document.querySelector('.nav-menu-btn i').onclick = toggleMenuSidebar;
 
@@ -626,7 +659,7 @@
             <ul>${(pkg.features || []).map(feature => `<li>${feature}</li>`).join('')}</ul>
             <p><strong style="font-size: 16px; font-style: italic;">Sessions:</strong>&nbsp;&nbsp;<span style="font-size: 16px; font-weight: normal;"> ${pkg.sessions}</span></p>
             <p><strong style="font-size: 16px; font-style: italic;">Price:</strong>&nbsp;&nbsp;<span style="font-size: 16px; font-weight: normal;"> $${pkg.price}</span></p>
-            <div class="view-more"><span class="bouncy-text">Click to Choose Sessions</span></div>
+            <div class="view-more"><span class="bouncy-text">Click to Choose Package</span></div>
           `;
   
           // When package is selected, go to athlete selection
@@ -806,7 +839,10 @@
     });
   
   
-    // "Next" button to payment
+    // ...existing code...
+
+    let stripe, elements, card;
+
     document.getElementById("nextToPaymentBtn").addEventListener("click", () => {
       goToStep(2); // Show payment section
 
@@ -815,26 +851,31 @@
       document.getElementById("checkoutPackagePrice").innerText = `$${selectedPackage.price}`;
       document.getElementById("payNowAmountText").innerText = selectedPackage.price;
 
-      const stripe = Stripe("pk_test_51RT8WoGI7tqbKPuizpKrkJK05SCf4kY7DrUBWIzh953MG53TtawtUwI5laWY0Wq6MfPoHo9yydwEbWyQWuQcUEW800JFWeLm0j");
-      const elements = stripe.elements();
-      const card = elements.create("card");
-      card.mount("#card-element");
+      // Initialize Stripe only once
+      if (!stripe) {
+        stripe = Stripe("pk_test_51RT8WoGI7tqbKPuizpKrkJK05SCf4kY7DrUBWIzh953MG53TtawtUwI5laWY0Wq6MfPoHo9yydwEbWyQWuQcUEW800JFWeLm0j");
+        elements = stripe.elements();
+        card = elements.create("card");
+        card.mount("#card-element");
+      }
+      document.getElementById("payNowBtn").disabled = false;
+    });
 
+    // Attach the click handler ONCE after DOMContentLoaded
+    document.addEventListener("DOMContentLoaded", () => {
       const payNowBtn = document.getElementById("payNowBtn");
-
-      payNowBtn.disabled = false;
-
       payNowBtn.addEventListener("click", async () => {
         const cardholderName = document.getElementById("cardholder-name").value;
         const country = document.getElementById("billing-country").value;
         const postalCode = document.getElementById("postal-code").value;
 
         if (!cardholderName) {
-          alert("Please enter the cardholder name.");
+          showCustomModal("Please enter the cardholder name.");
           return;
         }
 
         payNowBtn.disabled = true;
+        showLoading(true);
 
         try {
           const intentRes = await fetch(`${API_BASE}/booking/create-payment-intent`, {
@@ -862,43 +903,59 @@
           });
 
           if (result.error) {
-            alert("Payment failed: " + result.error.message);
+            showLoading(false);
+            showCustomModal("Payment failed: " + result.error.message);
             payNowBtn.disabled = false;
-          } else if (result.paymentIntent.status === "succeeded") {
-            alert("✅ Payment successful. Finalizing booking...");
-
-            const bookingRes = await fetch(`${API_BASE}/booking/booking`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                customer_id: customerId,
-                package_id: selectedPackageId,
-                athleteIds: selectedAthleteIds,
-                payment: {
-                  transaction_id: result.paymentIntent.id,
-                  amount: result.paymentIntent.amount / 100,
-                  method: result.paymentIntent.payment_method_types[0],
-                  status: result.paymentIntent.status
-                }
-              })
-            });
-
-            const bookingData = await bookingRes.json();
-            if (bookingRes.ok) {
-              alert("🎉 Booking confirmed!");
-              window.location.href = "/thank-you";
-            } else {
-              alert("Booking error: " + bookingData.error);
-              payNowBtn.disabled = false;
-            }
+          }  else if (result.paymentIntent.status === "succeeded") {
+            // Keep loading overlay ON while finalizing booking
+            finalizeBooking(result.paymentIntent);
           }
         } catch (err) {
-          console.error("Error during payment/booking:", err);
-          alert("Something went wrong. Try again.");
+          showLoading(false);
+          showCustomModal("Something went wrong. Try again.");
           payNowBtn.disabled = false;
         }
       });
     });
+
+    async function finalizeBooking(paymentIntent) {
+      const payNowBtn = document.getElementById("payNowBtn");
+      try {
+        const bookingRes = await fetch(`${API_BASE}/booking/booking`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customer_id: customerId,
+            package_id: selectedPackageId,
+            athleteIds: selectedAthleteIds,
+            payment: {
+              transaction_id: paymentIntent.id,
+              amount: paymentIntent.amount / 100,
+              method: paymentIntent.payment_method_types[0],
+              status: paymentIntent.status
+            }
+          })
+        });
+
+        const bookingData = await bookingRes.json();
+        showLoading(false);
+
+        if (bookingRes.ok) {
+          showBookingConfirmedOverlay();
+          setTimeout(() => {
+            hideBookingConfirmedOverlay();
+            window.location.href = "/thank-you";
+          }, 2500);
+        } else {
+          showCustomModal("Booking error: " + bookingData.error);
+          payNowBtn.disabled = false;
+        }
+      } catch (err) {
+        showLoading(false);
+        showCustomModal("Something went wrong. Try again.");
+        payNowBtn.disabled = false;
+      }
+    }
   </script>
 
   <!-- Not an athlete popup -->
@@ -990,6 +1047,66 @@
       font-size: 16px;
     ">OK</button>
   </div>
+
+  <div id="loadingOverlay" style="
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(52,58,64,0.7);
+  z-index: 99999;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.3s;
+">
+  <div style="color: white; font-size: 1.5rem;">
+    <i class="fa fa-spinner fa-spin"></i> Processing...
+  </div>
+</div>
+
+<div id="customModal" style="
+    display: none;
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: #343a40;
+    color: white;
+    padding: 30px 40px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+    z-index: 100000;
+    text-align: center;
+    min-width: 280px;
+    transition: opacity 0.3s;
+  ">
+    <div id="customModalMsg"></div>
+    <button onclick="closeCustomModal()" style="
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #ff4800;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    ">OK</button>
+  </div>
+
+<div id="bookingConfirmedOverlay" style="
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(52,58,64,0.7);
+  z-index: 100001;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.3s;
+">
+  <div style="color: white; font-size: 2rem; text-align: center; display: flex; align-items: center; justify-content: center; gap: 16px;">
+    <span style="font-size:2.5rem;">🎉</span>
+    <span>Booking confirmed!</span>
+    <span style="font-size:2.5rem;">🎉</span>
+  </div>
+</div>
 
 
 
