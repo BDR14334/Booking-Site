@@ -103,22 +103,24 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      max-width: 1200px;
+      max-width: 1240px;
       margin: 0 auto;
     }
 
     .carousel-viewport {
       overflow-x: auto;
       overflow-y: hidden;
-      width: 990px;
+      width: 1240px;
       height: auto;
-      padding: 20px 60px; 
+      padding: 20px 45px;  /* padding: 20px 60px;  */
       display: flex;
       scroll-behavior: smooth;
       scroll-snap-type: x mandatory;
       scrollbar-width: none; /* Firefox */
       -ms-overflow-style: none; /* IE 10+ */
+      /* margin-left: -15px; */
     }
+    
     .carousel-viewport::-webkit-scrollbar {
       display: none; /* Chrome, Safari */
     }
@@ -331,7 +333,7 @@
         <ul>
           <li><a href="/" class="link">Home</a></li>
           <li><a href="/about" class="link">About</a></li>
-          <li><a href="/booking" class="link">Book</a></li>
+          <li><a href="/booking" class="link">Packages</a></li>
           <li><a href="/contact" class="link">Contact</a></li>
         </ul>
       </div>
@@ -359,7 +361,7 @@
       <div class="mt-4 d-flex flex-column">
         <a href="/" class="text-white px-3 py-2 text-decoration-none">🏠 Home</a>
         <a href="/about" class="text-white px-3 py-2 text-decoration-none">ℹ️ About</a>
-        <a href="/booking" class="text-white px-3 py-2 text-decoration-none">📅 Book</a>
+        <a href="/booking" class="text-white px-3 py-2 text-decoration-none">📦 Packages</a>
         <a href="/contact" class="text-white px-3 py-2 text-decoration-none">✉️ Contact</a>
       </div>
     </div>
@@ -369,7 +371,7 @@
         <source src="video/ZSP.mp4" type="video/mp4" />
       </video>
       <div class="hero-overlay">
-        <button class="book-now-btn" onclick="window.location.href='/booking'">Book Now</button>
+        <button class="book-now-btn" onclick="window.location.href='/booking'">Explore Packages</button>
       </div>
     </section>
 
@@ -625,16 +627,6 @@
     loadHomeStories();
 
 
-  </script>
-  <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      const video = document.querySelector(".hero-video");
-      if (video) {
-        video.play().catch(err => {
-          console.log("Autoplay blocked:", err);
-        });
-      }
-    });
   </script>
 </body>
 </html>
