@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Athlete Dashboard</title>
+  <title>Dashboard</title>
   <!-- Poppins & Icons -->
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
@@ -299,14 +299,116 @@
       width: 95%; /* or any smaller value you want */
     }
 
+    .popup-modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #343a40;
+      color: white;
+      padding: 25px 30px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+      z-index: 9999;
+      font-size: 18px;
+      text-align: center;
+      max-width: 400px;
+    }
+
+    .popup-modal .icon {
+      font-size: 40px;
+      display: block;
+      margin-bottom: 15px;
+    }
+
+    .popup-modal button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #ff4800;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    /* Calendly Modal Styles */
+    .calendly-modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .calendly-modal-content {
+      background: #343a40;
+      padding: 20px;
+      border-radius: 8px;
+      position: relative;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .calendly-modal-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    /* Calendly Modal */
+    #calendlyModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
+    #calendlyModal > .calendly-modal-content {
+      background: #343a40;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 800px;
+      position: relative;
+    }
+    #calendlyModal .calendly-modal-close {
+      position: absolute;
+      top: 10px;
+      right: 30px;
+      background: none;
+      border: none;
+      font-size: 48px;
+      color: #ff4800 !important;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    #calendlyModal .calendly-modal-close:hover {
+      color: red !important;
+    }
+
   </style>
 </head>
 <body>
 <header>
-  <h1>Athlete Dashboard</h1>
+  <h1>Dashboard</h1>
   <nav id="sidebarLinksContainer">
     <a href="#editInfo">📋 Edit Info</a>
-    <a href="#bookSessions">📦 Book Sessions</a>
+    <a href="#bookSessions">📦 Schedule Sessions</a>
     <a href="#" id="sidebarLogoutBtn" class="text-danger px-3 py-2 text-decoration-none">🚪 Logout</a>
   </nav>
   <button id="profileBtn" class="btn btn-outline-light" style="display:none;">
@@ -318,7 +420,7 @@
   <button class="btn btn-sm btn-outline-light ms-2 mt-2 close-btn" onclick="toggleSidebar()">× Close</button>
   <div class="mt-4 d-flex flex-column">
     <a style="margin-top: 20px;" href="#editInfo">📋 Edit Info</a>
-    <a href="#bookSessions">📦 Book Sessions</a>
+    <a href="#bookSessions">📦 Schedule Sessions</a>
     <a href="#" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none">🚪 Logout</a>
   </div>
 </div>
@@ -328,7 +430,7 @@
 </div>
 
 <!-- Edit Personal Info -->
-<section id="editInfo">
+<section id="editInfo" style="margin-top: 25px;">
   <h1>Personal Info for Booking</h1>
   <p style="text-align:center; max-width:600px; margin:0 auto 30px auto; color:#fff; font-size:.9rem; text-shadow:0 2px 8px #000;">
     Please ensure your information is accurate to avoid booking issues. <br>
@@ -379,9 +481,9 @@
   </form>
 </section>
 
-<!-- Book Sessions (PAID PACKAGES ONLY) -->
-<section id="bookSessions">
-  <h1>Book Your Sessions</h1>
+<!-- Schedule Sessions (PAID PACKAGES ONLY) -->
+<section id="bookSessions" style="margin-top: 55px; margin-bottom: 55px;">
+  <h1>Schedule Your Sessions</h1>
   <div id="packageBookingContainer" class="athlete-box-container"></div>
   <div style="text-align:center; margin-top: 30px;">
     <button
@@ -394,7 +496,23 @@
   </div>
 </section>
 
+<!-- Calendly Modal Overlay -->
+<div id="calendlyModal" class="calendly-modal-overlay">
+  <div class="calendly-modal-content">
+    <button onclick="closeCalendly()" class="calendly-modal-close" aria-label="Close">&times;</button>
+    <div id="calendlyInline" style="min-width:320px; height:500px;"></div>
+  </div>
+</div>
+
+<div id="globalPopup" class="popup-modal">
+  <span id="globalPopupIcon" class="icon"></span>
+  <span id="globalPopupMessage"></span>
+  <br>
+  <button onclick="closeGlobalPopup()">OK</button>
+</div>
+
 <script src="authStatus.js"></script>
+<script src="https://assets.calendly.com/assets/external/widget.js" async></script>
 <script>
   // Redirect to login if not authenticated
   if (!localStorage.getItem("token")) {
@@ -409,8 +527,8 @@
     });
     const data = await res.json();
     if (!data.user || data.user.role !== 'adult-athlete') {
-      alert('Not authorized for Adult Athlete Dashboard');
-      window.location.href = "/login";
+      showGlobalPopup('Not authorized for Adult Athlete Dashboard');
+      setTimeout(() => { window.location.href = "/login"; }, 1800);
     }
   })();
 
@@ -421,6 +539,7 @@
   let userId = null;
   let customerId = null;
   let athleteId = null;
+  let customerData = {};
 
   document.getElementById('athleteForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -437,11 +556,11 @@
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
     if (!phoneRegex.test(phone)) {
-      alert("Please enter a valid phone number (digits only, 10-15 digits).");
+      showGlobalPopup("Please enter a valid phone number (digits only, 10-15 digits).");
       return;
     }
     if (!emailRegex.test(email)) {
-      alert("Please enter a valid email address.");
+      showGlobalPopup("Please enter a valid email address.");
       return;
     }
 
@@ -473,17 +592,26 @@
 
       const data = await response.json();
       if (response.ok) {
-        alert('✅ Athlete info saved successfully!');
+        const saveBtn = document.querySelector('button[type="submit"]');
+        if (saveBtn) {
+          const originalText = saveBtn.textContent;
+          saveBtn.textContent = 'Saved!';
+          saveBtn.disabled = true;
+          setTimeout(() => {
+            saveBtn.textContent = originalText;
+            saveBtn.disabled = false;
+          }, 2000);
+        }
         customerId = data.customer?.id || data.customer?.customer_id || customerId;
         athleteId = data.athlete?.id || data.athlete?.athlete_id || athleteId;
 
         console.log("Saved adult athlete:", { customerId, athleteId });
       } else {
-        alert('Error: ' + data.error);
+        showGlobalPopup('Error: ' + data.error);
       }
     } catch (error) {
       console.error('Fetch error:', error);
-      alert('Something went wrong saving athlete info!');
+      showGlobalPopup('Something went wrong saving athlete info!');
     }
   });
 
@@ -503,8 +631,8 @@
         throw new Error('User data not found');
       }
     } catch (error) {
-      alert('Session expired or unauthorized. Please log in again.');
-      window.location.href = "/login";
+      showGlobalPopup('Session expired or unauthorized. Please log in again.');
+      setTimeout(() => { window.location.href = "/login"; }, 1800);
     }
   }
 
@@ -523,6 +651,13 @@
       // ✅ Store both IDs
       customerId = athlete.customer_id;
       athleteId = athlete.athlete_id;
+
+      // Store for Calendly prefill
+      customerData = {
+        first_name: athlete.first_name || "",
+        last_name: athlete.last_name || "",
+        email: athlete.email || ""
+      };
 
       // Populate form fields
       document.getElementById("athleteName").value =
@@ -625,8 +760,7 @@
         // Show the "no packages" box
         container.innerHTML = `
           <div class="athlete-box">
-            No paid packages found.<br>
-            Click <strong>Explore Packages</strong> to purchase a package and schedule sessions.
+            <strong>No packages found.</strong><br>Click "Explore Packages" to purchase a package and schedule sessions.
           </div>
         `;
       }
@@ -638,7 +772,7 @@
         box.innerHTML = `
           <h3>${pkg.name}</h3>
           <p>Sessions Remaining: ${pkg.sessions_remaining ?? 'N/A'}</p>
-          <button class="book-calendly-btn" onclick="window.open('${pkg.calendly_url}', '_blank')">
+          <button class="book-calendly-btn" onclick="openCalendly('${pkg.calendly_url}')">
             Click to Schedule
           </button>
         `;
@@ -707,6 +841,72 @@
       }, 300);
     }
   });
+
+  function closeGlobalPopup() {
+    document.getElementById("globalPopup").style.display = "none";
+  }
+
+  // Show global popup with message
+  function showGlobalPopup(message) {
+    const iconSpan = document.getElementById('globalPopupIcon');
+    // Show icon only for error/warning messages
+    if (
+      message.toLowerCase().includes('error') ||
+      message.toLowerCase().includes('failed') ||
+      message.toLowerCase().includes('not authorized') ||
+      message.toLowerCase().includes('unauthorized') ||
+      message.toLowerCase().includes('delete')
+    ) {
+      iconSpan.innerHTML = '&#9888;'; // ⚠
+      iconSpan.style.display = 'inline';
+    } else {
+      iconSpan.innerHTML = '';
+      iconSpan.style.display = 'none';
+    }
+    document.getElementById('globalPopupMessage').textContent = message;
+    document.getElementById('globalPopup').style.display = 'block';
+  }
+
+  function openCalendly(url) {
+    const name = (customerData.first_name || "") + (customerData.last_name ? " " + customerData.last_name : "");
+    const email = customerData.email || "";
+
+    // Determine if we need ? or &
+    const joinChar = url.includes('?') ? '&' : '?';
+
+    Calendly.initInlineWidget({
+      url: url +
+        joinChar +
+        `hide_gdpr_banner=1` +
+        `&background_color=343a40` +
+        `&text_color=ffffff` +
+        `&primary_color=ff4800` +
+        `&name=${encodeURIComponent(name)}` +
+        `&email=${encodeURIComponent(email)}`,
+      parentElement: document.getElementById("calendlyInline"),
+      prefill: {
+        name: name,
+        email: email,
+      },
+    });
+
+    document.getElementById("calendlyModal").style.display = "flex";
+
+    // Listen for event scheduled
+    function calendlyListener(e) {
+      if (e.data.event && e.data.event.indexOf("calendly.event_scheduled") === 0) {
+        closeCalendly();
+        showGlobalPopup("Your session has been scheduled! Confirmation sent to your email.");
+        window.removeEventListener("message", calendlyListener);
+      }
+    }
+    window.addEventListener("message", calendlyListener);
+  }
+
+  function closeCalendly() {
+    document.getElementById("calendlyModal").style.display = "none";
+    document.getElementById("calendlyInline").innerHTML = ""; // reset for next time
+  }
 </script>
 
 <div id="firstLoginPopup" style="
