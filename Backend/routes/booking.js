@@ -209,8 +209,9 @@ router.post('/booking', async (req, res) => {
       }
     }
 
-    await client.query('COMMIT');
+    await client.query('COMMIT'); // Only commit if everything above succeeded
 
+    // Now send the email (outside the transaction)
     // Fetch package info
     const pkgRes = await pool.query(
       'SELECT name, price, sessions_included FROM packages WHERE id = $1',
@@ -227,6 +228,18 @@ router.post('/booking', async (req, res) => {
     `, [customer_id]);
     const customerEmail = custRes.rows[0].email;
     const customerName = custRes.rows[0].first_name;
+
+    // Fetch athlete names
+    const athleteNamesRes = await pool.query(
+      `SELECT a.id, a.first_name, a.last_name
+       FROM athlete a
+       WHERE a.id = ANY($1)`,
+      [athleteIds]
+    );
+    const athleteList = athleteNamesRes.rows
+      .map(a => `<li>${a.first_name} ${a.last_name}</li>`)
+      .join('');
+    const athleteCount = athleteNamesRes.rows.length;
 
     // Send receipt email
     const transporter = nodemailer.createTransport({
@@ -247,10 +260,16 @@ router.post('/booking', async (req, res) => {
         <p>Thank you for your purchase!</p>
         <ul>
           <li><b>Package:</b> ${pkg.name}</li>
-          <li><b>Price:</b> $${pkg.price}</li>
+          <li><b>Price per package:</b> $${pkg.price}</li>
+          <li><b>Packages purchased:</b> ${athleteCount}</li>
+          <li><b>Total:</b> $${pkg.price * athleteCount}</li>
           <li><b>Receipt Number:</b> ${receiptCodeStr}</li>
           <li><b>Status:</b> ${payment.status}</li>
           <li><b>Payment Date:</b> ${new Date().toLocaleString()}</li>
+        </ul>
+        <b>Athletes assigned to this purchase:</b>
+        <ul>
+          ${athleteList}
         </ul>
         <p><b>Ready to schedule sessions?</b>
           <a href="https://booking-site-frontend.onrender.com/athlete-dashboard.html#bookSessions" 
@@ -265,7 +284,7 @@ router.post('/booking', async (req, res) => {
 
     res.status(200).json({ message: 'Booking successful & receipt sent' });
   } catch (err) {
-    await client.query('ROLLBACK');
+    await client.query('ROLLBACK'); // Undo all DB changes if any error
     console.error('Booking error:', err.message);
     res.status(400).json({ error: err.message });
   } finally {
@@ -305,6 +324,7 @@ router.post('/create-checkout-session', async (req, res) => {
     const receiptCodeStr = `ZSP-${orderRes.rows[0].receipt_code}`;
 
     // 3. Create Stripe checkout session
+    const athleteCount = Array.isArray(athleteIds) ? athleteIds.length : 1;
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [{
@@ -313,7 +333,7 @@ router.post('/create-checkout-session', async (req, res) => {
           product_data: { name: pkg.name },
           unit_amount: priceCents,
         },
-        quantity: 1,
+        quantity: athleteCount, // <-- FIXED: charge for each athlete
       }],
       mode: 'payment',
       success_url: `http://localhost:5000/booking/payment-success?session_id={CHECKOUT_SESSION_ID}`,
