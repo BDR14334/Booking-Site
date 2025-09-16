@@ -250,6 +250,8 @@ router.post('/booking', async (req, res) => {
       }
     });
 
+    const paymentDate = new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' });
+
     await transporter.sendMail({
       from: 'robinsontech30@gmail.com',
       to: customerEmail,
@@ -265,7 +267,7 @@ router.post('/booking', async (req, res) => {
           <li><b>Total:</b> $${pkg.price * athleteCount}</li>
           <li><b>Receipt Number:</b> ${receiptCodeStr}</li>
           <li><b>Status:</b> ${payment.status}</li>
-          <li><b>Payment Date:</b> ${new Date().toLocaleString()}</li>
+          <li><b>Payment Date:</b> ${paymentDate}</li>
         </ul>
         <b>Athletes assigned to this purchase:</b>
         <ul>
@@ -458,7 +460,7 @@ router.get('/payment-success', async (req, res) => {
         <li><b>Package:</b> ${pkg.name}</li>
         <li><b>Price:</b> $${(session.amount_total / 100).toFixed(2)}</li>
         <li><b>Receipt Number:</b> ${session.metadata.receipt_code}</li>
-        <li><b>Payment Date:</b> ${new Date().toLocaleString()}</li>
+        <li><b>Payment Date:</b> ${new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' })}</li>
       </ul>
       <p>
         <b>Ready to schedule your sessions?</b><br>
