@@ -252,7 +252,7 @@ router.post('/booking', async (req, res) => {
           <li><b>Status:</b> ${payment.status}</li>
           <li><b>Payment Date:</b> ${new Date().toLocaleString()}</li>
         </ul>
-        <p><b>Ready to book sessions?</b>
+        <p><b>Ready to schedule sessions?</b>
           <a href="https://booking-site-frontend.onrender.com/athlete-dashboard.html#bookSessions" 
              target="_blank" style="color:#ff4800;font-weight:bold;">
              Click here
@@ -343,7 +343,7 @@ router.post('/create-checkout-session', async (req, res) => {
 
 // Post payment intent
 router.post('/create-payment-intent', async (req, res) => {
-  const { customerId, packageId } = req.body;
+  const { customerId, packageId, athleteIds } = req.body;
 
   try {
     const pkgRes = await pool.query(
@@ -356,7 +356,8 @@ router.post('/create-payment-intent', async (req, res) => {
     }
 
     const pkg = pkgRes.rows[0];
-    const amountCents = Math.round(parseFloat(pkg.price) * 100);
+    const athleteCount = Array.isArray(athleteIds) ? athleteIds.length : 1;
+    const amountCents = Math.round(parseFloat(pkg.price) * 100 * athleteCount);
 
     // Create a Stripe PaymentIntent
     const paymentIntent = await stripe.paymentIntents.create({
@@ -364,8 +365,9 @@ router.post('/create-payment-intent', async (req, res) => {
       currency: 'usd',
       metadata: {
         customer_id: customerId,
-        package_id: packageId
-        // optionally add timeslotIds or athleteIds if needed
+        package_id: packageId,
+        athlete_count: athleteCount,
+        athlete_ids: JSON.stringify(athleteIds)
       }
     });
 
@@ -439,7 +441,7 @@ router.get('/payment-success', async (req, res) => {
         <li><b>Payment Date:</b> ${new Date().toLocaleString()}</li>
       </ul>
       <p>
-        <b>Ready to book your sessions?</b><br>
+        <b>Ready to schedule your sessions?</b><br>
         <a href="https://booking-site-frontend.onrender.com/athlete-dashboard.html#bookSessions" target="_blank" style="color:#ff4800;font-weight:bold;">
           Click here to choose your sessions
         </a>

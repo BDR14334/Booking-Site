@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
   <link rel="stylesheet" href="style.css" />
-  <title>Booking</title>
+  <title>Packages</title>
   <style>
     html, body {
       margin: 0;
@@ -370,7 +370,7 @@
         <ul>
           <li><a href="/" class="link">Home</a></li>
           <li><a href="/about" class="link">About</a></li>
-          <li><a href="/booking" class="link">Book</a></li>
+          <li><a href="/booking" class="link">Packages</a></li>
           <li><a href="/contact" class="link">Contact</a></li>
         </ul>
       </div>
@@ -400,7 +400,7 @@
       <div class="mt-4 d-flex flex-column">
         <a href="/" class="text-white px-3 py-2 text-decoration-none">🏠 Home</a>
         <a href="/about" class="text-white px-3 py-2 text-decoration-none">ℹ️ About</a>
-        <a href="/booking" class="text-white px-3 py-2 text-decoration-none">📅 Book</a>
+        <a href="/booking" class="text-white px-3 py-2 text-decoration-none">📦 Packages</a>
         <a href="/contact" class="text-white px-3 py-2 text-decoration-none">✉️ Contact</a>
       </div>
     </div>
@@ -846,10 +846,20 @@
     document.getElementById("nextToPaymentBtn").addEventListener("click", () => {
       goToStep(2); // Show payment section
 
+      const athleteCount = selectedAthleteIds.length;
+      const totalPrice = selectedPackage.price * athleteCount;
+
       // Populate package info
+      let priceSummary;
+      if (athleteCount > 1) {
+        priceSummary = `$${selectedPackage.price} × ${athleteCount} Athletes`;
+      } else {
+        priceSummary = `$${totalPrice}`;
+      }
+
       document.getElementById("checkoutPackageTitle").innerText = selectedPackage.title;
-      document.getElementById("checkoutPackagePrice").innerText = `$${selectedPackage.price}`;
-      document.getElementById("payNowAmountText").innerText = selectedPackage.price;
+      document.getElementById("checkoutPackagePrice").innerHTML = priceSummary;
+      document.getElementById("payNowAmountText").innerText = totalPrice;
 
       // Initialize Stripe only once
       if (!stripe) {
