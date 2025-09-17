@@ -494,7 +494,7 @@ router.get('/active-users', async (req, res) => {
         u.first_name || ' ' || u.last_name AS full_name,
         u.role,
         u.email,
-        c.phone,
+        c.phone
       FROM users u
       LEFT JOIN customer c ON u.id = c.user_id
       ORDER BY u.first_name, u.last_name
