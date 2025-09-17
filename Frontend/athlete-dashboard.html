@@ -715,7 +715,7 @@
       box.innerHTML = `
         <h3>${pkg.name}</h3>
         <strong style="margin-bottom:0;">${athleteName}</strong>
-        <p style="margin-top:2px;">Sessions Remaining: ${pkg.sessions_remaining ?? 'N/A'}</p>
+        <p style="margin-top:2px;">Package Sessions: ${pkg.sessions_remaining ?? 'N/A'}</p>
         <button style="margin-top:10px;" class="book-calendly-btn" onclick="openCalendly('${pkg.calendly_url}')">
           Click to Schedule
         </button>
@@ -917,7 +917,7 @@
   function calendlyListener(e) {
     if (e.data.event && e.data.event.indexOf("calendly.event_scheduled") === 0) {
       closeCalendly();
-      showGlobalPopup("Your session has been scheduled! Confirmation sent to your email.");
+      showGlobalPopup("Your session has been scheduled! Confirmation sent to your email. \n\nNote: Your package sessions will decrease after you attend.");
       window.removeEventListener("message", calendlyListener);
     }
   }
@@ -1220,7 +1220,7 @@ function closeCalendly() {
       iconSpan.innerHTML = '';
       iconSpan.style.display = 'none';
     }
-    document.getElementById('globalPopupMessage').textContent = message;
+    document.getElementById('globalPopupMessage').innerText = message;
     document.getElementById('globalPopup').style.display = 'block';
   }
   function closeGlobalPopup() {

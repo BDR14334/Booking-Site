@@ -695,51 +695,36 @@
 
                 // Check for adult-athlete role
                 if (user.role === "adult-athlete") {
-                  // Fetch adult athlete info
+                  // Inside the adult-athlete booking logic:
                   const customerRes = await fetch(`${API_BASE}/athlete/adult-athlete/by-user/${user.id}`, {
                     credentials: 'include'
                   });
                   const customerData = await customerRes.json();
-                  if (!customerData.customer_id) {
+
+                  if (!customerData.customer || !customerData.customer.id) {
                     alert("Please complete your profile before booking.");
                     window.location.href = "/adult-athlete-dashboard#athleteInfo";
                     return;
                   }
-                  customerId = customerData.customer_id;
-                  athleteId = customerData.athlete_id;
-
-                  // Calculate age group from dob
-                  function getAgeGroup(dob) {
-                    const birthDate = new Date(dob);
-                    const today = new Date();
-                    let age = today.getFullYear() - birthDate.getFullYear();
-                    const m = today.getMonth() - birthDate.getMonth();
-                    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-                      age--;
-                    }
-                    if (age <= 8) return "8 & Under";
-                    if (age <= 10) return "9-10";
-                    if (age <= 12) return "11-12";
-                    if (age <= 14) return "13-14";
-                    if (age <= 16) return "15-16";
-                    if (age <= 18) return "17-18";
-                    return "18+";
-                  }
-                  const ageGroup = getAgeGroup(customerData.dob);
+                  customerId = customerData.customer.id;
+                  athleteId = customerData.athlete?.id;
 
                   // Show only the adult athlete as the "athlete"
                   const athleteContainer = document.getElementById('athleteContainer');
                   athleteContainer.innerHTML = '';
                   const athleteBox = document.createElement('a');
                   athleteBox.className = 'box selected'; // Auto-selected
-                  const isAdultAthlete = user.role === "adult-athlete";
+
                   athleteBox.innerHTML = `
                     <div class="icon"><i class="fa-solid fa-user"></i></div>
-                    <div class="topic">${customerData.first_name} ${customerData.last_name}</div>
-                    <p>Age: ${customerData.age}</p>
-                    <p>Level of Activity Daily: ${customerData.sport || ''}</p>
+                    <div class="topic">${customerData.customer.first_name || ""} ${customerData.customer.last_name || ""}</div>
+                    <p>Age: ${customerData.age || ""}</p>
+                    <p>Level of Activity Daily: ${customerData.athlete?.sport || ''}</p>
                   `;
                   athleteContainer.appendChild(athleteBox);
+
+                  // Set selectedAthleteIds to just this athleteId
+                  selectedAthleteIds = [athleteId];
 
                   // Set selectedAthleteIds to just this customerId
                   selectedAthleteIds = [athleteId];

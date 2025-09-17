@@ -12,20 +12,116 @@ function requireRole(expectedRole) {
   };
 }
 
-router.get('/me', authenticateToken, async (req, res) => {
-  console.log('req.user:', req.user); // <--- Add this
-  const userId = req.user.id;
+// --- Adult Athlete route (place this FIRST) ---
+router.get('/adult-athlete/by-user/:user_id', async (req, res) => {
+  const { user_id } = req.params;
   try {
     const result = await pool.query(
+      `SELECT 
+          c.id AS customer_id,
+          a.id AS athlete_id,
+          c.first_name AS customer_first_name,
+          c.last_name AS customer_last_name,
+          c.email AS customer_email,
+          c.phone AS customer_phone,
+          c.dob,
+          a.first_name AS athlete_first_name,
+          a.last_name AS athlete_last_name,
+          a.sport,
+          a.age_group
+       FROM customer c
+       JOIN athlete a ON c.id = a.customer_id
+       WHERE c.user_id = $1
+       LIMIT 1`,
+      [user_id]
+    );
+
+    if (result.rows.length === 0) {
+      // fallback: if no customer/athlete yet, return user info for autofill
+      const fallback = await pool.query(
+        `SELECT first_name, last_name, email FROM users WHERE id = $1 LIMIT 1`,
+        [user_id]
+      );
+      if (fallback.rows.length > 0) {
+        return res.json({
+          customer: {
+            id: null,
+            first_name: fallback.rows[0].first_name,
+            last_name: fallback.rows[0].last_name,
+            email: fallback.rows[0].email,
+            phone: null,
+            dob: null
+          },
+          athlete: null,
+          age: null
+        });
+      }
+      return res.status(404).json({ error: 'Adult athlete not found' });
+    }
+
+    const row = result.rows[0];
+
+    // Calculate age from dob
+    let age = null;
+    if (row.dob) {
+      const birthDate = new Date(row.dob);
+      const today = new Date();
+      age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+    }
+
+    res.json({
+      customer: {
+        id: row.customer_id,
+        first_name: row.customer_first_name,
+        last_name: row.customer_last_name,
+        email: row.customer_email,
+        phone: row.customer_phone,
+        dob: row.dob
+      },
+      athlete: row.athlete_id
+        ? {
+            id: row.athlete_id,
+            first_name: row.athlete_first_name,
+            last_name: row.athlete_last_name,
+            sport: row.sport,
+            age_group: row.age_group
+          }
+        : null,
+      age
+    });
+  } catch (err) {
+    console.error('Error fetching adult athlete:', err.message);
+    res.status(500).json({ error: 'Error fetching adult athlete data' });
+  }
+});
+
+router.get('/me', authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+  try {
+    let result = await pool.query(
       'SELECT first_name, last_name, email FROM customer WHERE user_id = $1 LIMIT 1',
       [userId]
     );
+
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Customer not found' });
+      // fallback to users table
+      result = await pool.query(
+        'SELECT first_name, last_name, email FROM users WHERE id = $1 LIMIT 1',
+        [userId]
+      );
     }
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     res.json(result.rows[0]);
   } catch (err) {
-    console.error('Error fetching customer:', err);
+    console.error('Error fetching user/customer:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -68,24 +164,25 @@ router.put('/update/:id', async (req, res) => {
       return res.status(400).json({ error: 'User not found' });
     }
 
-    // Update customer info in the correct table
-    const result = await pool.query(
+    // Fetch current values
+    const current = await pool.query('SELECT * FROM public.customer WHERE id = $1', [id]);
+    const existing = current.rows[0];
+
+    // Use existing value if new value is empty
+    const updatedFirstName = first_name || existing.first_name;
+    const updatedLastName = last_name || existing.last_name;
+    const updatedEmail = email || existing.email;
+    const updatedPhone = phone || existing.phone;
+
+    // Then update
+    await pool.query(
       `UPDATE public.customer
-       SET first_name = $1,
-           last_name = $2,
-           email = $3,
-           phone = $4,
-           user_id = $5
-       WHERE id = $6
-       RETURNING *`,
-      [first_name, last_name, email, phone, user_id, id]
+       SET first_name = $1, last_name = $2, email = $3, phone = $4, user_id = $5
+       WHERE id = $6`,
+      [updatedFirstName, updatedLastName, updatedEmail, updatedPhone, user_id, id]
     );
 
-    if (result.rows.length > 0) {
-      res.status(200).json({ message: 'Client updated successfully', customer: result.rows[0] });
-    } else {
-      res.status(404).json({ error: 'Client not found' });
-    }
+    res.status(200).json({ message: 'Client updated successfully' });
   } catch (err) {
     console.error('Error updating client:', err.message);
     res.status(500).json({ error: 'Error updating client' });
@@ -317,23 +414,26 @@ router.get('/paid-packages/:customerId', authenticateToken, async (req, res) => 
   }
 });
 
-// Create or update adult athlete (with dob)
+// Create or update adult athlete (with customer and athlete separation)
 router.post('/adult-athlete/create', async (req, res) => {
   const { first_name, last_name, dob, email, phone, user_id, sport } = req.body;
 
   try {
-    // Check if customer already exists for this user_id
+    // 1. Upsert customer
+    let customerId;
     const existingCustomer = await pool.query(
       `SELECT id FROM public.customer WHERE user_id = $1 LIMIT 1`,
       [user_id]
     );
-
-    let customerId;
     if (existingCustomer.rows.length > 0) {
-      // ✅ Use the existing customer row
       customerId = existingCustomer.rows[0].id;
+      await pool.query(
+        `UPDATE public.customer
+         SET first_name = $1, last_name = $2, dob = $3, email = $4, phone = $5
+         WHERE id = $6`,
+        [first_name, last_name, dob, email, phone, customerId]
+      );
     } else {
-      // Insert into customer table
       const customerRes = await pool.query(
         `INSERT INTO public.customer (first_name, last_name, dob, email, phone, user_id)
          VALUES ($1, $2, $3, $4, $5, $6)
@@ -343,8 +443,9 @@ router.post('/adult-athlete/create', async (req, res) => {
       customerId = customerRes.rows[0].id;
     }
 
-    // Calculate age group from dob
+    // 2. Calculate age group
     function getAgeGroup(dob) {
+      if (!dob) return null;
       const birthDate = new Date(dob);
       const today = new Date();
       let age = today.getFullYear() - birthDate.getFullYear();
@@ -360,7 +461,7 @@ router.post('/adult-athlete/create', async (req, res) => {
     }
     const age_group = getAgeGroup(dob);
 
-    // Check if athlete already exists
+    // 3. Upsert athlete
     const existingAthlete = await pool.query(
       `SELECT id FROM athlete WHERE customer_id = $1 LIMIT 1`,
       [customerId]
@@ -458,47 +559,6 @@ router.put('/adult-athlete/update/:id', async (req, res) => {
   } catch (err) {
     console.error('Error updating adult athlete:', err.message);
     res.status(500).json({ error: 'Error updating adult athlete' });
-  }
-});
-
-// Get adult athlete by user_id (returns both customer and athlete)
-router.get('/adult-athlete/by-user/:user_id', async (req, res) => {
-  const { user_id } = req.params;
-  try {
-    const result = await pool.query(
-      `SELECT 
-          c.id AS customer_id,
-          a.id AS athlete_id,
-          c.first_name, c.last_name, c.email, c.phone, c.dob,
-          a.sport, a.age_group
-       FROM customer c
-       JOIN athlete a ON c.id = a.customer_id
-       WHERE c.user_id = $1
-       LIMIT 1`,
-      [user_id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Adult athlete not found' });
-    }
-
-    const row = result.rows[0];
-    // Calculate age from dob
-    let age = null;
-    if (row.dob) {
-      const birthDate = new Date(row.dob);
-      const today = new Date();
-      age = today.getFullYear() - birthDate.getFullYear();
-      const m = today.getMonth() - birthDate.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
-    }
-
-    res.json({ ...row, age });
-  } catch (err) {
-    console.error('Error fetching adult athlete:', err.message);
-    res.status(500).json({ error: 'Error fetching adult athlete data' });
   }
 });
 

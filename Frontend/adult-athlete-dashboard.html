@@ -649,22 +649,21 @@
       const athlete = await athleteRes.json();
 
       // ✅ Store both IDs
-      customerId = athlete.customer_id;
-      athleteId = athlete.athlete_id;
+      customerId = athlete.customer?.id || athlete.customer_id;
+      athleteId = athlete.athlete?.id || athlete.athlete_id;
 
-      // Store for Calendly prefill
       customerData = {
-        first_name: athlete.first_name || "",
-        last_name: athlete.last_name || "",
-        email: athlete.email || ""
+        first_name: athlete.customer?.first_name || "",
+        last_name: athlete.customer?.last_name || "",
+        email: athlete.customer?.email || ""
       };
 
       // Populate form fields
       document.getElementById("athleteName").value =
-        (athlete.first_name || "") + (athlete.last_name ? " " + athlete.last_name : "");
-      document.getElementById("email").value = athlete.email || "";
-      document.getElementById("phone").value = athlete.phone || "";
-      const dob = athlete.dob ? athlete.dob.split('T')[0] : "";
+        ((athlete.customer?.first_name || "") + (athlete.customer?.last_name ? " " + athlete.customer.last_name : "")).trim();
+      document.getElementById("email").value = athlete.customer?.email || "";
+      document.getElementById("phone").value = athlete.customer?.phone || "";
+      const dob = athlete.customer?.dob ? athlete.customer.dob.split('T')[0] : "";
       document.getElementById("dob").value = dob;
 
       const sportMap = {
@@ -673,7 +672,7 @@
         "moderatly active": "Moderately Active",
         "not active": "Not Active"
       };
-      const sportValue = sportMap[(athlete.sport || "").toLowerCase().trim()] || "";
+      const sportValue = sportMap[(athlete.athlete?.sport || "").toLowerCase().trim()] || "";
       document.getElementById("sport").value = sportValue;
     } catch (error) {
       console.error('Error loading client data:', error);
@@ -771,7 +770,7 @@
 
         box.innerHTML = `
           <h3>${pkg.name}</h3>
-          <p>Sessions Remaining: ${pkg.sessions_remaining ?? 'N/A'}</p>
+          <p>Package Sessions: ${pkg.sessions_remaining ?? 'N/A'}</p>
           <button class="book-calendly-btn" onclick="openCalendly('${pkg.calendly_url}')">
             Click to Schedule
           </button>
@@ -825,6 +824,38 @@
     }
   }
 
+  async function autofillParentInfoIfFirstLogin() {
+    if (localStorage.getItem("parentAutofilled") === "true") {
+      console.log("Autofill skipped: already done");
+      return;
+    }
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${API_BASE}/athlete/me`, {
+        method: 'GET',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: 'include'
+      });
+      if (!res.ok) {
+        console.log("Autofill: /athlete/me not ok", res.status);
+        return;
+      }
+      const data = await res.json();
+      console.log("Autofill data:", data);
+      const nameInput = document.getElementById("name");
+      const emailInput = document.getElementById("email");
+      if (nameInput && !nameInput.value) {
+        nameInput.value = `${data.first_name || ""} ${data.last_name || ""}`.trim();
+      }
+      if (emailInput && !emailInput.value) {
+        emailInput.value = data.email || "";
+      }
+      localStorage.setItem("parentAutofilled", "true");
+    } catch (err) {
+      console.error("Failed to autofill parent info", err);
+    }
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     autofillAthleteInfoIfFirstLogin();
   });
@@ -863,7 +894,7 @@
       iconSpan.innerHTML = '';
       iconSpan.style.display = 'none';
     }
-    document.getElementById('globalPopupMessage').textContent = message;
+    document.getElementById('globalPopupMessage').innerText = message;
     document.getElementById('globalPopup').style.display = 'block';
   }
 
@@ -896,7 +927,7 @@
     function calendlyListener(e) {
       if (e.data.event && e.data.event.indexOf("calendly.event_scheduled") === 0) {
         closeCalendly();
-        showGlobalPopup("Your session has been scheduled! Confirmation sent to your email.");
+        showGlobalPopup("Your session has been scheduled! Confirmation sent to your email. \n\nNote: Your package sessions will decrease after you attend.");
         window.removeEventListener("message", calendlyListener);
       }
     }
