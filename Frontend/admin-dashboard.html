@@ -1012,6 +1012,7 @@
       if (!container) return;
       Sortable.create(container, {
         animation: 150,
+        handle: '.drag-handle', // Only allow dragging by the handle (the dots)
         onEnd: function () {
           // Save the new order of story IDs to localStorage
           const order = Array.from(container.querySelectorAll('.storyForm')).map(form => form.dataset.id);
