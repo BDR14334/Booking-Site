@@ -360,13 +360,17 @@
     #billing-country {
       width: 100% !important;
       padding: 10px !important;
-      margin-bottom: 10px !important;
       border-radius: 8px !important;
       border: none !important;
       background: #fff !important;
       color: #222 !important;
       font-size: 16px !important;
       font-family: inherit !important;
+      height: 44px !important; /* Match your input height */
+      box-sizing: border-box !important;
+      appearance: none !important;      /* Remove default arrow in most browsers */
+      -webkit-appearance: none !important; /* Remove default arrow in Safari/iOS */
+      -moz-appearance: none !important;
     }
   </style>
 </head>
@@ -463,7 +467,7 @@
           </div>
           <div style="max-width: 500px; margin: 0 auto;">
             <label for="cardholder-name" style="color: white;">Cardholder Name</label>
-            <input id="cardholder-name" type="text" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: none;" placeholder="Jane Doe" required>
+            <input id="cardholder-name" type="text" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: none;" required>
             <label for="card-element" style="color: white;">Card Details</label>
             <div id="card-element" style="padding: 15px; background: white; border-radius: 10px; margin-bottom: 15px;"></div>
             <label for="billing-country" style="color: white;">Country</label>
