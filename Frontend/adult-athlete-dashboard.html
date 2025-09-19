@@ -795,6 +795,15 @@
       e.preventDefault();
       handleLogout();
     });
+
+    // Show first login popup if needed (NOW customerData is ready)
+    const isFirstLogin = sessionStorage.getItem("isFirstLogin");
+    if (isFirstLogin === "true") {
+      let firstName = customerData && customerData.first_name ? customerData.first_name : "";
+      document.getElementById("firstLoginName").textContent = firstName;
+      document.getElementById("firstLoginPopup").style.display = "block";
+      sessionStorage.removeItem("isFirstLogin");
+    }
   });
 
   async function autofillAthleteInfoIfFirstLogin() {
@@ -940,13 +949,19 @@
   }
 
   // Show first login popup if flagged in sessionStorage
-  document.addEventListener("DOMContentLoaded", function() {
-    const isFirstLogin = sessionStorage.getItem("isFirstLogin");
-    if (isFirstLogin === "true") {
-      document.getElementById("firstLoginPopup").style.display = "block";
-      sessionStorage.removeItem("isFirstLogin"); // Prevent future triggers
-    }
-  });
+  // document.addEventListener("DOMContentLoaded", function() {
+  //   const isFirstLogin = sessionStorage.getItem("isFirstLogin");
+  //   if (isFirstLogin === "true") {
+  //     // Use the globally loaded customerData if available
+  //     let firstName = "";
+  //     if (customerData && customerData.first_name) {
+  //       firstName = customerData.first_name;
+  //     }
+  //     document.getElementById("firstLoginName").textContent = firstName;
+  //     document.getElementById("firstLoginPopup").style.display = "block";
+  //     sessionStorage.removeItem("isFirstLogin"); // Prevent future triggers
+  //   }
+  // });
 
   function closeFirstLoginPopup() {
     document.getElementById("firstLoginPopup").style.display = "none";
@@ -970,7 +985,9 @@
   text-align: center;
   max-width: 400px;
 ">
-  <p id="firstLoginMessage">Welcome! Please complete your profile before exploring packages.</p>
+  <p id="firstLoginMessage">
+    Welcome, <span id="firstLoginName" style="color:#ff4800; font-weight:bold;"></span>! Please complete your profile before exploring packages.
+  </p>
   <button onclick="closeFirstLoginPopup()" style="
     margin-top: 20px;
     padding: 10px 20px;

@@ -609,33 +609,37 @@
   }
 
   (async function checkRole() {
-  const token = localStorage.getItem("token");
-  const res = await fetch(`${API_BASE}/auth/me`, {
-    credentials: 'include',
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  const data = await res.json();
-  if (!data.user || data.user.role !== 'athlete') {
-    showGlobalPopup('Not authorized for Youth Athlete Dashboard');
-    window.location.href = "/login";
-  }
-})();
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${API_BASE}/auth/me`, {
+      credentials: 'include',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (!data.user || data.user.role !== 'athlete') {
+      showGlobalPopup('Not authorized for Youth Athlete Dashboard');
+      window.location.href = "/login";
+    }
+  })();
 
   function handleBackClick() {
      window.location.href = "/";
   }
 
-  window.addEventListener("DOMContentLoaded", () => {
-    const isFirstLogin = sessionStorage.getItem("isFirstLogin");
+  // window.addEventListener("DOMContentLoaded", () => {
+  //   const isFirstLogin = sessionStorage.getItem("isFirstLogin");
 
-    if (isFirstLogin === "true") {
-      const message = document.getElementById("firstLoginMessage");
-
-      document.getElementById("firstLoginPopup").style.display = "block";
-      sessionStorage.removeItem("isFirstLogin"); // Prevent future triggers
-    }
-  });
-
+  //   if (isFirstLogin === "true") {
+  //     // Use the globally loaded customerData if available
+  //     let firstName = "";
+  //     if (customerData && customerData.first_name) {
+  //       firstName = customerData.first_name;
+  //     }
+  //     document.getElementById("firstLoginName").textContent = firstName;
+  //     document.getElementById("firstLoginPopup").style.display = "block";
+  //     sessionStorage.removeItem("isFirstLogin"); // Prevent future triggers
+  //   }
+  // });
+  
   function closeFirstLoginPopup() {
     document.getElementById("firstLoginPopup").style.display = "none";
   }
@@ -1118,6 +1122,15 @@ function closeCalendly() {
     await loadAthleteData();
     await loadPaidPackages();
 
+    // Show first login popup if needed (customerData is now ready)
+    const isFirstLogin = sessionStorage.getItem("isFirstLogin");
+    if (isFirstLogin === "true") {
+      let firstName = customerData && customerData.first_name ? customerData.first_name : "";
+      document.getElementById("firstLoginName").textContent = firstName;
+      document.getElementById("firstLoginPopup").style.display = "block";
+      sessionStorage.removeItem("isFirstLogin");
+    }
+
     document.getElementById("logoutBtn")?.addEventListener("click", function(e) {
       e.preventDefault();
       handleLogout();
@@ -1224,7 +1237,7 @@ function closeCalendly() {
 
 <div id="firstLoginPopup" class="popup-modal">
   <p id="firstLoginMessage">
-    Welcome! Please complete your profile before purchasing packages.
+    Welcome, <span id="firstLoginName" style="color:#ff4800; font-weight:bold;"></span>! Please complete your profile before exploring packages.
   </p>
   <button onclick="closeFirstLoginPopup()">OK</button>
 </div>
