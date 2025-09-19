@@ -426,7 +426,7 @@
 </div>
 
 <div id="globalBackBtn" class="back-btn" onclick="handleBackClick()">
-  <i class="fas fa-arrow-left">Back to Home</i>
+  <i class="fas fa-arrow-left">Home</i>
 </div>
 
 <!-- Edit Personal Info -->
@@ -938,6 +938,20 @@
     document.getElementById("calendlyModal").style.display = "none";
     document.getElementById("calendlyInline").innerHTML = ""; // reset for next time
   }
+
+  // Show first login popup if flagged in sessionStorage
+  document.addEventListener("DOMContentLoaded", function() {
+    const isFirstLogin = sessionStorage.getItem("isFirstLogin");
+    if (isFirstLogin === "true") {
+      document.getElementById("firstLoginPopup").style.display = "block";
+      sessionStorage.removeItem("isFirstLogin"); // Prevent future triggers
+    }
+  });
+
+  function closeFirstLoginPopup() {
+    document.getElementById("firstLoginPopup").style.display = "none";
+  }
+
 </script>
 
 <div id="firstLoginPopup" style="
@@ -956,7 +970,7 @@
   text-align: center;
   max-width: 400px;
 ">
-  <p id="firstLoginMessage">Welcome! Please complete your profile before booking sessions.</p>
+  <p id="firstLoginMessage">Welcome! Please complete your profile before exploring packages.</p>
   <button onclick="closeFirstLoginPopup()" style="
     margin-top: 20px;
     padding: 10px 20px;

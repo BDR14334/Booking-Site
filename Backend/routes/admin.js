@@ -6,6 +6,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
+const { authenticateToken, requireRole } = require('./auth');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
@@ -152,7 +153,7 @@ router.delete('/delete-story/:id', async (req, res) => {
 // Create a new package
 router.post('/create-package', async (req, res) => {
   try {
-    const { packageTitle, price, sessionNumber, description, features, calendlyUrl } = req.body;
+    const { packageTitle, price, sessionNumber, description, features, calendlyUrl, isMemberPriced } = req.body;
     const cleanedDescription = typeof description === 'string' ? description.trim() : '';
     if (!cleanedDescription) {
       return res.status(400).json({ error: 'Package must include a description.' });
@@ -164,10 +165,10 @@ router.post('/create-package', async (req, res) => {
       return res.status(400).json({ error: 'Package must include at least one feature.' });
     }
     const result = await pool.query(
-      `INSERT INTO packages (name, price, description, features, sessions_included, calendly_url)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO packages (name, price, description, features, sessions_included, calendly_url, is_member_priced)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [packageTitle, price, cleanedDescription, cleanedFeatures, sessionNumber, calendlyUrl]
+      [packageTitle, price, cleanedDescription, cleanedFeatures, sessionNumber, calendlyUrl, !!isMemberPriced]
     );
     res.status(201).json({ message: 'Package created', package: result.rows[0] });
   } catch (err) {
@@ -179,7 +180,7 @@ router.post('/create-package', async (req, res) => {
 // Update an existing package by ID
 router.put('/update-package/:id', async (req, res) => {
   const { id } = req.params;
-  const { packageTitle, sessionNumber, price, description, features, calendlyUrl } = req.body;
+  const { packageTitle, sessionNumber, price, description, features, calendlyUrl, isMemberPriced } = req.body;
   const cleanedDescription = typeof description === 'string' ? description.trim() : '';
   const cleanedFeatures = Array.isArray(features)
     ? features.map(f => f.trim()).filter(f => f !== '')
@@ -198,10 +199,11 @@ router.put('/update-package/:id', async (req, res) => {
            price = $3,
            description = $4,
            features = $5,
-           calendly_url = $6
-       WHERE id = $7
+           calendly_url = $6,
+           is_member_priced = $7
+       WHERE id = $8
        RETURNING *`,
-      [packageTitle, sessionNumber, price, cleanedDescription, cleanedFeatures, calendlyUrl, id]
+      [packageTitle, sessionNumber, price, cleanedDescription, cleanedFeatures, calendlyUrl, !!isMemberPriced, id]
     );
     if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Package not found.' });
@@ -239,7 +241,8 @@ router.get('/get-packages', async (req, res) => {
         price,
         description,
         features,
-        calendly_url
+        calendly_url,
+        is_member_priced
       FROM packages
     `);
     const packages = result.rows.map(pkg => ({
@@ -249,7 +252,8 @@ router.get('/get-packages', async (req, res) => {
       price: pkg.price,
       description: typeof pkg.description === 'string' ? pkg.description : '',
       features: Array.isArray(pkg.features) ? pkg.features : [],
-      calendlyUrl: pkg.calendly_url || ''
+      calendlyUrl: pkg.calendly_url || '',
+      is_member_priced: pkg.is_member_priced // <-- add this line
     }));
     res.json(packages);
   } catch (error) {
@@ -491,10 +495,12 @@ router.get('/active-users', async (req, res) => {
     const result = await pool.query(`
       SELECT 
         u.id,
+        c.id AS customer_id,  -- add this line
         u.first_name || ' ' || u.last_name AS full_name,
         u.role,
         u.email,
-        c.phone
+        c.phone,
+        c.is_member
       FROM users u
       LEFT JOIN customer c ON u.id = c.user_id
       ORDER BY u.first_name, u.last_name
@@ -505,7 +511,6 @@ router.get('/active-users', async (req, res) => {
     res.status(500).json({ error: 'Failed to load active users' });
   }
 });
-
 
 // Get booking transactions with customer + payment details
 router.get('/transactions', async (req, res) => {
@@ -530,6 +535,39 @@ router.get('/transactions', async (req, res) => {
     res.status(500).json({ error: 'Failed to load transactions' });
   }
 });
+
+router.put('/toggle-member/:userId', async (req, res) => {
+  const { userId } = req.params;
+  const { hasMemberPricing } = req.body;
+  try {
+    const result = await pool.query(
+      `UPDATE customer SET has_member_pricing = $1 WHERE user_id = $2 RETURNING *`,
+      [!!hasMemberPricing, userId]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error toggling member pricing:', err);
+    res.status(500).json({ error: 'Failed to toggle member pricing' });
+  }
+});
+
+// Update customer membership status
+router.put('/customer/:id/membership', authenticateToken, requireRole('admin'), async (req, res) => {
+  const { id } = req.params;
+  const { isMember } = req.body;
+
+  try {
+    const result = await pool.query(
+      `UPDATE customer SET is_member = $1 WHERE id = $2 RETURNING *`,
+      [isMember, id]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error updating customer membership:', err);
+    res.status(500).json({ error: 'Failed to update membership' });
+  }
+});
+
 
 module.exports = router;
 

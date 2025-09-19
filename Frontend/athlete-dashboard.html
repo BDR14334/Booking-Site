@@ -482,7 +482,7 @@
 </div>
 
 <div id="globalBackBtn" class="back-btn" onclick="handleBackClick()">
-  <i class="fas fa-arrow-left">Back to Home</i>
+  <i class="fas fa-arrow-left">Home</i>
 </div>
 
 <!-- Edit Personal Info -->
@@ -630,13 +630,6 @@
 
     if (isFirstLogin === "true") {
       const message = document.getElementById("firstLoginMessage");
-
-      // Custom message per role if needed
-      if (window.location.href.includes("AthleteDashboard")) {
-        message.textContent = "Welcome! Please fill in your parental/guardian info and add an athlete before booking.";
-      } else if (window.location.href.includes("CoachDashboard")) {
-        message.textContent = "Welcome! Please complete your profile to set availability for athlete training.";
-      }
 
       document.getElementById("firstLoginPopup").style.display = "block";
       sessionStorage.removeItem("isFirstLogin"); // Prevent future triggers
@@ -1226,6 +1219,7 @@ function closeCalendly() {
   function closeGlobalPopup() {
     document.getElementById('globalPopup').style.display = 'none';
   }
+
 </script>
 
 <div id="firstLoginPopup" class="popup-modal">

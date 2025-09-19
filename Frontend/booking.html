@@ -414,6 +414,18 @@
       <section class="booking" id="booking">
         <div class="content">
           <div class="title"><span>Package Choices</span></div>
+          <div id="membershipNotice" style="
+            text-align:center;
+            max-width:600px;
+            margin: -24px auto 48px auto;
+            color: #fff;
+            font-size:1rem;
+            font-weight:600;
+            display:none;
+            
+          ">
+            <!-- Message will be injected here -->
+          </div>
           <div id="packageContainer" class="boxes"></div>
         </div>
       </section>
@@ -630,23 +642,69 @@
     // Package Selection
     document.addEventListener('DOMContentLoaded', async () => {
       try {
+        // Step 1: Fetch membership status
+        let isMember = false;
+        try {
+          const membershipRes = await fetch(`${API_BASE}/auth/membership`, {
+            credentials: 'include'
+          });
+          if (membershipRes.ok) {
+            const { is_member } = await membershipRes.json();
+            isMember = is_member;
+          }
+        } catch (err) {
+          console.warn("Not logged in or failed to fetch membership:", err);
+          // Default: isMember = false (visitors or guests)
+        }
+
+        // Step 2: Fetch all packages
         const response = await fetch(`${API_BASE}/admin/get-packages`, {
           credentials: 'include'
         });
         const packages = await response.json();
+
+        console.log("isMember:", isMember, packages.map(p => ({
+          id: p.id,
+          name: p.title,
+          is_member_priced: p.is_member_priced
+        })));
+
+        // Step 3: Filter packages based on membership
+        console.log("isMember flag from /membership:", isMember);
+        console.log("Packages raw:", packages.map(p => ({
+          id: p.id,
+          name: p.title,
+          raw: p.is_member_priced,
+          type: typeof p.is_member_priced
+        })));
+        
+        const visiblePackages = packages.filter(pkg => {
+          const isMemberPkg = pkg.is_member_priced === true || pkg.is_member_priced === "true";
+          return isMember ? isMemberPkg : !isMemberPkg;
+        });
+
+        // Show message for visitors/non-members
+        const noticeEl = document.getElementById("membershipNotice");
+        if (!isMember) {
+          noticeEl.innerText = "Contact us if you are part of Chicagoland Zephyrs for \ndiscounted training rates.";
+          noticeEl.style.display = "block";
+        } else {
+          noticeEl.style.display = "none";
+        }
+
         const container = document.getElementById('packageContainer');
         container.innerHTML = '';
 
-        // Get saved order from localStorage
+        // Step 4: Apply saved ordering (optional)
         const savedOrder = JSON.parse(localStorage.getItem('packageOrder') || '[]');
-        // Sort packages according to saved order
         const orderedPackages = savedOrder.length
           ? savedOrder
-              .map(id => packages.find(pkg => String(pkg.id) === String(id)))
+              .map(id => visiblePackages.find(pkg => String(pkg.id) === String(id)))
               .filter(Boolean)
-              .concat(packages.filter(pkg => !savedOrder.includes(String(pkg.id))))
-          : packages;
+              .concat(visiblePackages.filter(pkg => !savedOrder.includes(String(pkg.id))))
+          : visiblePackages;
 
+        // Step 5: Render only the visible packages
         orderedPackages.forEach(pkg => {
           const box = document.createElement('a');
           box.className = 'box';
@@ -657,11 +715,13 @@
             <p>${pkg.description}</p>
             <h3 class="sub-heading">Features:</h3>
             <ul>${(pkg.features || []).map(feature => `<li>${feature}</li>`).join('')}</ul>
-            <p><strong style="font-size: 16px; font-style: italic;">Sessions:</strong>&nbsp;&nbsp;<span style="font-size: 16px; font-weight: normal;"> ${pkg.sessions}</span></p>
-            <p><strong style="font-size: 16px; font-style: italic;">Price:</strong>&nbsp;&nbsp;<span style="font-size: 16px; font-weight: normal;"> $${pkg.price}</span></p>
+            <p><strong style="font-size: 16px; font-style: italic;">Sessions:</strong>&nbsp;&nbsp;
+              <span style="font-size: 16px; font-weight: normal;">${pkg.sessions}</span></p>
+            <p><strong style="font-size: 16px; font-style: italic;">Price:</strong>&nbsp;&nbsp;
+              <span style="font-size: 16px; font-weight: normal;">$${pkg.price}</span></p>
             <div class="view-more"><span class="bouncy-text">Click to Choose Package</span></div>
           `;
-  
+
           // When package is selected, go to athlete selection
           box.addEventListener('click', async (e) => {
             e.preventDefault();
@@ -1103,8 +1163,6 @@
     <span style="font-size:2.5rem;">🎉</span>
   </div>
 </div>
-
-
 
 </body>
 </html>

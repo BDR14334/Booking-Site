@@ -171,7 +171,44 @@ router.post('/login', async (req, res) => {
       { expiresIn: '1h' }
     );
 
-    // Set cookie
+    // Send welcome email on first login
+    if (user.is_first_login) {
+      // Mark user as not first-time login
+      await pool.query(`UPDATE users SET is_first_login = false WHERE id = $1`, [user.id]);
+
+      // Send welcome email
+      try {
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: 'robinsontech30@gmail.com',
+            pass: process.env.GMAIL_APP_PASSWORD
+          }
+        });
+
+        const mailOptions = {
+          from: 'robinsontech30@gmail.com',
+          to: user.email,
+          subject: 'Welcome to Zephyrs Strength & Performance!',
+          html: `
+            <p>Hi ${user.first_name},</p>
+            <p>Welcome to Zephyrs Strength & Performance! We’re excited to have you join our community.</p>
+            <p>Our founders, Coach Warren Archer and Coach Dennis Robinson, created Zephyrs Strength & Performance with one goal in mind: to help athletes unlock their full potential through science-based training. Together, they bring decades of experience developing athletes of all ages—from first-timers to national champions—blending evidence-driven programming with mentorship that extends beyond the track.</p>
+            <p>As part of Zephyrs Strength & Performance, you’ll gain access to training that builds speed, strength, endurance, and resilience. More than workouts, we’re here to help you grow as an athlete and as a person.</p>
+            <p>We encourage you to log in, explore your account, and check out available packages. Your journey to becoming stronger, faster, and more confident starts today.</p>
+            <p>Welcome to the ZSP family, we’re glad you’re here.</p>
+            <p>Best,<br>The Zephyrs Strength & Performance Team</p>
+          `
+        };
+
+        await transporter.sendMail(mailOptions);
+      } catch (emailErr) {
+        console.error('Failed to send welcome email:', emailErr);
+        // Do not block login if email fails
+      }
+    }
+
+    // Set cookie and respond
     res
       .cookie('token', token, {
         httpOnly: true,
@@ -191,10 +228,6 @@ router.post('/login', async (req, res) => {
         },
       });
 
-    // Mark user as not first-time login
-    if (user.is_first_login) {
-      await pool.query(`UPDATE users SET is_first_login = false WHERE id = $1`, [user.id]);
-    }
   } catch (err) {
     console.error('Login error:', err.message);
     res.status(500).json({ error: 'Server error during login.' });
@@ -360,8 +393,36 @@ router.get('/auth/me', authenticateToken, async (req, res) => {
   }
 });
 
+function requireRole(role) {
+  return function (req, res, next) {
+    if (!req.user || req.user.role !== role) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    next();
+  };
+}
+
+// Membership route
+router.get('/membership', authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT c.is_member
+      FROM customer c
+      WHERE c.user_id = $1
+    `, [req.user.id]);
+
+    if (result.rows.length === 0) {
+      return res.json({ is_member: false });
+    }
+    res.json({ is_member: result.rows[0].is_member });
+  } catch (err) {
+    console.error("Error fetching user membership:", err);
+    res.status(500).json({ error: "Failed to fetch user info" });
+  }
+});
 
 module.exports = {
   router,
-  authenticateToken
+  authenticateToken,
+  requireRole
 };

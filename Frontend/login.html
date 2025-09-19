@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -246,6 +245,11 @@
 
                 // ✅ Store the token in localStorage for mobile compatibility
                 localStorage.setItem("token", token);
+
+                // 👇 Add this block to set the session flag for first login
+                if (user.is_first_login) {
+                    sessionStorage.setItem("isFirstLogin", "true");
+                }
 
                 // Redirect based on user.role
                 if (user.role === "adult-athlete") {
