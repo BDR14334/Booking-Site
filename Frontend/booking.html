@@ -356,6 +356,18 @@
     #nextToPaymentBtn:hover {
       background-color: #e03e00;
     }
+
+    #billing-country {
+      width: 100% !important;
+      padding: 10px !important;
+      margin-bottom: 10px !important;
+      border-radius: 8px !important;
+      border: none !important;
+      background: #fff !important;
+      color: #222 !important;
+      font-size: 16px !important;
+      font-family: inherit !important;
+    }
   </style>
 </head>
 <body>
@@ -418,7 +430,7 @@
             text-align:center;
             max-width:600px;
             margin: -24px auto 48px auto;
-            color: #fff;
+            color: #ffa162;
             font-size:1rem;
             font-weight:600;
             display:none;
@@ -433,7 +445,7 @@
       <!-- Athlete Selection Section -->
       <section class="booking" id="athleteSection">
         <div class="content">
-          <div class="title"><span>Choose an Athlete</span></div>
+          <div class="title"><span>Choose Athlete(s)</span></div>
           <div id="athleteContainer" class="boxes"></div>
           <div style="text-align:center; margin-top: 20px;">
             <button id="nextToPaymentBtn" class="next-btn" style="display: none;">Next</button>
@@ -452,14 +464,14 @@
           <div style="max-width: 500px; margin: 0 auto;">
             <label for="cardholder-name" style="color: white;">Cardholder Name</label>
             <input id="cardholder-name" type="text" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: none;" placeholder="Jane Doe" required>
+            <label for="card-element" style="color: white;">Card Details</label>
             <div id="card-element" style="padding: 15px; background: white; border-radius: 10px; margin-bottom: 15px;"></div>
             <label for="billing-country" style="color: white;">Country</label>
             <select id="billing-country" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: none;">
               <option value="US" selected>United States</option>
               <option value="CA">Canada</option>
             </select>
-            <label for="postal-code" style="color: white;">ZIP / Postal Code</label>
-            <input id="postal-code" type="text" style="width: 100%; padding: 10px; margin-bottom: 20px; border-radius: 8px; border: none;" placeholder="12345">
+
             <button id="payNowBtn">Pay $<span id="payNowAmountText"></span></button>
           </div>
         </div>
@@ -686,7 +698,7 @@
         // Show message for visitors/non-members
         const noticeEl = document.getElementById("membershipNotice");
         if (!isMember) {
-          noticeEl.innerText = "Contact us if you are part of Chicagoland Zephyrs for \ndiscounted training rates.";
+          noticeEl.innerHTML = "<em>Contact us if you are part of Chicagoland Zephyrs Track Club for discounted training rates.</em>";
           noticeEl.style.display = "block";
         } else {
           noticeEl.style.display = "none";
@@ -860,6 +872,12 @@
                     // Enable next button and load calendar
                     const nextBtn = document.getElementById('nextToPaymentBtn');
                     nextBtn.style.display = selectedAthleteIds.length > 0 ? 'inline-block' : 'none';
+
+                    if (selectedAthleteIds.length == 1) {
+                      setTimeout(() => {
+                        nextBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }, 100);
+                    }
                   });
   
                   athleteContainer.appendChild(athleteBox);
@@ -922,7 +940,6 @@
       payNowBtn.addEventListener("click", async () => {
         const cardholderName = document.getElementById("cardholder-name").value;
         const country = document.getElementById("billing-country").value;
-        const postalCode = document.getElementById("postal-code").value;
 
         if (!cardholderName) {
           showCustomModal("Please enter the cardholder name.");
@@ -952,7 +969,6 @@
                 name: cardholderName,
                 address: {
                   country: country,
-                  postal_code: postalCode
                 }
               }
             }
@@ -1147,7 +1163,8 @@
     ">OK</button>
   </div>
 
-<div id="bookingConfirmedOverlay" style="
+  <!-- Booking Confirmed Overlay -->
+  <div id="bookingConfirmedOverlay" style="
   display: none;
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
