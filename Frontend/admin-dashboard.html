@@ -487,7 +487,17 @@
     </section>
 
     <section id="athlete-packages" class="page-section">
-      <h2>Manage Athlete Package Usage</h2>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+        <h2 style="margin: 0;">Manage Athlete Package Usage</h2>
+        <input
+          type="text"
+          id="athleteSearchInput"
+          class="form-control"
+          style="width: 260px;"
+          placeholder="Search athlete name..."
+          oninput="filterAthletePackages()"
+        />
+      </div>
       <p>
         This section displays all athletes assigned to each package. The orange bubble next to each package name shows how many athletes have remaining sessions for that package.<br>
         Use the <span style="color:#ff4800;font-weight:bold;">–</span> button to subtract a session when an athlete attends, and the <span style="color:#28a745;font-weight:bold;">+</span> button to add sessions to an athlete if needed.
@@ -501,6 +511,18 @@
       <a href="https://dashboard.stripe.com/login" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:1.2rem; padding:12px 32px; margin-top:20px;">
         Go to Stripe Dashboard
       </a>
+
+      <!-- Add search bar here -->
+      <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 10px;">
+        <input
+          type="text"
+          id="transactionSearchInput"
+          class="form-control"
+          style="width: 260px;"
+          placeholder="Search Transaction or Receipt ID..."
+          oninput="filterTransactions()"
+        />
+      </div>
 
       <!-- Recent Transactions styled like package-section -->
       <div class="package-section" style="margin-top:32px;">
@@ -527,8 +549,18 @@
 
     <!-- Add this after your Stripe section or wherever you want it to appear -->
     <section id="activeUsersSection" class="page-section">
-      <div class="package-section" style="margin-top:32px;">
-        <h2>Active Users</h2>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+        <h2 style="margin: 0;">Active Users</h2>
+        <input
+          type="text"
+          id="activeUserSearchInput"
+          class="form-control"
+          style="width: 260px;"
+          placeholder="Search name or email..."
+          oninput="filterActiveUsers()"
+        />
+      </div>
+      <div class="package-section" style="margin-top:0px;">
         <p>View currently active users on the platform. Assess if they are part of Chicagoland Zephyrs.</p>
         <div id="activeUsersDropdowns"></div>
       </div>
@@ -1375,99 +1407,133 @@
         fetch(`${API_BASE}/admin/all-packages`, { credentials: 'include' }),
         fetch(`${API_BASE}/admin/athlete-packages`, { credentials: 'include' })
       ]);
-      const allPackages = await packagesRes.json();
-      const usages = await usagesRes.json();
+      allPackagesList = await packagesRes.json();
+      allAthleteUsages = await usagesRes.json();
 
-      // Group usages by package name
-      const grouped = {};
-      usages.forEach(pkg => {
-        if (!grouped[pkg.package_name]) grouped[pkg.package_name] = [];
-        grouped[pkg.package_name].push(pkg);
-      });
-
-      const container = document.getElementById('package-dropdowns');
-      container.innerHTML = '';
-
-      allPackages.forEach(pkg => {
-        const packageName = pkg.name;
-        const athletes = grouped[packageName] || [];
-        // Sort: athletes with sessions_remaining > 0 first
-        athletes.sort((a, b) => b.sessions_remaining - a.sessions_remaining);
-
-        const wrapper = document.createElement('div');
-        wrapper.classList.add('package-section');
-
-        // Dropdown content (athlete list)
-        const content = document.createElement('div');
-        content.classList.add('dropdown-content');
-
-        // Package header (clickable dropdown)
-        const header = document.createElement('button');
-        header.classList.add('dropdown-btn');
-
-
-        // Count athletes with sessions_remaining > 0
-        const activeCount = athletes.filter(a => a.sessions_remaining > 0).length;
-
-        // Create the dropdown header with bubble
-        header.classList.add('dropdown-btn');
-        header.innerHTML = `
-          ${packageName}
-          <span class="athlete-bubble">${activeCount}</span>
-        `;
-        header.onclick = () => {
-          content.classList.toggle('show');
-          // Update openDropdowns after toggle
-          if (content.classList.contains('show')) {
-            if (!openDropdowns.includes(packageName)) openDropdowns.push(packageName);
-          } else {
-            openDropdowns = openDropdowns.filter(name => name !== packageName);
-          }
-        };
-
-        // If this dropdown was open before, keep it open
-        if (openDropdowns.includes(packageName)) {
-          content.classList.add('show');
-        }
-
-        if (athletes.length === 0) {
-          content.innerHTML = `<p>No athletes booked for this package.</p>`;
-        } else {
-          const table = document.createElement('table');
-          table.className = "table table-bordered table-sm";
-          table.innerHTML = `
-            <thead>
-              <tr>
-                <th>Athlete</th>
-                <th>Sessions Purchased</th>
-                <th>Sessions Remaining</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${athletes.map(a => `
-                <tr>
-                  <td>${a.athlete_name}</td>
-                  <td>${a.sessions_purchased}</td>
-                  <td>${a.sessions_remaining}</td>
-                  <td>
-                    <button type="button" class="btn btn-warning btn-sm" onclick="event.stopPropagation(); updateSession(${a.usage_id}, -1)">-</button>
-                    <button type="button" class="btn btn-success btn-sm" onclick="event.stopPropagation(); updateSession(${a.usage_id}, 1)">+</button>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          `;
-          content.appendChild(table);
-        }
-
-        wrapper.appendChild(header);
-        wrapper.appendChild(content);
-        container.appendChild(wrapper);
-      });
+      renderAthletePackagesDropdowns();
     } catch (err) {
       console.error('Error loading athlete packages:', err);
     }
+  }
+
+  function renderAthletePackagesDropdowns(search = "") {
+    // Group usages by package name
+    const grouped = {};
+    allAthleteUsages.forEach(pkg => {
+      if (!grouped[pkg.package_name]) grouped[pkg.package_name] = [];
+      grouped[pkg.package_name].push(pkg);
+    });
+
+    const container = document.getElementById('package-dropdowns');
+    container.innerHTML = '';
+
+    // Lowercase search for comparison
+    const searchLower = search.trim().toLowerCase();
+
+    allPackagesList.forEach(pkg => {
+      const packageName = pkg.name;
+      let athletes = grouped[packageName] || [];
+
+      // Filter by search
+      let filteredAthletes = athletes;
+      if (searchLower) {
+        filteredAthletes = athletes.filter(a =>
+          a.athlete_name && a.athlete_name.toLowerCase().includes(searchLower)
+        );
+      }
+
+      // Only show packages that have at least one matching athlete if searching
+      if (searchLower && filteredAthletes.length === 0) {
+        return; // Skip this package
+      }
+
+      // Sort: athletes with sessions_remaining > 0 first
+      filteredAthletes.sort((a, b) => b.sessions_remaining - a.sessions_remaining);
+
+      const wrapper = document.createElement('div');
+      wrapper.classList.add('package-section');
+
+      // Dropdown content (athlete list)
+      const content = document.createElement('div');
+      content.classList.add('dropdown-content');
+
+      // Package header (clickable dropdown)
+      const header = document.createElement('button');
+      header.classList.add('dropdown-btn');
+
+      // Count athletes with sessions_remaining > 0
+      const activeCount = filteredAthletes.filter(a => a.sessions_remaining > 0).length;
+
+      // Create the dropdown header with bubble
+      header.innerHTML = `
+        ${packageName}
+        <span class="athlete-bubble">${activeCount}</span>
+      `;
+
+      // If searching, always open the dropdown for matching packages
+      if (searchLower) {
+        content.classList.add('show');
+      }
+
+      header.onclick = () => {
+        content.classList.toggle('show');
+        // Update openDropdowns after toggle
+        if (content.classList.contains('show')) {
+          if (!openDropdowns.includes(packageName)) openDropdowns.push(packageName);
+        } else {
+          openDropdowns = openDropdowns.filter(name => name !== packageName);
+        }
+      };
+
+      // If this dropdown was open before, keep it open (unless searching)
+      if (!searchLower && openDropdowns.includes(packageName)) {
+        content.classList.add('show');
+      }
+
+      if (filteredAthletes.length === 0) {
+        content.innerHTML = `<p>No athletes booked for this package.</p>`;
+      } else {
+        const table = document.createElement('table');
+        table.className = "table table-bordered table-sm";
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>Athlete</th>
+              <th>Age</th>
+              <th>Sport</th>
+              <th>Sessions Purchased</th>
+              <th>Sessions Remaining</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filteredAthletes.map(a => `
+              <tr>
+                <td>${a.athlete_name}</td>
+                <td>${a.age ? a.age : (a.age_group || '')}</td>
+                <td>${a.sport || ''}</td>
+                <td>${a.sessions_purchased}</td>
+                <td>${a.sessions_remaining}</td>
+                <td>
+                  <button type="button" class="btn btn-warning btn-sm" onclick="event.stopPropagation(); updateSession(${a.usage_id}, -1)">−</button>
+                  <button type="button" class="btn btn-success btn-sm" onclick="event.stopPropagation(); updateSession(${a.usage_id}, 1)">+</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        `;
+        content.appendChild(table);
+      }
+
+      wrapper.appendChild(header);
+      wrapper.appendChild(content);
+      container.appendChild(wrapper);
+    });
+  }
+
+  function filterAthletePackages() {
+    const search = document.getElementById('athleteSearchInput').value.trim().toLowerCase();
+    renderAthletePackagesDropdowns(search);
   }
 
   // Update session count (subtract or add)
@@ -1483,128 +1549,187 @@
   }
   window.updateSession = updateSession;
 
+  let allTransactions = [];
+
   async function loadTransactions() {
     try {
       const res = await fetch(`${API_BASE}/admin/transactions`, { credentials: 'include' });
-      const data = await res.json();
-      const tbody = document.getElementById('transactionList');
-      tbody.innerHTML = '';
-
-      data.forEach(tx => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${tx.customer_name}</td>
-          <td>${tx.email}</td>
-          <td>${tx.phone || '-'}</td>
-          <td>${tx.transaction_id}</td>
-          <td>${tx.friendly_id}</td>
-          <td>${new Date(tx.order_date).toLocaleString()}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+      allTransactions = await res.json();
+      renderTransactions();
     } catch (err) {
       console.error('Failed to load transactions', err);
     }
   }
 
+  function renderTransactions(search = "") {
+    const tbody = document.getElementById('transactionList');
+    if (!tbody) return;
+    const searchLower = search.trim().toLowerCase();
+
+    // Filter by Transaction ID or Receipt ID
+    const filtered = searchLower
+      ? allTransactions.filter(tx =>
+          (tx.transaction_id && tx.transaction_id.toLowerCase().includes(searchLower)) ||
+          (tx.friendly_id && tx.friendly_id.toLowerCase().includes(searchLower))
+        )
+      : allTransactions;
+
+    tbody.innerHTML = '';
+    filtered.forEach(tx => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${tx.customer_name}</td>
+        <td>${tx.email}</td>
+        <td>${tx.phone || '-'}</td>
+        <td>${tx.transaction_id}</td>
+        <td>${tx.friendly_id}</td>
+        <td>${new Date(tx.order_date).toLocaleString()}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function filterTransactions() {
+    const search = document.getElementById('transactionSearchInput').value;
+    renderTransactions(search);
+  }
+
+  let allActiveUsers = [];
+
   async function loadActiveUsers() {
     try {
       const res = await fetch(`${API_BASE}/admin/active-users`, { credentials: 'include' });
-      const data = await res.json();
-
-      // Group users by role
-      const groups = {
-        'adult-athlete': [],
-        'athlete': [],
-        'admin': []
-      };
-
-      data.forEach(user => {
-        if (groups[user.role]) {
-          groups[user.role].push(user);
-        }
-      });
-
-      // Role display mapping
-      function getRoleDisplay(role) {
-        if (role === 'adult-athlete') return 'Adult Athlete';
-        if (role === 'athlete') return 'Parent/Guardian';
-        if (role === 'admin') return 'Admin';
-        return role.charAt(0).toUpperCase() + role.slice(1);
-      }
-
-      // Dropdown order and labels
-      const dropdowns = [
-        { role: 'adult-athlete', label: 'Adult Athletes' },
-        { role: 'athlete', label: 'Parents/Guardians' },
-        { role: 'admin', label: 'Admins' }
-      ];
-
-      const container = document.getElementById('activeUsersDropdowns');
-      container.innerHTML = '';
-
-      dropdowns.forEach(({ role, label }) => {
-        const users = groups[role];
-        // Create dropdown
-        const wrapper = document.createElement('div');
-        wrapper.className = 'package-section';
-
-        const header = document.createElement('button');
-        header.className = 'dropdown-btn';
-        header.type = 'button';
-        header.innerHTML = `
-          ${label}
-          <span class="athlete-bubble">${users.length}</span>
-        `;
-
-        const content = document.createElement('div');
-        content.className = 'dropdown-content';
-        if (users.length > 0) {
-          const table = document.createElement('table');
-          table.className = 'table table-bordered table-sm';
-          table.innerHTML = `
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Role</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Member</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${users.map(user => `
-                <tr>
-                  <td>${user.full_name}</td>
-                  <td>${getRoleDisplay(user.role)}</td>
-                  <td>${user.email}</td>
-                  <td>${user.phone || '-'}</td>
-                  <td>
-                    <label class="form-check-label" style="margin-bottom:0;">
-                      <input class="form-check-input" type="checkbox"
-                        ${user.is_member ? 'checked' : ''}
-                        onchange="toggleMember(${user.customer_id}, this.checked, this)" />
-                      <span class="member-status-text">${user.is_member ? 'Yes' : 'No'}</span>
-                    </label>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          `;
-          content.appendChild(table);
-        } else {
-          content.innerHTML = `<p>No users in this group.</p>`;
-        }
-
-        // Dropdown toggle
-        header.onclick = () => content.classList.toggle('show');
-        wrapper.appendChild(header);
-        wrapper.appendChild(content);
-        container.appendChild(wrapper);
-      });
+      allActiveUsers = await res.json();
+      renderActiveUsersDropdowns();
     } catch (err) {
       console.error('Failed to load active users', err);
     }
+  }
+
+  function filterActiveUsers() {
+    const search = document.getElementById('activeUserSearchInput').value.trim().toLowerCase();
+    renderActiveUsersDropdowns(search);
+  }
+
+  function renderActiveUsersDropdowns(search = "") {
+    // Group users by role
+    const groups = {
+      'adult-athlete': [],
+      'athlete': [],
+      'admin': []
+    };
+
+    // Lowercase search for comparison
+    const searchLower = search.trim().toLowerCase();
+
+    // Filter users by name or email if searching
+    allActiveUsers.forEach(user => {
+      if (
+        !searchLower ||
+        (user.full_name && user.full_name.toLowerCase().includes(searchLower)) ||
+        (user.email && user.email.toLowerCase().includes(searchLower))
+      ) {
+        if (groups[user.role]) {
+          groups[user.role].push(user);
+        }
+      }
+    });
+
+    // Role display mapping
+    function getRoleDisplay(role) {
+      if (role === 'adult-athlete') return 'Adult Athlete';
+      if (role === 'athlete') return 'Parent/Guardian';
+      if (role === 'admin') return 'Admin';
+      return role.charAt(0).toUpperCase() + role.slice(1);
+    }
+
+    // Dropdown order and labels
+    const dropdowns = [
+      { role: 'adult-athlete', label: 'Adult Athletes' },
+      { role: 'athlete', label: 'Parents/Guardians' },
+      { role: 'admin', label: 'Admins' }
+    ];
+
+    const container = document.getElementById('activeUsersDropdowns');
+    container.innerHTML = '';
+
+    dropdowns.forEach(({ role, label }) => {
+      const users = groups[role];
+
+      // If searching, only show dropdowns with matches
+      if (searchLower && users.length === 0) return;
+
+      // Create dropdown
+      const wrapper = document.createElement('div');
+      wrapper.className = 'package-section';
+
+      const header = document.createElement('button');
+      header.className = 'dropdown-btn';
+      header.type = 'button';
+      header.innerHTML = `
+        ${label}
+        <span class="athlete-bubble">${users.length}</span>
+      `;
+
+      const content = document.createElement('div');
+      content.className = 'dropdown-content';
+
+      // If searching, always open the dropdown for matching groups
+      if (searchLower) {
+        content.classList.add('show');
+      }
+
+      if (users.length > 0) {
+        const table = document.createElement('table');
+        table.className = 'table table-bordered table-sm';
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Role</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Member</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${users.map(user => `
+              <tr>
+                <td>${user.full_name}</td>
+                <td>${getRoleDisplay(user.role)}</td>
+                <td>${user.email}</td>
+                <td>${user.phone || '-'}</td>
+                <td>
+                  <label class="form-check-label" style="margin-bottom:0;">
+                    <input class="form-check-input" type="checkbox"
+                      ${user.is_member ? 'checked' : ''}
+                      onchange="toggleMember(${user.customer_id}, this.checked, this)" />
+                    <span class="member-status-text">${user.is_member ? 'Yes' : 'No'}</span>
+                  </label>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        `;
+        content.appendChild(table);
+      } else {
+        content.innerHTML = `<p>No users in this group.</p>`;
+      }
+
+      // Dropdown toggle (only allow manual toggle if not searching)
+      header.onclick = () => {
+        if (!searchLower) content.classList.toggle('show');
+      };
+
+      // If this dropdown was open before, keep it open (unless searching)
+      if (!searchLower && openDropdowns.includes(label)) {
+        content.classList.add('show');
+      }
+
+      wrapper.appendChild(header);
+      wrapper.appendChild(content);
+      container.appendChild(wrapper);
+    });
   }
 
   // Place the toggle function here:

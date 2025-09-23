@@ -449,14 +449,19 @@ router.get('/athlete-packages', async (req, res) => {
       SELECT 
         pu.id AS usage_id,
         a.first_name || ' ' || a.last_name AS athlete_name,
+        a.age_group,
+        a.sport,
         p.name AS package_name,
         pu.sessions_remaining,
         pu.sessions_purchased,
         pu.athlete_id,
-        pu.package_id
+        pu.package_id,
+        c.dob,
+        EXTRACT(YEAR FROM age(c.dob)) AS age
       FROM package_usage pu
       JOIN athlete a ON pu.athlete_id = a.id
       JOIN packages p ON pu.package_id = p.id
+      JOIN customer c ON a.customer_id = c.id
       ORDER BY p.name, athlete_name
     `);
     res.json(result.rows);
