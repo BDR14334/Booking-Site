@@ -455,6 +455,7 @@
       max-width: 800px;
       position: relative;
     }
+
   </style>
 </head>
 <body>
@@ -464,7 +465,7 @@
     <a href="#editInfo">📋 Edit Info</a>
     <a href="#athleteInfo">➕ Add Athlete</a>
     <a href="#bookSessions">📦 Schedule Sessions</a>
-    <a href="#" id="sidebarLogoutBtn" class="text-danger px-3 py-2 text-decoration-none">🚪 Logout</a>
+    <a href="javascript:void(0)" id="sidebarLogoutBtn" class="text-danger px-3 py-2 text-decoration-none">🚪 Logout</a>
   </nav>
   <button id="profileBtn" class="btn btn-outline-light" style="display:none;">
     <i class="bx bx-user"></i>
@@ -477,7 +478,7 @@
     <a style="margin-top: 20px;" href="#editInfo">📋 Edit Info</a>
     <a href="#athleteInfo">➕ Add Athlete</a>
     <a href="#bookSessions">📦 Schedule Sessions</a>
-    <a href="#" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none">🚪 Logout</a>
+    <a href="javascript:void(0)" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none">🚪 Logout</a>
   </div>
 </div>
 
@@ -502,6 +503,9 @@
       type="email"
       id="email"
       name="email"
+      value=""
+      readonly
+      class="locked-input"
       required
       pattern="^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$"
       placeholder="Enter your email"
@@ -523,7 +527,7 @@
       oninvalid="this.setCustomValidity('Please enter a valid phone number (digits only, 10-15 digits).')"
       oninput="this.setCustomValidity('')"
     />
-    <div class="field-error" id="phoneError"></div>
+    <div class="field-error" id="phoneError"></div> 
 
     <button type="submit" id="saveInfoBtn">Save Info</button>
   </form>
@@ -603,16 +607,10 @@
 <script src="authStatus.js"></script>
 <script src="https://assets.calendly.com/assets/external/widget.js" async></script>
 <script>
-  // Redirect to login if not authenticated
-  if (!localStorage.getItem("token")) {
-    window.location.href = "/login";
-  }
 
   (async function checkRole() {
-    const token = localStorage.getItem("token");
     const res = await fetch(`${API_BASE}/auth/me`, {
       credentials: 'include',
-      headers: { Authorization: `Bearer ${token}` }
     });
     const data = await res.json();
     if (!data.user || data.user.role !== 'athlete') {
@@ -653,11 +651,9 @@
 
   async function loadPaidPackages() {
   if (!customerId) return;
-  const token = localStorage.getItem("token");
   try {
     const res = await fetch(`${API_BASE}/athlete/paid-packages/${customerId}`, {
       credentials: 'include',
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
     const packages = await res.json();
 
@@ -846,11 +842,9 @@
   // Fetch logged-in user
   async function fetchLoggedInUser() {
     try {
-      const token = localStorage.getItem("token");
 
       const res = await fetch(`${API_BASE}/auth/me`, {
         credentials: 'include', // try sending cookie
-        headers: token ? { Authorization: `Bearer ${token}` } : {} // fallback to header
       });
       const data = await res.json();
       if (data.user && data.user.id) {
@@ -1002,6 +996,15 @@ function closeCalendly() {
         }
         getUserDetails(); // <-- Update welcome message
         if (!customerId) customerId = data.customer.id;
+        
+        // Make email field readonly and styled as locked
+        const emailField = document.getElementById('email');
+        if (emailField) {
+          emailField.setAttribute('readonly', true);
+          emailField.classList.remove('editing');
+          emailField.classList.add('locked-input');
+        }
+  
       } else {
         showGlobalPopup('Error: ' + data.error);
       }
@@ -1098,19 +1101,16 @@ function closeCalendly() {
   async function handleLogout() {
     try {
       // Hit your logout route to clear the cookie
-      const token = localStorage.getItem("token");
 
       fetch(`${API_BASE}/auth/logout`, {
         method: 'POST',
-        credentials: 'include',
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
+        credentials: 'include'
       });
     } catch (err) {
       console.error("Logout request failed:", err);
     }
 
     // Clear frontend tokens
-    localStorage.removeItem("token");
     sessionStorage.clear();
 
     // Redirect to homepage
@@ -1147,6 +1147,29 @@ function closeCalendly() {
         firstAthleteForm.addEventListener('submit', handleAthleteSubmit);
       }
     }, 0);
+
+    const emailField = document.getElementById('email');
+    const emailEditPopup = document.getElementById('emailEditPopup');
+    const emailEditConfirmBtn = document.getElementById('emailEditConfirmBtn');
+    const emailEditCancelBtn = document.getElementById('emailEditCancelBtn');
+
+    emailField.addEventListener('click', () => {
+      if (emailField.hasAttribute('readonly')) {
+        // Show styled popup instead of confirm()
+        emailEditPopup.style.display = 'block';
+      }
+    });
+
+    emailEditConfirmBtn.onclick = function() {
+      emailEditPopup.style.display = 'none';
+      emailField.removeAttribute('readonly');
+      emailField.classList.remove('locked-input');
+      emailField.classList.add('editing');
+      emailField.focus();
+    };
+    emailEditCancelBtn.onclick = function() {
+      emailEditPopup.style.display = 'none';
+    };
   });
 
 
@@ -1156,12 +1179,9 @@ function closeCalendly() {
       return; // Already autofilled once
     }
 
-    const token = localStorage.getItem("token");
-
     try {
       const res = await fetch(`${API_BASE}/athlete/me`, {
         method: 'GET',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
         credentials: 'include'
       });
 
@@ -1254,6 +1274,19 @@ function closeCalendly() {
   <span id="globalPopupMessage"></span>
   <br>
   <button onclick="closeGlobalPopup()">OK</button>
+</div>
+
+<!-- Email Edit Confirmation Popup -->
+<div id="emailEditPopup" class="popup-modal">
+  <span class="icon">&#9888;</span>
+  <span id="emailEditPopupMessage">
+    <br>Your email is used both to log in and to receive notifications.
+    Changing it will update both.<br><br>
+    Continue?
+  </span>
+  <br>
+  <button id="emailEditConfirmBtn">Yes, Edit Email</button>
+  <button id="emailEditCancelBtn" style="margin-left:10px;">Cancel</button>
 </div>
 
 </body>

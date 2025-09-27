@@ -320,6 +320,7 @@
       font-size: 40px;
       display: block;
       margin-bottom: 15px;
+      color: #ffa162;
     }
 
     .popup-modal button {
@@ -409,7 +410,7 @@
   <nav id="sidebarLinksContainer">
     <a href="#editInfo">📋 Edit Info</a>
     <a href="#bookSessions">📦 Schedule Sessions</a>
-    <a href="#" id="sidebarLogoutBtn" class="text-danger px-3 py-2 text-decoration-none">🚪 Logout</a>
+    <a href="javascript:void(0)" id="sidebarLogoutBtn" class="text-danger px-3 py-2 text-decoration-none">🚪 Logout</a>
   </nav>
   <button id="profileBtn" class="btn btn-outline-light" style="display:none;">
     <i class="bx bx-user"></i>
@@ -421,7 +422,7 @@
   <div class="mt-4 d-flex flex-column">
     <a style="margin-top: 20px;" href="#editInfo">📋 Edit Info</a>
     <a href="#bookSessions">📦 Schedule Sessions</a>
-    <a href="#" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none">🚪 Logout</a>
+    <a href="javascript:void(0)" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none">🚪 Logout</a>
   </div>
 </div>
 
@@ -439,18 +440,23 @@
   <form id="athleteForm">
     <label for="athleteName">Name</label>
     <input type="text" id="athleteName" name="athleteName" required />
+    <div class="field-error" id="nameError"></div>
 
     <label for="email">Email</label>
     <input
       type="email"
       id="email"
       name="email"
+      value=""
+      readonly
+      class="locked-input"
       required
       pattern="^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$"
       placeholder="Enter your email"
       oninvalid="this.setCustomValidity('Please enter a valid email address.')"
       oninput="this.setCustomValidity('')"
     />
+    <div class="field-error" id="emailError"></div>
 
     <label for="phone">Phone</label>
     <input
@@ -465,6 +471,7 @@
       oninvalid="this.setCustomValidity('Please enter a valid phone number (digits only, 10-15 digits).')"
       oninput="this.setCustomValidity('')"
     />
+    <div class="field-error" id="phoneError"></div> 
 
     <label for="dob">Date of Birth</label>
     <input type="date" id="dob" name="dob" required />
@@ -511,19 +518,25 @@
   <button onclick="closeGlobalPopup()">OK</button>
 </div>
 
+<div id="emailEditPopup" class="popup-modal">
+  <span class="icon">&#9888;</span>
+  <span id="emailEditPopupMessage">
+    Your email is used both to log in and to receive notifications.<br>
+    Changing it will update both.<br><br>
+    Continue?
+  </span>
+  <br>
+  <button id="emailEditConfirmBtn">Yes, Edit Email</button>
+  <button id="emailEditCancelBtn" style="margin-left:10px;">Cancel</button>
+</div>
+
 <script src="authStatus.js"></script>
 <script src="https://assets.calendly.com/assets/external/widget.js" async></script>
 <script>
-  // Redirect to login if not authenticated
-  if (!localStorage.getItem("token")) {
-    window.location.href = "/login";
-  }
 
   (async function checkRole() {
-    const token = localStorage.getItem("token");
     const res = await fetch(`${API_BASE}/auth/me`, {
-      credentials: 'include',
-      headers: { Authorization: `Bearer ${token}` }
+      credentials: 'include'
     });
     const data = await res.json();
     if (!data.user || data.user.role !== 'adult-athlete') {
@@ -605,9 +618,17 @@
         customerId = data.customer?.id || data.customer?.customer_id || customerId;
         athleteId = data.athlete?.id || data.athlete?.athlete_id || athleteId;
 
+        // New email handling logic
+        if (emailField && emailField.classList.contains('editing')) {
+          emailField.setAttribute('readonly', true);
+          emailField.classList.remove('editing');
+          emailField.classList.add('locked-input');
+        }
+
         console.log("Saved adult athlete:", { customerId, athleteId });
       } else {
-        showGlobalPopup('Error: ' + data.error);
+        showGlobalPopup(data.error || 'Error saving info.');
+        return;
       }
     } catch (error) {
       console.error('Fetch error:', error);
@@ -618,11 +639,8 @@
   // Fetch logged-in user
   async function fetchLoggedInUser() {
     try {
-      const token = localStorage.getItem("token");
-
       const res = await fetch(`${API_BASE}/auth/me`, {
         credentials: 'include', // try sending cookie
-        headers: token ? { Authorization: `Bearer ${token}` } : {} // fallback to header
       });
       const data = await res.json();
       if (data.user && data.user.id) {
@@ -639,12 +657,10 @@
   // Load athlete info
   async function loadCustomerData() {
     await fetchLoggedInUser();
-    const token = localStorage.getItem("token");
 
     try {
       const athleteRes = await fetch(`${API_BASE}/athlete/adult-athlete/by-user/${userId}`, {
-        credentials: 'include',
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
+        credentials: 'include'
       });
       const athlete = await athleteRes.json();
 
@@ -700,21 +716,17 @@
   });
 
   async function handleLogout() {
-    try {      // Hit your logout route to clear the cookie
-
+    try {      
       // Hit your logout route to clear the cookie
-      const token = localStorage.getItem("token");
       fetch(`${API_BASE}/auth/logout`, {
         method: 'POST',
-        credentials: 'include',
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
+        credentials: 'include'
       });
     } catch (err) {
       console.error("Logout request failed:", err);
     }
 
     // Clear frontend tokens
-    localStorage.removeItem("token");
     sessionStorage.clear();
 
     // Redirect to homepage
@@ -810,11 +822,9 @@
     if (localStorage.getItem("athleteAutofilled") === "true") {
       return;
     }
-    const token = localStorage.getItem("token");
     try {
       const res = await fetch(`${API_BASE}/athlete/me`, {
         method: 'GET',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
         credentials: 'include'
       });
       if (!res.ok) return;
@@ -838,11 +848,9 @@
       console.log("Autofill skipped: already done");
       return;
     }
-    const token = localStorage.getItem("token");
     try {
       const res = await fetch(`${API_BASE}/athlete/me`, {
         method: 'GET',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
         credentials: 'include'
       });
       if (!res.ok) {
@@ -967,6 +975,26 @@
     document.getElementById("firstLoginPopup").style.display = "none";
   }
 
+  const emailField = document.getElementById('email');
+  const emailEditPopup = document.getElementById('emailEditPopup');
+  const emailEditConfirmBtn = document.getElementById('emailEditConfirmBtn');
+  const emailEditCancelBtn = document.getElementById('emailEditCancelBtn');
+
+  emailField.addEventListener('click', () => {
+    if (emailField.hasAttribute('readonly')) {
+      emailEditPopup.style.display = 'block';
+    }
+  });
+  emailEditConfirmBtn.onclick = function() {
+    emailEditPopup.style.display = 'none';
+    emailField.removeAttribute('readonly');
+    emailField.classList.remove('locked-input');
+    emailField.classList.add('editing');
+    emailField.focus();
+  };
+  emailEditCancelBtn.onclick = function() {
+    emailEditPopup.style.display = 'none';
+  };
 </script>
 
 <div id="firstLoginPopup" style="

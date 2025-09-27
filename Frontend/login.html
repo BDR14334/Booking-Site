@@ -56,7 +56,7 @@
       <div class="mt-4 d-flex flex-column">
         <p id="userRole" class="px-3 text-white"></p>
         <div id="sidebarLinksContainer"></div>
-        <a href="#" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none" style="display:none;">🚪 Logout</a>
+        <a href="javascript:void(0)" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none" style="display:none;">🚪 Logout</a>
       </div>
     </div>
 
@@ -194,12 +194,9 @@
     }
 
     document.addEventListener("DOMContentLoaded", async () => {
-        const token = localStorage.getItem("token");
-        if (token) {
-            try {
+        try {
             const res = await fetch(`${API_BASE}/auth/verify`, {
                 method: "GET",
-                headers: { "Authorization": `Bearer ${token}` },
                 credentials: "include"
             });
             const data = await res.json();
@@ -207,9 +204,8 @@
                 window.location.href = "/"; // Redirect to home if already logged in
                 return;
             }
-            } catch (err) {
+        } catch (err) {
             console.warn("Token invalid or expired.");
-            }
         }
 
         // Not logged in → show login form
@@ -241,15 +237,7 @@
 
             const data = await res.json();
             if (res.ok) {
-                const { user, token } = data;
-
-                // ✅ Store the token in localStorage for mobile compatibility
-                localStorage.setItem("token", token);
-
-                // 👇 Add this block to set the session flag for first login
-                if (user.is_first_login) {
-                    sessionStorage.setItem("isFirstLogin", "true");
-                }
+                const { user } = data;
 
                 // Redirect based on user.role
                 if (user.role === "adult-athlete") {

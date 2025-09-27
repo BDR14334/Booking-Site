@@ -17,17 +17,12 @@ function toggleSidebar() {
 
 // Logout function
 function handleLogout() {
-  console.log("Logout clicked");
-  const token = localStorage.getItem("token");
-
   fetch(`${API_BASE}/auth/logout`, {
     method: 'POST',
-    credentials: 'include',
-    headers: token ? { Authorization: `Bearer ${token}` } : {}
+    credentials: 'include'
   })
   .then(res => res.json())
   .then(() => {
-    localStorage.removeItem("token");
     window.location.reload();
   });
 }
@@ -67,13 +62,10 @@ function buildSidebarLinks(role) {
 // Function to fetch user details from the backend (verify endpoint)
 async function getUserDetails() {
   try {
-    const token = localStorage.getItem("token");
-
-    // Fetch user info
+    // No token, no Authorization header
     const response = await fetch(`${API_BASE}/auth/verify`, {
       method: 'GET',
-      credentials: 'include',
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
+      credentials: 'include'
     });
     const data = await response.json();
 
@@ -82,8 +74,7 @@ async function getUserDetails() {
     // Try to fetch updated customer info
     const customerRes = await fetch(`${API_BASE}/athlete/me`, {
       method: 'GET',
-      credentials: 'include',
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
+      credentials: 'include'
     });
     if (customerRes.ok) {
       const customerData = await customerRes.json();
@@ -98,7 +89,6 @@ async function getUserDetails() {
         userRole.innerHTML = `Welcome, <span class="user-name">${firstName}</span>`;
       }
     } else {
-      // Clear the userRole element when not logged in
       if (userRole) {
         userRole.innerHTML = "";
       }
@@ -123,14 +113,10 @@ function updateNavButton() {
   // Determine screen width
   const isMobile = window.innerWidth < 824;
 
-  const token = localStorage.getItem("token");
-
   fetch(`${API_BASE}/auth/verify?_=${Date.now()}`, {
     method: 'GET',
-    credentials: 'include',
-    headers: token ? { Authorization: `Bearer ${token}` } : {}
+    credentials: 'include'
   })
-
     .then(res => res.json())
     .then(data => {
       if (data.loggedIn) {
@@ -183,6 +169,55 @@ function updateNavButton() {
     .catch(err => {
       console.error("Auth check failed:", err);
     });
+}
+
+// === Periodic Session Check ===
+// function startSessionChecker() {
+//   setInterval(async () => {
+//     try {
+//       const token = localStorage.getItem("token");
+//       const res = await originalFetch(`${API_BASE}/auth/verify`, {
+//         method: "GET",
+//         credentials: "include",
+//         headers: token ? { Authorization: `Bearer ${token}` } : {}
+//       });
+
+//       if (!res.ok) {
+//         handleSessionExpired();
+//         return;
+//       }
+
+//       const data = await res.json();
+//       if (!data.loggedIn) {
+//         handleSessionExpired();
+//       }
+//     } catch (err) {
+//       console.error("Session check failed:", err);
+//       handleSessionExpired();
+//     }
+//   }, 60 * 1000); // check every 1 minute
+// }
+
+function handleSessionExpired() {
+  console.warn("Session expired — handling logout");
+
+  const sidebar = document.getElementById("profileSidebar");
+  if (sidebar) sidebar.style.display = "none";
+
+  const userRole = document.getElementById('userRole');
+  if (userRole) userRole.innerHTML = "";
+
+  const path = window.location.pathname;
+  if (
+    path.includes("athlete-dashboard") ||
+    path.includes("adult-athlete-dashboard") ||
+    path.includes("coach-dashboard") ||
+    path.includes("admin-dashboard")
+  ) {
+    window.location.href = "/login.html";
+  } else {
+    updateNavButton();
+  }
 }
 
 // Track last known isMobile state to avoid unnecessary updates
@@ -245,4 +280,14 @@ function updateAuthButtonClasses() {
         }
     }
 }
+
+// Start session checker
+// startSessionChecker();
+
+window.addEventListener("storage", function(event) {
+  if (event.key === "token" && event.oldValue && !event.newValue) {
+    // Token was removed in another tab (logout)
+    handleSessionExpired();
+  }
+});
 

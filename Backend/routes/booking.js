@@ -339,7 +339,7 @@ router.post('/create-checkout-session', async (req, res) => {
       }],
       mode: 'payment',
       success_url: `http://localhost:5000/booking/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `http://localhost:5000/booking.html`,
+      cancel_url: `http://localhost:5000/booking`,
       metadata: {
         order_id: orderId,
         customer_id: customerId,
@@ -400,116 +400,16 @@ router.post('/create-payment-intent', async (req, res) => {
   }
 });
 
-// Gets data to later be sent to customer
+// payment-success (frontend redirect only)
 router.get('/payment-success', async (req, res) => {
-  const { session_id } = req.query;
-
-  try {
-    const session = await stripe.checkout.sessions.retrieve(session_id);
-    const metadata = session.metadata;
-
-    const orderId = metadata.order_id;
-    const customerId = metadata.customer_id;
-    const packageId = metadata.package_id;
-
-    // 1. Mark order as paid
-    await pool.query(
-      `UPDATE orders SET status = 'paid' WHERE id = $1`,
-      [orderId]
-    );
-
-    // 2. Insert into payments table
-    await pool.query(
-      `INSERT INTO payments (order_id, amount, payment_method, transaction_id, payment_status)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [orderId, session.amount_total / 100, 'card', session_id, session.payment_status]
-    );
-
-    // 3. Fetch package (with Calendly link and sessions_included)
-    const pkgRes = await pool.query(
-      'SELECT name, calendly_url, sessions_included FROM packages WHERE id = $1',
-      [packageId]
-    );
-    if (pkgRes.rows.length === 0) throw new Error("Package not found");
-    const pkg = pkgRes.rows[0];
-    const sessions_included = pkg.sessions_included;
-
-    // 4. Fetch customer email
-    const customerRes = await pool.query(`
-      SELECT u.email, u.first_name
-      FROM customer c
-      JOIN users u ON c.user_id = u.id
-      WHERE c.id = $1`, [customerId]);
-    const customerEmail = customerRes.rows[0].email;
-    const customerName = customerRes.rows[0].first_name;
-
-    // 5. Send email with receipt link
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: 'robinsontech30@gmail.com',
-        pass: process.env.GMAIL_APP_PASSWORD
-      }
-    });
-
-    const htmlReceipt = `
-      <h2>Payment Receipt</h2>
-      <p>Hi ${customerName},</p>
-      <p>Thank you for your purchase! Here are your details:</p>
-      <ul>
-        <li><b>Package:</b> ${pkg.name}</li>
-        <li><b>Price:</b> $${(session.amount_total / 100).toFixed(2)}</li>
-        <li><b>Receipt Number:</b> ${session.metadata.receipt_code}</li>
-        <li><b>Payment Date:</b> ${new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' })}</li>
-      </ul>
-      <p>
-        <b>Ready to schedule your sessions?</b><br>
-        <a href="https://booking-site-frontend.onrender.com/athlete-dashboard.html#bookSessions" target="_blank" style="color:#ff4800;font-weight:bold;">
-          Click here to choose your sessions
-        </a>
-      </p>
-      <br/>
-      <p>– ZSP Team</p>
-    `;
-
-    // 6. Insert or update package_usage for each athlete
-    const athleteIds = JSON.parse(metadata.athlete_ids);
-
-    for (const athlete_id of athleteIds) {
-      await pool.query(
-        `INSERT INTO package_usage (customer_id, athlete_id, package_id, sessions_remaining, sessions_purchased)
-         VALUES ($1, $2, $3, $4, $4)
-         ON CONFLICT (customer_id, athlete_id, package_id)
-         DO UPDATE SET
-           sessions_remaining = package_usage.sessions_remaining + EXCLUDED.sessions_remaining,
-           sessions_purchased = package_usage.sessions_purchased + EXCLUDED.sessions_purchased
-        `,
-        [customerId, athlete_id, packageId, sessions_included]
-      );
-    }
-
-    try {
-      await transporter.sendMail({
-        from: 'robinsontech30@gmail.com',
-        to: customerEmail,
-        subject: `Your Receipt – ${pkg.name}`,
-        html: htmlReceipt
-      });
-      console.log('Receipt email sent to:', customerEmail);
-    } catch (emailErr) {
-      console.error('Email sending failed:', emailErr);
-    }
-
-    res.redirect('/thank-you');
-
-  } catch (err) {
-    console.error('Payment success handling failed:', err.message);
-    res.status(500).send('Booking failed. Please contact support.');
-  }
+  // No DB writes here; just redirect to thank-you page
+  return res.redirect('/thank-you');
 });
 
 // ✅ Step 3: Stripe Webhook (optional safety net)
-router.post('/webhook', bodyParser.raw({ type: 'application/json' }), async (req, res) => {
+const rawBodyParser = bodyParser.raw({ type: 'application/json' });
+
+router.post('/webhook', rawBodyParser, async (req, res) => {
   const sig = req.headers['stripe-signature'];
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -521,21 +421,169 @@ router.post('/webhook', bodyParser.raw({ type: 'application/json' }), async (req
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    const metadata = session.metadata;
-
+  async function finalizeCharge({ transactionId, amount, metadata, paymentStatus }) {
+    const client = await pool.connect();
     try {
+      await client.query('BEGIN');
+
+      // Prevent duplicate processing
+      const existing = await client.query(
+        `SELECT id FROM payments WHERE transaction_id = $1 LIMIT 1`,
+        [transactionId]
+      );
+      if (existing.rows.length > 0) {
+        await client.query('ROLLBACK');
+        return { alreadyProcessed: true };
+      }
+
       const orderId = metadata.order_id;
-      await pool.query(`UPDATE orders SET status = 'paid' WHERE id = $1`, [orderId]);
-      console.log(`✅ Order ${orderId} marked as paid (via webhook)`);
+      const customerId = metadata.customer_id;
+      const packageId = metadata.package_id;
+      const receiptCodeStr = metadata.receipt_code || null;
+      const athleteIds = metadata.athlete_ids ? JSON.parse(metadata.athlete_ids) : [];
+
+      await client.query(`UPDATE orders SET status = 'paid' WHERE id = $1`, [orderId]);
+
+      await client.query(`
+        INSERT INTO payments (order_id, amount, payment_method, transaction_id, payment_status)
+        VALUES ($1, $2, $3, $4, $5)
+        ON CONFLICT (transaction_id) DO NOTHING
+      `, [orderId, amount, 'card', transactionId, paymentStatus]);
+
+      const pkgRes = await client.query(
+        "SELECT sessions_included, name FROM packages WHERE id = $1",
+        [packageId]
+      );
+      if (pkgRes.rows.length === 0) throw new Error("Package not found");
+      const sessions_included = pkgRes.rows[0].sessions_included;
+      const packageName = pkgRes.rows[0].name;
+
+      for (const athlete_id of athleteIds) {
+        await client.query(
+          `INSERT INTO package_usage (customer_id, athlete_id, package_id, sessions_remaining, sessions_purchased)
+           VALUES ($1, $2, $3, $4, $4)
+           ON CONFLICT (customer_id, athlete_id, package_id)
+           DO UPDATE SET
+             sessions_remaining = package_usage.sessions_remaining + EXCLUDED.sessions_remaining,
+             sessions_purchased = package_usage.sessions_purchased + EXCLUDED.sessions_purchased
+          `,
+          [customerId, athlete_id, packageId, sessions_included]
+        );
+      }
+
+      await client.query('COMMIT');
+
+      // Send receipt email (outside transaction)
+      try {
+        const customerRes = await pool.query(`
+          SELECT u.email, u.first_name
+          FROM customer c
+          JOIN users u ON c.user_id = u.id
+          WHERE c.id = $1
+        `, [customerId]);
+        const customerEmail = customerRes.rows[0]?.email;
+        const customerName = customerRes.rows[0]?.first_name || 'Customer';
+
+        const athleteNamesRes = await pool.query(
+          `SELECT a.id, a.first_name, a.last_name FROM athlete a WHERE a.id = ANY($1)`,
+          [athleteIds]
+        );
+        const athleteList = athleteNamesRes.rows.map(a => `<li>${a.first_name} ${a.last_name}</li>`).join('');
+        const paymentDate = new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' });
+
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: 'robinsontech30@gmail.com',
+            pass: process.env.GMAIL_APP_PASSWORD
+          }
+        });
+
+        const htmlReceipt = `
+          <h2>Payment Receipt</h2>
+          <p>Hi ${customerName},</p>
+          <p>Thank you for your purchase! Here are your details:</p>
+          <ul>
+            <li><b>Package:</b> ${packageName}</li>
+            <li><b>Price:</b> $${(amount).toFixed(2)}</li>
+            <li><b>Receipt Number:</b> ${receiptCodeStr || 'N/A'}</li>
+            <li><b>Payment Date:</b> ${paymentDate}</li>
+            <li><b>Status:</b> ${paymentStatus}</li>
+          </ul>
+          <p><b>Athletes assigned to this purchase:</b></p>
+          <ul>${athleteList}</ul>
+          <p>
+            <b>Ready to schedule sessions?</b><br>
+            <a href="https://booking-site-frontend.onrender.com/athlete-dashboard.html#bookSessions" target="_blank" style="color:#ff4800;font-weight:bold;">
+              Click here to choose your sessions
+            </a>
+          </p>
+          <br/>
+          <p>– ZSP Team</p>
+        `;
+
+        if (customerEmail) {
+          await transporter.sendMail({
+            from: 'robinsontech30@gmail.com',
+            to: customerEmail,
+            subject: `Your Receipt – ${packageName}`,
+            html: htmlReceipt
+          });
+        } else {
+          console.warn('No customer email found to send receipt');
+        }
+      } catch (emailErr) {
+        console.error('Failed to send receipt email:', emailErr);
+      }
+
+      return { alreadyProcessed: false };
     } catch (err) {
-      console.error('❌ Error handling webhook booking:', err.message);
-      return res.status(500).send('Internal Server Error');
+      try { await client.query('ROLLBACK'); } catch (e) { /* ignore */ }
+      console.error('Error finalizing charge (transaction):', err.message);
+      throw err;
+    } finally {
+      client.release();
     }
   }
 
-  res.status(200).send('Webhook received');
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object;
+        const metadata = session.metadata || {};
+        const amount = (session.amount_total || 0) / 100;
+        const transactionId = session.id;
+
+        await finalizeCharge({
+          transactionId,
+          amount,
+          metadata,
+          paymentStatus: session.payment_status || 'unknown'
+        });
+        break;
+      }
+      case 'payment_intent.succeeded': {
+        const pi = event.data.object;
+        const metadata = pi.metadata || {};
+        const amount = (pi.amount || 0) / 100;
+        const transactionId = pi.id;
+
+        await finalizeCharge({
+          transactionId,
+          amount,
+          metadata,
+          paymentStatus: 'succeeded'
+        });
+        break;
+      }
+      default:
+        break;
+    }
+    res.json({ received: true });
+  } catch (err) {
+    console.error('Webhook processing error:', err.message);
+    res.status(500).send('Webhook processing failed');
+  }
 });
 
 // Export the router to be used in app.js

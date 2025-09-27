@@ -301,7 +301,7 @@
       <a href="#editCoachInfo">📋 Edit Info</a>
       <a href="#editAvailability">🕑 Edit Availability</a>
       <a href="#coachBookings">📅 View Bookings</a>
-      <a href="#" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none" >🚪 Logout</a>
+      <a href="javascript:void(0)" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none" >🚪 Logout</a>
     </nav>
     <button id="profileBtn" class="btn btn-outline-light" style="display:none;">
       <i class="bx bx-user"></i>
@@ -314,7 +314,7 @@
       <a href="#editCoachInfo">📋 Edit Info</a>
       <a href="#editAvailability">🕑 Edit Availability</a>
       <a href="#coachBookings">📅 View Bookings</a>
-      <a href="#" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none" >🚪 Logout</a>
+      <a href="javascript:void(0)" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none" >🚪 Logout</a>
     </div>
   </div>
 
@@ -365,10 +365,7 @@
   <script src="authStatus.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar/index.global.min.js"></script>
   <script>
-  // Redirect to login if not authenticated
-  if (!localStorage.getItem("token")) {
-    window.location.href = "/login";
-  }
+
   // Global variables to store logged-in user ID, FullCalendar instance, and coach ID
   let userId = null;
   let calendar = null;
@@ -392,12 +389,9 @@
   // Example function to fetch and show coach name
   async function showCoachFirstLoginPopup() {
     try {
-      const token = localStorage.getItem("token");
-
       const response = await fetch(`${API_BASE}/auth/me`, {
         method: 'GET',
-        credentials: 'include',
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
+        credentials: 'include'
       });
 
       if (response.ok) {
@@ -426,11 +420,8 @@
    */
   async function fetchLoggedInUser() {
     try {
-      const token = localStorage.getItem("token");
-
       const res = await fetch(`${API_BASE}/auth/me`, {
         credentials: 'include', // try sending cookie
-        headers: token ? { Authorization: `Bearer ${token}` } : {} // fallback to header
       });
 
       const data = await res.json();
@@ -774,19 +765,15 @@
     async function handleLogout() {
       try {
         // Hit your logout route to clear the cookie
-        const token = localStorage.getItem("token");
-
         fetch(`${API_BASE}/auth/logout`, {
           method: 'POST',
           credentials: 'include',
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
         });
       } catch (err) {
         console.error("Logout request failed:", err);
       }
 
       // Clear frontend tokens
-      localStorage.removeItem("token");
       sessionStorage.clear();
 
       // Redirect to homepage

@@ -16,9 +16,13 @@ const ADMIN_SECRET_ID = process.env.ADMIN_SECRET_ID;
 // Use the first allowed origin as the default FRONTEND_BASE_URL
 const FRONTEND_BASE_URL = process.env.FRONTEND_BASE_URL || allowedOrigins[0];
 
-// Add near the top, after your requires
+// Authenticate token
 function authenticateToken(req, res, next) {
-  const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
+  // Only check cookies and Authorization header (never localStorage/sessionStorage)
+  const token =
+    req.cookies.token ||
+    req.headers.authorization?.split(' ')[1];
+
   if (!token) return res.status(401).json({ error: 'No token provided' });
 
   try {
@@ -48,7 +52,11 @@ function isValidUsername(username) {
 // GET current logged-in user
 router.get('/me', (req, res) => {
   try {
-    const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
+    // Only check cookies and Authorization header
+    const token =
+      req.cookies.token ||
+      req.headers.authorization?.split(' ')[1];
+
     if (!token) return res.status(401).json({ error: 'Not logged in' });
 
     const decoded = jwt.verify(token, JWT_SECRET);
@@ -130,7 +138,6 @@ router.post('/register', async (req, res) => {
 
 // LOGIN
 router.post('/login', async (req, res) => {
-  // const { email, password } = req.body;
   const { identifier, password } = req.body;
 
   if (!identifier || !password) {
@@ -138,25 +145,26 @@ router.post('/login', async (req, res) => {
   }
 
   try {
-    // Find user by email only
+    // Find user by email or username
     const userQuery = await pool.query(
       `SELECT * FROM public.users WHERE LOWER(username) = LOWER($1) OR LOWER(email) = LOWER($1)`,
       [identifier]
     );
 
-    if (userQuery.rows.length === 0) {
-      return res.status(401).json({ error: 'User not found.' });
+    // Always use a constant-time password check to avoid timing attacks
+    let user = userQuery.rows[0];
+    let isPasswordMatch = false;
+
+    if (user) {
+      isPasswordMatch = await bcrypt.compare(password, user.password_hash);
+    } else {
+      // Dummy hash compare to mitigate timing attacks
+      await bcrypt.compare(password, "$2a$10$7a8b9c0d1e2f3g4h5i6j7k8l9m0n1o2p3q4r5s6t7u8v9w0x1y2z3a");
     }
 
-    const user = userQuery.rows[0];
-
-    // Check password
-    const isPasswordMatch = await bcrypt.compare(password, user.password_hash);
-    if (!isPasswordMatch) {
-      return res.status(401).json({ error: 'Incorrect password.' });
+    if (!user || !isPasswordMatch) {
+      return res.status(401).json({ error: 'Invalid credentials.' });
     }
-
-    // Admins no longer need to provide admin ID for login
 
     // Generate token
     const token = jwt.sign(
@@ -171,9 +179,16 @@ router.post('/login', async (req, res) => {
       { expiresIn: '1h' }
     );
 
+    // Set cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,       // only over HTTPS
+      sameSite: "None",   // allows cross-site frontend/backend
+      maxAge: 3600000     // 1 hour
+    });
+
     // Send welcome email on first login
     if (user.is_first_login) {
-      // Mark user as not first-time login
       await pool.query(`UPDATE users SET is_first_login = false WHERE id = $1`, [user.id]);
 
       // Send welcome email
@@ -208,25 +223,16 @@ router.post('/login', async (req, res) => {
       }
     }
 
-    // Set cookie and respond
-    res
-      .cookie('token', token, {
-        httpOnly: true,
-        secure: true,
-        maxAge: 3600000,
-        sameSite: 'None',
-      })
-      .status(200)
-      .json({
-        message: 'Login successful',
-        token,
-        user: {
-          id: user.id,
-          email: user.email,
-          role: user.role,
-          is_first_login: user.is_first_login,
-        },
-      });
+    // Respond with token and user info
+    res.status(200).json({
+      message: 'Login successful',
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        is_first_login: user.is_first_login,
+      },
+    });
 
   } catch (err) {
     console.error('Login error:', err.message);
@@ -248,15 +254,19 @@ router.post('/logout', (req, res) => {
 
 // VERIFY (check login status)
 router.get('/verify', (req, res) => {
-    try {
-      const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
-      if (!token) return res.status(401).json({ loggedIn: false });
-  
-      const decoded = jwt.verify(token, JWT_SECRET);
-      res.json({ loggedIn: true, user: decoded });
-    } catch (err) {
-      res.status(401).json({ loggedIn: false });
-    }
+  try {
+    // Only check cookies and Authorization header
+    const token =
+      req.cookies.token ||
+      req.headers.authorization?.split(' ')[1];
+
+    if (!token) return res.status(401).json({ loggedIn: false });
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+    res.json({ loggedIn: true, user: decoded });
+  } catch (err) {
+    res.status(401).json({ loggedIn: false });
+  }
 });
 
 // Helper to hash tokens
@@ -293,7 +303,7 @@ router.post('/forgot-password', async (req, res) => {
     const origin = req.get('origin');
     const isAllowed = allowedOrigins.includes(origin);
     const baseUrl = isAllowed ? origin : allowedOrigins[1]; // fallback to your production URL
-    const resetLink = `${baseUrl}/reset-password?token=${rawToken}`;
+    const resetLink = `${baseUrl}/auth/reset-link/${rawToken}`;
 
     // Send email (same as before)
     const transporter = nodemailer.createTransport({
@@ -343,7 +353,12 @@ router.get('/check-reset-token', async (req, res) => {
 
 // Actually reset the password
 router.post('/reset-password', async (req, res) => {
-  const { token, newPassword } = req.body;
+  const { newPassword } = req.body;
+  const token = req.cookies.reset_token; // Read from cookie
+
+  if (!token) {
+    return res.status(400).json({ error: 'Reset token missing or expired.' });
+  }
 
   if (!isValidPassword(newPassword)) {
     return res.status(400).json({
@@ -369,6 +384,13 @@ router.post('/reset-password', async (req, res) => {
 
     await pool.query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [hashedPassword, userId]);
     await pool.query(`DELETE FROM password_resets WHERE user_id = $1`, [userId]);
+
+    // On success, clear the cookie:
+    res.clearCookie('reset_token', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'None'
+    });
 
     res.json({ message: 'Password successfully updated.' });
   } catch (err) {
@@ -419,6 +441,18 @@ router.get('/membership', authenticateToken, async (req, res) => {
     console.error("Error fetching user membership:", err);
     res.status(500).json({ error: "Failed to fetch user info" });
   }
+});
+
+// When the user clicks the link in the email, direct them to this backend route:
+router.get('/reset-link/:token', (req, res) => {
+  const rawToken = req.params.token;
+  res.cookie("reset_token", rawToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "None",
+    maxAge: 15 * 60 * 1000 // 15 minutes
+  });
+  res.redirect('/reset-password');
 });
 
 module.exports = {

@@ -403,7 +403,7 @@
       <div class="mt-4 d-flex flex-column">
         <p id="userRole" class="px-3 text-white"></p>
         <div id="sidebarLinksContainer"></div>
-        <a href="#" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none" style="display:none;">🚪 Logout</a>
+        <a href="javascript:void(0)" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none" style="display:none;">🚪 Logout</a>
       </div>
     </div>
 
@@ -514,7 +514,7 @@
     <div class="mt-4 d-flex flex-column">
       <p id="userRole" class="px-3 text-white">👤 Loading...</p>
       <div id="sidebarLinksContainer"></div> <!-- Empty div to hold the dynamic links -->
-      <a href="#" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none">🚪 Logout</a>
+      <a href="javascript:void(0)" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none">🚪 Logout</a>
     </div>
   </div>
   
@@ -749,11 +749,8 @@
             // Ensure authenticated
             if (!customerId) {
               try {
-                const token = localStorage.getItem("token");
-
                 const userRes = await fetch(`${API_BASE}/auth/verify`, {
                   credentials: 'include',
-                  headers: token ? { Authorization: `Bearer ${token}` } : {}
                 });
                 const userData = await userRes.json();
                 const user = userData.user;

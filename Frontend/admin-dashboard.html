@@ -363,9 +363,9 @@
         Menu
       </button>
       <ul class="dropdown-menu dropdown-menu-end">
-        <li><a class="dropdown-item" href="#" id="toggleSidebar">Admin Menu</a></li>
+        <li><a class="dropdown-item" href="javascript:void(0)" id="toggleSidebar">Admin Menu</a></li>
         <li><a class="dropdown-item" href="/" id="toggleSite">Website</a></li>
-        <li><a class="dropdown-item text-danger" href="#" onclick="logout()">Logout</a></li>
+        <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="logout()">Logout</a></li>
       </ul>
     </div>
   </nav>
@@ -576,22 +576,16 @@
     // Use local backend if running locally, otherwise use deployed backend
     
     // Redirect to login if not authenticated
-    if (!localStorage.getItem("token")) {
-      window.location.href = "/login";
-    }
 
     function logout() {
       try {
-        const token = localStorage.getItem("token");
         fetch(`${API_BASE}/auth/logout`, {
           method: 'POST',
           credentials: 'include',
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
         });
       } catch (err) {
         console.error("Logout request failed:", err);
       }
-      localStorage.removeItem("token");
       sessionStorage.clear();
       window.location.href = "/";
     }
@@ -599,10 +593,8 @@
     document.addEventListener('DOMContentLoaded', async function () {
       // 1. Auth check
       try {
-        const token = localStorage.getItem("token");
         const res = await fetch(`${API_BASE}/auth/verify`, {
           credentials: "include",
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
         });
         const data = await res.json();
         if (!res.ok || !data.loggedIn || data.user.role !== 'admin') {
@@ -1748,7 +1740,6 @@
       method: 'PUT',
       headers: { 
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem("token")}`
       },
       credentials: 'include',
       body: JSON.stringify({ isMember: checked })
