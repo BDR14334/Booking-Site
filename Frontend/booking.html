@@ -11,6 +11,7 @@
 
   <link rel="stylesheet" href="style.css" />
   <title>Packages</title>
+  <link rel="icon" type="image/png" href="img/favicon.png" />
   <style>
     html, body {
       margin: 0;
@@ -117,16 +118,19 @@
     }
     
     .booking .box .icon {
-        height: 50px;
-        width: 50px;
+        height: 60px;
+        width: 60px;
         background: #333;
         border-radius: 50%;
         text-align: center;
-        line-height: 50px;
+        line-height: 90px;
         font-size: 24px;
         color: white;
-        margin: 0 auto 15px;
+        margin: 0 auto 20px;
         transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
     .booking .box:hover .icon {
@@ -134,6 +138,20 @@
         color: black;
     }
     
+    .package-logo {
+      width: 42px;   /* increase logo size to fit circle */
+      height: 48px;
+      object-fit: contain;
+      filter: brightness(0) invert(1); /* makes black logo appear white */
+      transition: filter 0.3s;
+      display: inline-block;
+    }
+
+    /* When box is hovered, show original (black) logo */
+    .booking .box:hover .package-logo {
+      filter: none;
+    }
+
     .booking .box .topic {
         font-size: 18px;
         font-weight: bold;
@@ -369,15 +387,17 @@
       height: 44px !important; /* Match your input height */
       box-sizing: border-box !important;
     }
+
+
   </style>
 </head>
 <body>
   <!-- Main Content wrapper -->
   <div class="wrapper-homepage">
     <nav class="nav">
-      <div class="nav-logo">
-        <p>ZSP</p>
-      </div>
+        <div class="nav-logo">
+          <img src="img/ZSP-logo1.png" alt="Zephyrs Strength & Performance Logo" />
+        </div>
 
       <div class="nav-menu" id="navMenu">
         <ul>
@@ -722,7 +742,9 @@
           const box = document.createElement('a');
           box.className = 'box';
           box.innerHTML = `
-            <div class="icon"><i class="fa-solid fa-dumbbell"></i></div>
+            <div class="icon">
+              <img src="img/ZSP-logo2.png" alt="Package Logo" class="package-logo" />
+            </div>
             <div class="topic">${pkg.title}</div>
             <h3 class="sub-heading">Description:</h3>
             <p>${pkg.description}</p>

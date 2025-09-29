@@ -350,7 +350,7 @@ header{
 }
 
 /* Styles for screens smaller than 824px (tablets) */
-@media only screen and (max-width: 824px){
+@media only screen and (max-width: 904px){
     /* .nav-menu.responsive{
         top: 100px;
     } */
@@ -388,7 +388,7 @@ header{
 }
 
 /* Styles for very small screens (phones) */
-@media only screen and (max-width: 540px) {
+@media only screen and (max-width: 904px) {
     .wrapper{
         min-height: 100vh;
     }
@@ -397,9 +397,13 @@ header{
         min-height: 500px;
         height: auto;
         overflow-y: auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
     .register-container, .login-container{
-        width: 100%;
+        width: 450px; 
+        max-width: 95vw;
         padding: 0 20px;
     }
     .register-container .two-forms{
@@ -409,7 +413,7 @@ header{
 }
 
 /* New media query for screens smaller than 924px */
-@media (max-width: 824px) {
+@media (max-width: 904px) {
   .nav {
     justify-content: center;
     align-items: center;
@@ -497,6 +501,7 @@ header{
       display: block !important;
       z-index: 9999 !important;
     }
+
 }
 
 .sidebar {
@@ -566,5 +571,30 @@ header{
   right: 0;
   left: auto;
   box-shadow: -10px 0 20px #24282c;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  margin-top: 12px; /* brings logo down */
+}
+
+.nav-logo img {
+    height: 100px;
+    width: 100px;
+    filter: drop-shadow(2px 2px .25px rgba(0,0,0,1));
+    transition: height 0.3s, width 0.3s, margin-top 0.3s;
+}
+
+/* Mobile view: shrink logo and add more top margin */
+@media (max-width: 600px) {
+    .nav-logo {
+    margin-top: 4px; /* bring logo further down on mobile */
+    }
+    .nav-logo img {
+    height: 75px;
+    width: 75px;
+    margin-top: 0;
+    }
 }
 

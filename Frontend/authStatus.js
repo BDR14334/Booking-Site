@@ -111,7 +111,7 @@ function updateNavButton() {
   sidebarLinksContainer.innerHTML = "";
 
   // Determine screen width
-  const isMobile = window.innerWidth < 824;
+  const isMobile = window.innerWidth < 904;
 
   fetch(`${API_BASE}/auth/verify?_=${Date.now()}`, {
     method: 'GET',
@@ -167,7 +167,8 @@ function updateNavButton() {
       }
     })
     .catch(err => {
-      console.error("Auth check failed:", err);
+      // Optionally suppress 401 errors
+      if (err && err.status !== 401) console.error("Auth check failed:", err);
     });
 }
 
@@ -221,10 +222,10 @@ function handleSessionExpired() {
 }
 
 // Track last known isMobile state to avoid unnecessary updates
-let lastIsMobile = window.innerWidth < 824;
+let lastIsMobile = window.innerWidth < 904;
 
 window.addEventListener('resize', () => {
-  const isMobile = window.innerWidth < 824;
+  const isMobile = window.innerWidth < 904;
   if (isMobile !== lastIsMobile) {
     updateNavButton();
     lastIsMobile = isMobile;
