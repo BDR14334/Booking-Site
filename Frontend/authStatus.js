@@ -37,24 +37,24 @@ function buildSidebarLinks(role) {
   // Create new links based on the role
   if (role === "admin") {
     sidebarLinksContainer.insertAdjacentHTML('beforeend', `
-      <a href="/admin-dashboard" class="text-white px-3 py-2 text-decoration-none">📊 Admin Dashboard</a>
+      <a href="/admin-dashboard" class="text-white px-3 py-2 text-decoration-none">Admin Dashboard</a>
     `);
   } else if (role === "coach") {
     sidebarLinksContainer.insertAdjacentHTML('beforeend', `
-      <a href="/coach-dashboard#editCoachInfo" class="text-white px-3 py-2 text-decoration-none">📋 Edit Info</a>
-      <a href="/coach-dashboard#editAvailability" class="text-white px-3 py-2 text-decoration-none">🕑 Edit Availability</a>
-      <a href="/coach-dashboard#coachBookings" class="text-white px-3 py-2 text-decoration-none">📅 View Bookings</a>
+      <a href="/coach-dashboard#editCoachInfo" class="text-white px-3 py-2 text-decoration-none">Edit Info</a>
+      <a href="/coach-dashboard#editAvailability" class="text-white px-3 py-2 text-decoration-none">Edit Availability</a>
+      <a href="/coach-dashboard#coachBookings" class="text-white px-3 py-2 text-decoration-none">View Bookings</a>
     `);
   } else if (role === "athlete") {
     sidebarLinksContainer.insertAdjacentHTML('beforeend', `
-      <a href="/athlete-dashboard#editInfo" class="text-white px-3 py-2 text-decoration-none">📋 Edit Info</a>
-      <a href="/athlete-dashboard#athleteInfo" class="text-white px-3 py-2 text-decoration-none">➕ Add Athlete</a>
-      <a href="/athlete-dashboard#bookSessions" class="text-white px-3 py-2 text-decoration-none">📅 Schedule Sessions</a>
+      <a href="/athlete-dashboard#editInfo" class="text-white px-3 py-2 text-decoration-none">Edit Info</a>
+      <a href="/athlete-dashboard#athleteInfo" class="text-white px-3 py-2 text-decoration-none">Add Athlete</a>
+      <a href="/athlete-dashboard#bookSessions" class="text-white px-3 py-2 text-decoration-none">Schedule Sessions</a>
     `);
   } else if (role === "adult-athlete") {
     sidebarLinksContainer.insertAdjacentHTML('beforeend', `
-      <a href="/adult-athlete-dashboard#athleteInfo" class="text-white px-3 py-2 text-decoration-none">📋 Edit Info</a>
-      <a href="/adult-athlete-dashboard#bookSessions" class="text-white px-3 py-2 text-decoration-none">📅 Schedule Sessions</a>
+      <a href="/adult-athlete-dashboard#athleteInfo" class="text-white px-3 py-2 text-decoration-none">Edit Info</a>
+      <a href="/adult-athlete-dashboard#bookSessions" class="text-white px-3 py-2 text-decoration-none">Schedule Sessions</a>
     `);
   }
 }
@@ -145,8 +145,8 @@ function updateNavButton() {
           `;
 
           sidebarLinksContainer.innerHTML = `
-            <a class="sidebar-link-margin text-white px-3 py-2 text-decoration-none" href="/login">🔑 Login</a>
-            <a class="text-white px-3 py-2 text-decoration-none" href="/login?register">📝 Register</a>
+            <a class="sidebar-link-margin text-white px-3 py-2 text-decoration-none" href="/login">Login</a>
+            <a class="text-white px-3 py-2 text-decoration-none" href="/login?register">Register</a>
           `;
 
           document.getElementById('profileBtn')?.addEventListener('click', toggleSidebar);
