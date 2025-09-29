@@ -463,8 +463,8 @@ header{
   }
   #profileSidebar.sidebar {
     width: 80vw;
-    min-width: 220px;
-    max-width: 320px;
+    min-width: 260px;
+    max-width: 275px;
     right: 0;
     left: auto;
     display: none; /* default, JS will set to block */
@@ -531,6 +531,10 @@ header{
 }
 
 .sidebar-link-margin {
+    margin-top: 0.6rem !important;
+}
+
+.sidebar a:first-child {
     margin-top: 0.6rem !important;
 }
 
