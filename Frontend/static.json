@@ -3,7 +3,7 @@
   "routes": [
     { "source": "/athlete-dashboard", "destination": "/athlete-dashboard.html" },
     { "source": "/adult-athlete-dashboard", "destination": "/adult-athlete-dashboard.html" },
-    { "source": "/packages", "destination": "/booking.html" },
+    { "source": "/packages", "destination": "/packages.html" },
     { "source": "/", "destination": "/index.html" },
     { "source": "/about", "destination": "/about.html" },
     { "source": "/admin-dashboard", "destination": "/admin-dashboard.html" },
