@@ -124,7 +124,9 @@
   <div class="wrapper">
     <nav class="nav">
       <div class="nav-logo">
-        <img src="img/ZSP-logo1.png" alt="Zephyrs Strength & Performance Logo" />
+        <a href="/">
+          <img src="img/ZSP-logo1.png" alt="Zephyrs Strength & Performance Logo" />
+        </a>
       </div>
 
       <div class="nav-menu" id="navMenu">
@@ -150,6 +152,7 @@
       <button class="btn btn-sm btn-outline-light ms-2 mt-2 close-btn" onclick="toggleSidebar()">× Close</button>
       <div class="mt-4 d-flex flex-column">
         <p id="userRole" class="px-3 text-white"></p>
+        <div class="sidebar-separator hidden-separator"></div>
         <div id="sidebarLinksContainer"></div>
         <a href="javascript:void(0)" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none" style="display:none;">Logout</a>
       </div>
@@ -158,6 +161,7 @@
     <div id="menuSidebar" class="sidebar bg-dark text-white" style="left:0; right:auto;">
       <button class="btn btn-sm btn-outline-light ms-2 mt-2 close-btn" onclick="toggleMenuSidebar()">× Close</button>
       <h4 style="margin-left:1.5rem; color:#fff;">Menu</h4>
+      <div class="sidebar-separator menu-separator"></div>
       <div class="mt-4 d-flex flex-column">
         <a href="/" class="text-white px-3 py-2 text-decoration-none">Home</a>
         <a href="/about" class="text-white px-3 py-2 text-decoration-none">About</a>
@@ -205,8 +209,13 @@
         </div>
     </section>
 
-
-    
+    <!-- Contact Popup Modal -->
+    <div id="contactPopup" class="popup-modal">
+      <span class="icon">&#9888;</span>
+      <span id="contactPopupMessage"></span>
+      <br>
+      <button onclick="closeContactPopup()">OK</button>
+    </div>
     
 
      <!-- Right-Aligned Sidebar -->
@@ -285,12 +294,18 @@
       });
 
       if (res.ok) {
-        alert("Thank you! Your message has been sent.");
+        document.getElementById("contactPopupMessage").innerText = "Thank you! Your message has been sent.";
+        document.getElementById("contactPopup").style.display = "block";
         document.getElementById("contactForm").reset();
       } else {
-        alert("Sorry, there was a problem sending your message.");
+        document.getElementById("contactPopupMessage").innerText = "Sorry, there was a problem sending your message.";
+        document.getElementById("contactPopup").style.display = "block";
       }
     });
+
+    function closeContactPopup() {
+      document.getElementById("contactPopup").style.display = "none";
+    }
   </script>
 
 </body>

@@ -46,6 +46,24 @@ body{
     background: #91908b;
 } 
 
+/* Add scrollbar buttons (up/down arrows) */
+::-webkit-scrollbar-button {
+    height: 16px;   /* Increased from 16px */
+    width: 20px;    /* Increased from 10px */
+    background: white;
+    border: none;
+}
+
+/* Up arrow (top button) */
+::-webkit-scrollbar-button:single-button:vertical:decrement {
+    background: white url('data:image/svg+xml;utf8,<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg"><polygon points="12,6 20,18 4,18" fill="%2391908b"/></svg>') no-repeat center;
+}
+
+/* Down arrow (bottom button) */
+::-webkit-scrollbar-button:single-button:vertical:increment {
+    background: white url('data:image/svg+xml;utf8,<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg"><polygon points="4,6 20,6 12,18" fill="%2391908b"/></svg>') no-repeat center;
+}
+
 /* ------------------ NAVIGATION BAR ------------------ */
 
 /* Styles the navigation bar: fixed at top, spaced elements */
@@ -504,6 +522,16 @@ header{
 
 }
 
+.sidebar-separator {
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(to right, #343a40 0%, #ff4800 100%);
+    border-radius: 2px;
+    margin: 12px auto 18px auto;
+    opacity: 0.5;
+}
+
+
 .sidebar {
     position: fixed;
     top: 0;
@@ -527,7 +555,10 @@ header{
 }
 
 .sidebar a:hover {
-    background-color: #495057;
+    background-color: rgba(255, 60, 0, 0.574);
+    color: white;
+    /* background-color: #ff4800;  */
+    
 }
 
 .sidebar-link-margin {
@@ -580,7 +611,13 @@ header{
 .nav-logo {
   display: flex;
   align-items: center;
-  margin-top: 12px; /* brings logo down */
+  margin-top: 12px;
+}
+
+.nav-logo a {
+    display: flex;
+    align-items: center;
+    height: 100px; /* match .nav-logo img height */
 }
 
 .nav-logo img {
@@ -602,3 +639,88 @@ header{
     }
 }
 
+.sidebar-separator {
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(to right, #343a40 0%, #ff4800 100%);
+    border-radius: 2px;
+    margin: 12px auto 18px auto;
+    opacity: 0.5;
+}
+
+.menu-separator {
+    margin-top: 24px !important; /* moves separator further down */
+    background: linear-gradient(to right, #ff4800 0%, #343a40 100%);
+}
+
+.hidden-separator {
+    display: none !important;
+}
+
+.profile-separator {
+    margin-top: 5px !important;
+    display: block !important;
+}
+
+.welcome-text {
+    margin-top: -34px;
+    padding: 20px 20px;
+    font-size: 18px;
+    color: white;
+    font-weight: bold;
+    margin-left: 5px;
+}
+
+.popup-modal {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #343a40;
+  color: white;
+  padding: 25px 30px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+  z-index: 9999;
+  font-size: 18px;
+  text-align: center;
+  max-width: 400px;
+}
+.popup-modal .icon {
+  font-size: 2rem;
+  margin-right: 8px;
+  color: #ffa162;
+  vertical-align: middle;
+}
+.popup-modal button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #ff4800;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+}
+@media (max-width: 600px) {
+  .popup-modal {
+    width: 95vw;
+    max-width: 700px;
+    min-width: 0;
+    height: auto;
+    padding: 40px 16px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px black;
+    background: #343a40;
+    color: white;
+    font-size: 1.1rem;
+    line-height: 1.5;
+    margin: 0 auto;
+  }
+  .popup-modal .icon {
+    font-size: 2rem;
+    margin-bottom: 18px;
+    display: block;
+  }
+}

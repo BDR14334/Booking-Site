@@ -34,6 +34,11 @@ function buildSidebarLinks(role) {
   // Clear previous links except Logout link
   sidebarLinksContainer.innerHTML = '';
 
+  // Insert the separator before the links
+  sidebarLinksContainer.insertAdjacentHTML('beforeend', `
+    <div class="sidebar-separator profile-separator"></div>
+  `);
+
   // Create new links based on the role
   if (role === "admin") {
     sidebarLinksContainer.insertAdjacentHTML('beforeend', `
@@ -145,6 +150,8 @@ function updateNavButton() {
           `;
 
           sidebarLinksContainer.innerHTML = `
+            <p class="welcome-text px-3 text-white">Welcome</p>
+            <div class="sidebar-separator profile-separator"></div>
             <a class="sidebar-link-margin text-white px-3 py-2 text-decoration-none" href="/login">Login</a>
             <a class="text-white px-3 py-2 text-decoration-none" href="/login?register">Register</a>
           `;

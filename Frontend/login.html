@@ -29,7 +29,9 @@
     <nav class="nav">
         <!-- Logo -->
         <div class="nav-logo">
+            <a href="/">
             <img src="img/ZSP-logo1.png" alt="Zephyrs Strength & Performance Logo" />
+            </a>
         </div>
 
         <!-- Navigation links -->
@@ -58,6 +60,7 @@
       <button class="btn btn-sm btn-outline-light ms-2 mt-2 close-btn" onclick="toggleSidebar()">× Close</button>
       <div class="mt-4 d-flex flex-column">
         <p id="userRole" class="px-3 text-white"></p>
+        <div class="sidebar-separator hidden-separator"></div>
         <div id="sidebarLinksContainer"></div>
         <a href="javascript:void(0)" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none" style="display:none;">Logout</a>
       </div>
@@ -66,6 +69,7 @@
     <div id="menuSidebar" class="sidebar bg-dark text-white" style="left:0; right:auto;">
       <button class="btn btn-sm btn-outline-light ms-2 mt-2 close-btn" onclick="toggleMenuSidebar()">× Close</button>
       <h4 style="margin-left:1.5rem; color:#fff;">Menu</h4>
+      <div class="sidebar-separator menu-separator"></div>
       <div class="mt-4 d-flex flex-column">
         <a href="/" class="text-white px-3 py-2 text-decoration-none">Home</a>
         <a href="/about" class="text-white px-3 py-2 text-decoration-none">About</a>
@@ -372,33 +376,38 @@
     });
 </script>
     <!-- Styled Alert Popup -->
-    <div id="customAlertPopup" style="
-        display: none;
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: #343a40;
-        color: white;
-        padding: 25px 30px;
-        border-radius: 12px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.4);
-        z-index: 9999;
-        font-size: 18px;
-        text-align: center;
-        max-width: 400px;
-        ">
-        <p id="customAlertMessage">Placeholder message</p>
-        <button onclick="closeCustomAlertPopup()" style="
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #ff4800;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-        ">OK</button>
+    <div id="customAlertPopup" class="popup-modal">
+        <span class="icon">&#9888;</span>
+        <span id="customAlertMessage">Placeholder message</span>
+        <br>
+        <button onclick="closeCustomAlertPopup()">OK</button>
+    </div>
+
+    <div id="athleteErrorPopup" class="popup-modal">
+        <span class="icon">&#9888;</span>
+        <span id="athleteErrorMessage"></span>
+        <br>
+        <button onclick="closeAthleteErrorPopup()">OK</button>
+    </div>
+
+    <div id="globalPopup" class="popup-modal">
+        <span id="globalPopupIcon" class="icon"></span>
+        <span id="globalPopupMessage"></span>
+        <br>
+        <button onclick="closeGlobalPopup()">OK</button>
+    </div>
+
+    <!-- Email Edit Confirmation Popup -->
+    <div id="emailEditPopup" class="popup-modal">
+        <span class="icon">&#9888;</span>
+        <span id="emailEditPopupMessage">
+            <br>Your email is used both to log in and to receive notifications.
+            Changing it will update both.<br><br>
+            Continue?
+        </span>
+        <br>
+        <button id="emailEditConfirmBtn">Yes, Edit Email</button>
+        <button id="emailEditCancelBtn" style="margin-left:10px;">Cancel</button>
     </div>
 
 </body>
