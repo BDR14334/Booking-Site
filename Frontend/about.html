@@ -257,6 +257,10 @@
         max-width: 650px;
       }
     }
+
+    .site-footer {
+      background: #000 !important;
+    }
   </style>
 </head>
 <body>
@@ -264,9 +268,12 @@
   <div class="wrapper-homepage">
     <nav class="nav">
       <div class="nav-logo">
-        <a href="/">
-          <img src="img/ZSP-logo1.png" alt="Zephyrs Strength & Performance Logo" />
-        </a>
+          <a href="/">
+            <img src="img/ZSP-logo1.png" alt="Zephyrs Strength & Performance Logo"
+                oncontextmenu="return false;"
+                draggable="false"
+                style="user-select: none; -webkit-user-drag: none;" />
+          </a>
       </div>
 
       <div class="nav-menu" id="navMenu">
@@ -373,6 +380,27 @@
         </div>
       </div>
     </section>
+
+    <footer class="site-footer">
+      <div class="footer-content">
+        <div class="footer-left">
+          <p>&copy; 2025 Zephyrs Strength & Performance</p>
+        </div>
+        <!-- <div class="footer-links">
+          <a href="/about">About</a>
+          <a href="/packages">Packages</a>
+          <a href="/contact">Contact</a>
+        </div> -->
+        <div class="footer-social">
+          <a href="https://instagram.com/yourusername" target="_blank" aria-label="Instagram">
+            <i class="bx bxl-instagram"></i>
+          </a>
+          <a href="https://facebook.com/yourusername" target="_blank" aria-label="Facebook">
+            <i class="bx bxl-facebook"></i>
+          </a>
+        </div>
+      </div>
+    </footer>
 
 
 

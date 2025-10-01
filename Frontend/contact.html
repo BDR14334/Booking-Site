@@ -117,6 +117,40 @@
       opacity: 0.75; /* Lower = more dim */
       font-size: 16px;
     }
+
+    .social-links {
+      margin-top: -20px;
+      /* display: flex; */
+      /* gap: 5px; */
+    }
+
+    .social-links a{
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      width: 2.6rem;
+      height: 2.6rem;
+      background-color: transparent;
+      border: 0.2rem solid #ff4800;
+      font-size: 2rem;
+      border-radius: 50%;
+      margin: 3rem .5rem -3rem;
+      transition: 0.3s ease;
+      color: #ff4800;
+      text-decoration: none; 
+  }
+
+  .social-links a:hover{
+      color: #343a40;
+      transform:scale(1.25) translateY(-5px);
+      background-color: #ff4800;
+      box-shadow: 0 0 25px #ff4800;
+  }
+
+  
+    .site-footer {
+      background: #24282c !important;
+    }
   </style>
 </head>
 <body>
@@ -125,7 +159,10 @@
     <nav class="nav">
       <div class="nav-logo">
         <a href="/">
-          <img src="img/ZSP-logo1.png" alt="Zephyrs Strength & Performance Logo" />
+          <img src="img/ZSP-logo1.png" alt="Zephyrs Strength & Performance Logo"
+              oncontextmenu="return false;"
+              draggable="false"
+              style="user-select: none; -webkit-user-drag: none;" />
         </a>
       </div>
 
@@ -178,6 +215,14 @@
             <div class="contact-info">
             <h2>OUR ADDRESS</h2>
             <p style="margin-top: 1rem"><i class='bx bxs-envelope'></i>info@Zephyrsstrengthandperformance.com</p>
+            <div class="social-links">
+              <a href="https://instagram.com/zsp7142" target="_blank" aria-label="Instagram">
+                <i class='bx bxl-instagram'></i>
+              </a>
+              <a href="https://www.facebook.com/profile.php?id=61581354792000&sk=about" target="_blank" aria-label="Facebook">
+                <i class='bx bxl-facebook'></i>
+              </a>
+            </div>
             </div>
 
             <!-- Contact Form -->
@@ -227,8 +272,29 @@
         <a href="javascript:void(0)" id="logoutBtn" class="text-danger px-3 py-2 text-decoration-none">Logout</a>
       </div>
   </div>
+    
 
   </div>
+    <footer class="site-footer">
+      <div class="footer-content">
+        <div class="footer-left">
+          <p>&copy; 2025 Zephyrs Strength & Performance</p>
+        </div>
+        <!-- <div class="footer-links">
+          <a href="/about">About</a>
+          <a href="/packages">Packages</a>
+          <a href="/contact">Contact</a>
+        </div> -->
+        <div class="footer-social">
+          <a href="https://instagram.com/zsp7142" target="_blank" aria-label="Instagram">
+            <i class="bx bxl-instagram"></i>
+          </a>
+          <a href="https://www.facebook.com/profile.php?id=61581354792000&sk=about" target="_blank" aria-label="Facebook">
+            <i class="bx bxl-facebook"></i>
+          </a>
+        </div>
+      </div>
+    </footer>
 
   <!-- Profile dropdown logic + login/register redirection -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -307,6 +373,5 @@
       document.getElementById("contactPopup").style.display = "none";
     }
   </script>
-
 </body>
 </html>

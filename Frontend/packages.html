@@ -244,14 +244,6 @@
         }
     }
 
-    .footer {
-      background-color: #222;
-      color: white;
-      padding: 20px 0;
-      width: 100%;
-      text-align: center;
-    }
-
     #packageContainer .box.selected {
       border: 2px solid #ff4800;
       background: rgba(167, 99, 40, 0.444);
@@ -396,9 +388,12 @@
   <div class="wrapper-homepage">
     <nav class="nav">
       <div class="nav-logo">
-        <a href="/">
-          <img src="img/ZSP-logo1.png" alt="Zephyrs Strength & Performance Logo" />
-        </a>
+          <a href="/">
+            <img src="img/ZSP-logo1.png" alt="Zephyrs Strength & Performance Logo"
+                oncontextmenu="return false;"
+                draggable="false"
+                style="user-select: none; -webkit-user-drag: none;" />
+          </a>
       </div>
 
       <div class="nav-menu" id="navMenu">
@@ -506,11 +501,27 @@
 
     </div>
     
-    <!-- Footer -->
-    <footer class="footer">
-      <p>&copy; 2025 Zephyrs. All rights reserved.</p>
-    </footer>
   </div>
+    <footer class="site-footer">
+      <div class="footer-content">
+        <div class="footer-left">
+          <p>&copy; 2025 Zephyrs Strength & Performance</p>
+        </div>
+        <!-- <div class="footer-links">
+          <a href="/about">About</a>
+          <a href="/packages">Packages</a>
+          <a href="/contact">Contact</a>
+        </div> -->
+        <div class="footer-social">
+          <a href="https://instagram.com/zsp7142" target="_blank" aria-label="Instagram">
+            <i class="bx bxl-instagram"></i>
+          </a>
+          <a href="https://www.facebook.com/profile.php?id=61581354792000&sk=about" target="_blank" aria-label="Facebook">
+            <i class="bx bxl-facebook"></i>
+          </a>
+        </div>
+      </div>
+    </footer>
 
   <div id="noAthleteNotice" style="
     display: none;
@@ -747,7 +758,10 @@
           box.className = 'box';
           box.innerHTML = `
             <div class="icon">
-              <img src="img/ZSP-logo2.png" alt="Package Logo" class="package-logo" />
+              <img src="img/ZSP-logo2.png" alt="Package Logo" class="package-logo"                  
+                 oncontextmenu="return false;"
+                 draggable="false"
+                 style="user-select: none; -webkit-user-drag: none;" />
             </div>
             <div class="topic">${pkg.title}</div>
             <h3 class="sub-heading">Description:</h3>

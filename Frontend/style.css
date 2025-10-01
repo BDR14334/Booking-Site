@@ -724,3 +724,70 @@ header{
     display: block;
   }
 }
+
+/* Footer base styles */
+.site-footer {
+  padding: 40px 20px;
+  color: #fff; /* or whatever your text color is */
+  font-size: 0.95rem;
+  background: #343a40;
+  border-top: 1px solid rgba(255,255,255,0.3);
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Center links */
+.footer-links a {
+  color: inherit;
+  text-decoration: none;
+  margin: 0 10px;
+  transition: color 0.3s ease; 
+}
+.footer-links a:hover {
+  color: #ff4800; /* use your accent/hover color */
+}
+
+/* Social icons styling */
+.footer-social {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.footer-social a {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255,255,255,0.7);
+  border-radius: 50%;
+  color: inherit;
+  font-size: 1.2rem;
+  transition: border-color 0.3s ease, color 0.3s ease;
+  text-decoration: none;
+}
+
+.footer-social a:hover {
+  border-color: #ff4800;
+  color: #ff4800;
+}
+
+/* Responsive: stack on small screens */
+@media (max-width: 768px) {
+  .footer-content {
+    flex-direction: column;
+    text-align: center;
+  }
+  .footer-links {
+    margin: 15px 0;
+  }
+}
