@@ -291,7 +291,7 @@ router.post('/forgot-password', async (req, res) => {
 
     const origin = req.get('origin');
     const isAllowed = allowedOrigins.includes(origin);
-    const baseUrl = isAllowed ? origin : allowedOrigins[1]; // fallback to your production URL
+    const baseUrl = isAllowed ? origin : allowedOrigins[2]; // fallback to your production URL
     const resetLink = `${baseUrl}/auth/reset-link/${rawToken}`;
 
     // Send password reset email using SendGrid and no-reply address
