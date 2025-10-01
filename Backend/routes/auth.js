@@ -333,8 +333,8 @@ router.get('/check-reset-token', async (req, res) => {
 
 // Actually reset the password
 router.post('/reset-password', async (req, res) => {
-  const { newPassword } = req.body;
-  const token = req.cookies.reset_token; // Read from cookie
+  const { newPassword, token: bodyToken } = req.body;
+  const token = req.cookies.reset_token || bodyToken; // Use cookie or body
 
   if (!token) {
     return res.status(400).json({ error: 'Reset token missing or expired.' });
