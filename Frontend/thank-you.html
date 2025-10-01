@@ -208,31 +208,28 @@
     });
 
     function goToDashboard() {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        window.location.href = "/login";
-        return;
-      }
-
-      fetch(`${API_BASE}/auth/me`, {
-        credentials: "include",
-        headers: { Authorization: `Bearer ${token}` }
-      })
-        .then(res => res.json())
+      fetch("/auth/me", { credentials: "include" })
+        .then(res => {
+          if (!res.ok) {
+            window.location.href = "/login";
+            return;
+          }
+          return res.json();
+        })
         .then(data => {
-          console.log("auth/me response:", data);
-          if (data.user && data.user.role === "adult-athlete") {
+          if (!data || !data.user) {
+            window.location.href = "/login";
+            return;
+          }
+          if (data.user.role === "adult-athlete") {
             window.location.href = "/adult-athlete-dashboard#bookSessions";
-          } else if (data.user && data.user.role === "athlete") {
+          } else if (data.user.role === "athlete") {
             window.location.href = "/athlete-dashboard#bookSessions";
           } else {
             window.location.href = "/";
           }
         })
-        .catch((err) => {
-          console.error("auth/me fetch error:", err);
-          window.location.href = "/";
-        });
+        .catch(() => window.location.href = "/login");
     }
 
 
