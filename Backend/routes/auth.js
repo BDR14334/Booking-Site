@@ -5,8 +5,8 @@ const jwt = require('jsonwebtoken');
 const pool = require('../db');
 require('dotenv').config();
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
 const { allowedOrigins } = require('../config');
+const sendEmail = require('../utils/email'); // new mailjet helper
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -191,21 +191,12 @@ router.post('/login', async (req, res) => {
     if (user.is_first_login) {
       await pool.query(`UPDATE users SET is_first_login = false WHERE id = $1`, [user.id]);
 
-      // Send welcome email
+      // Send welcome email using SendGrid and no-reply address
       try {
-        const transporter = nodemailer.createTransport({
-          service: 'gmail',
-          auth: {
-            user: 'robinsontech30@gmail.com',
-            pass: process.env.GMAIL_APP_PASSWORD
-          }
-        });
-
-        const mailOptions = {
-          from: 'robinsontech30@gmail.com',
-          to: user.email,
-          subject: 'Welcome to Zephyrs Strength & Performance!',
-          html: `
+        await sendEmail(
+          user.email,
+          'Welcome to Zephyrs Strength & Performance!',
+          `
             <p>Hi ${user.first_name},</p>
             <p>Welcome to Zephyrs Strength & Performance! We’re excited to have you join our community.</p>
             <p>Our founders, Coach Warren Archer and Coach Dennis Robinson, created Zephyrs Strength & Performance with one goal in mind: to help athletes unlock their full potential through science-based training. Together, they bring decades of experience developing athletes of all ages—from first-timers to national champions—blending evidence-driven programming with mentorship that extends beyond the track.</p>
@@ -214,9 +205,7 @@ router.post('/login', async (req, res) => {
             <p>Welcome to the ZSP family, we’re glad you’re here.</p>
             <p>Best,<br>The Zephyrs Strength & Performance Team</p>
           `
-        };
-
-        await transporter.sendMail(mailOptions);
+        );
       } catch (emailErr) {
         console.error('Failed to send welcome email:', emailErr);
         // Do not block login if email fails
@@ -305,21 +294,12 @@ router.post('/forgot-password', async (req, res) => {
     const baseUrl = isAllowed ? origin : allowedOrigins[1]; // fallback to your production URL
     const resetLink = `${baseUrl}/auth/reset-link/${rawToken}`;
 
-    // Send email (same as before)
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: 'robinsontech30@gmail.com',
-        pass: process.env.GMAIL_APP_PASSWORD
-      }
-    });
-
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Password Reset',
-      html: `<p>Click <a href="${resetLink}">here</a> to reset your password. The link expires in 15 minutes.</p>`
-    });
+    // Send password reset email using SendGrid and no-reply address
+    await sendEmail(
+      email,
+      'Password Reset',
+      `<p>Click <a href="${resetLink}">here</a> to reset your password. The link expires in 15 minutes.</p>`
+    );
 
     res.json({ message: 'Reset link sent to your email address.' });
   } catch (err) {

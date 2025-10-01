@@ -1,33 +1,24 @@
 const express = require('express');
 const router = express.Router();
-const nodemailer = require('nodemailer');
+const sendEmail = require('../utils/email'); // SendGrid helper
 
 router.post('/', async (req, res) => {
   const { firstName, lastName, email, phone, message } = req.body;
 
-  // Configure transporter (use your own credentials)
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: 'robinsontech30@gmail.com',
-      pass: process.env.GMAIL_APP_PASSWORD // Use an App Password, not your Gmail password!
-    }
-  });
-
-  const mailOptions = {
-    from: email,
-    to: 'info@Zephyrsstrengthandperformance.com',
-    subject: 'New Contact Form Submission',
-    text: `
-      Name: ${firstName} ${lastName}
-      Email: ${email}
-      Phone: ${phone}
-      Message: ${message}
-    `
-  };
+  const html = `
+    <h2>New Contact Form Submission</h2>
+    <p><b>Name:</b> ${firstName} ${lastName}</p>
+    <p><b>Email:</b> ${email}</p>
+    <p><b>Phone:</b> ${phone}</p>
+    <p><b>Message:</b><br>${message}</p>
+  `;
 
   try {
-    await transporter.sendMail(mailOptions);
+    await sendEmail(
+      'info@Zephyrsstrengthandperformance.com', // To ZSP
+      'New Contact Form Submission',
+      html
+    );
     res.status(200).json({ success: true });
   } catch (err) {
     console.error(err);

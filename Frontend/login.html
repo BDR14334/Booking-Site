@@ -254,8 +254,14 @@
 
                 // Redirect based on user.role
                 if (user.role === "adult-athlete") {
+                    if (user.is_first_login) {
+                        sessionStorage.setItem("isFirstLogin", "true");
+                    }
                     window.location.href = "/adult-athlete-dashboard";
                 } else if (user.role === "athlete") {
+                    if (user.is_first_login) {
+                        sessionStorage.setItem("isFirstLogin", "true");
+                    }
                     window.location.href = "/athlete-dashboard";
                 } else if (user.role === "coach") {
                     window.location.href = "/coach-dashboard";

@@ -1,11 +1,11 @@
 // Import Express and create a router instance
 const express = require('express');
 const pool = require('../db'); // Import PostgreSQL connection pool
-const nodemailer = require('nodemailer');
 const router = express.Router(); // Creates a new router instance
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { v4: uuidv4 } = require('uuid');
 const bodyParser = require('body-parser'); // Add at the top if not already present
+const sendEmail = require('../utils/email'); // Add this line
 
 // GET availability by package packageId
 router.get('/availability/by-package/:packageId', async (req, res) => {
@@ -242,21 +242,12 @@ router.post('/booking', async (req, res) => {
     const athleteCount = athleteNamesRes.rows.length;
 
     // Send receipt email
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: 'robinsontech30@gmail.com',
-        pass: process.env.GMAIL_APP_PASSWORD
-      }
-    });
-
     const paymentDate = new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' });
 
-    await transporter.sendMail({
-      from: 'robinsontech30@gmail.com',
-      to: customerEmail,
-      subject: `Your Receipt – ${pkg.name}`,
-      html: `
+    await sendEmail(
+      customerEmail,
+      `Your Receipt – ${pkg.name}`,
+      `
         <h2>Payment Receipt</h2>
         <p>Hi ${customerName},</p>
         <p>Thank you for your purchase!</p>
@@ -282,7 +273,7 @@ router.post('/booking', async (req, res) => {
         <br/>
         <p>– ZSP Team</p>
       `
-    });
+    );
 
     res.status(200).json({ message: 'Booking successful & receipt sent' });
   } catch (err) {
@@ -491,14 +482,6 @@ router.post('/webhook', rawBodyParser, async (req, res) => {
         const athleteList = athleteNamesRes.rows.map(a => `<li>${a.first_name} ${a.last_name}</li>`).join('');
         const paymentDate = new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' });
 
-        const transporter = nodemailer.createTransport({
-          service: 'gmail',
-          auth: {
-            user: 'robinsontech30@gmail.com',
-            pass: process.env.GMAIL_APP_PASSWORD
-          }
-        });
-
         const htmlReceipt = `
           <h2>Payment Receipt</h2>
           <p>Hi ${customerName},</p>
@@ -522,16 +505,11 @@ router.post('/webhook', rawBodyParser, async (req, res) => {
           <p>– ZSP Team</p>
         `;
 
-        if (customerEmail) {
-          await transporter.sendMail({
-            from: 'robinsontech30@gmail.com',
-            to: customerEmail,
-            subject: `Your Receipt – ${packageName}`,
-            html: htmlReceipt
-          });
-        } else {
-          console.warn('No customer email found to send receipt');
-        }
+        await sendEmail(
+          customerEmail,
+          `Your Receipt – ${packageName}`,
+          htmlReceipt
+        );
       } catch (emailErr) {
         console.error('Failed to send receipt email:', emailErr);
       }
