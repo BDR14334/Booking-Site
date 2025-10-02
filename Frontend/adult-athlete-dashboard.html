@@ -557,6 +557,13 @@
   <button id="emailEditCancelBtn" style="margin-left:10px;">Cancel</button>
 </div>
 
+<div id="firstLoginPopup" class="popup-modal">
+  <p id="firstLoginMessage">
+    Welcome, <span id="firstLoginName" style="color:#ff4800; font-weight:bold;"></span>! Please complete your profile before exploring packages.
+  </p>
+  <button onclick="closeFirstLoginPopup()">OK</button>
+</div>
+
 <script src="authStatus.js"></script>
 <script src="https://assets.calendly.com/assets/external/widget.js" async></script>
 <script>
@@ -1023,37 +1030,6 @@
     emailEditPopup.style.display = 'none';
   };
 </script>
-
-<div id="firstLoginPopup" style="
-  display: none;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: #343a40;
-  color: white;
-  padding: 25px 30px;
-  border-radius: 12px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.4);
-  z-index: 9999;
-  font-size: 18px;
-  text-align: center;
-  max-width: 400px;
-">
-  <p id="firstLoginMessage">
-    Welcome, <span id="firstLoginName" style="color:#ff4800; font-weight:bold;"></span>! Please complete your profile before exploring packages.
-  </p>
-  <button onclick="closeFirstLoginPopup()" style="
-    margin-top: 20px;
-    padding: 10px 20px;
-    background-color: #ff4800;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 16px;
-  ">OK</button>
-</div>
 
 </body>
 </html>

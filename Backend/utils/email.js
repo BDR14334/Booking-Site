@@ -11,7 +11,7 @@ const mailjet = Mailjet.apiConnect(
  * @param {string} subject - Subject line
  * @param {string} html - HTML body
  */
-async function sendEmail(to, subject, html) {
+async function sendEmail(to, subject, html, from, replyTo) {
   try {
     const request = mailjet
       .post('send', { version: 'v3.1' })
@@ -19,12 +19,13 @@ async function sendEmail(to, subject, html) {
         Messages: [
           {
             From: {
-              Email: process.env.NO_REPLY_EMAIL,
+              Email: from || process.env.NO_REPLY_EMAIL,
               Name: 'Zephyrs Strength & Performance',
             },
             To: Array.isArray(to) ? to.map(email => ({ Email: email })) : [{ Email: to }],
             Subject: subject,
             HTMLPart: html,
+            ...(replyTo ? { ReplyTo: { Email: replyTo } } : {}),
           },
         ],
       });

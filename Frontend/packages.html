@@ -938,13 +938,16 @@
         console.error('Failed to load packages:', err);
       }
     });
-  
-  
-    // ...existing code...
 
     let stripe, elements, card;
 
-    document.getElementById("nextToPaymentBtn").addEventListener("click", () => {
+    async function getStripeKey() {
+      const res = await fetch(`${API_BASE}/booking/stripe-publish-key`);
+      const data = await res.json();
+      return data.publishKey;
+    }
+
+    document.getElementById("nextToPaymentBtn").addEventListener("click", async () => {
       goToStep(2); // Show payment section
 
       const athleteCount = selectedAthleteIds.length;
@@ -964,7 +967,8 @@
 
       // Initialize Stripe only once
       if (!stripe) {
-        stripe = Stripe("pk_test_51RT8WoGI7tqbKPuizpKrkJK05SCf4kY7DrUBWIzh953MG53TtawtUwI5laWY0Wq6MfPoHo9yydwEbWyQWuQcUEW800JFWeLm0j");
+        const publishKey = await getStripeKey();
+        stripe = Stripe(publishKey);
         elements = stripe.elements();
         card = elements.create("card");
         card.mount("#card-element");

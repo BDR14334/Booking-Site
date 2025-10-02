@@ -564,5 +564,10 @@ router.post('/webhook', rawBodyParser, async (req, res) => {
   }
 });
 
+// GET Stripe publishable key (for frontend)
+router.get('/stripe-publish-key', (req, res) => {
+  res.json({ publishKey: process.env.STRIPE_PUBLISH_KEY });
+});
+
 // Export the router to be used in app.js
 module.exports = router;

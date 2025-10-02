@@ -672,27 +672,7 @@
       pushState(currentSection, sidebarOpen);
       showSection('dashboard');
     });
- 
-    function showSection(sectionId) {
-      const sections = document.querySelectorAll('.page-section');
-      sections.forEach(sec => sec.classList.remove('active'));
-      const target = document.getElementById(sectionId);
-      if (target) {
-        target.classList.add('active');
 
-        // Trigger coach loading if viewing coach registry
-        if (sectionId === 'coachRegistry') {
-          loadPendingCoaches();
-          loadApprovedCoaches(); // <-- Add this line
-        }
-        if (sectionId === 'manageStories') {
-          loadStories();
-        }
-        if (sectionId === 'athlete-packages') {
-          loadAthletePackages();
-        }
-      }
-    }
     // Accept Registered Coaches
     async function loadPendingCoaches() {
       try {
@@ -1039,9 +1019,9 @@
     });
 
 
-    document.addEventListener('DOMContentLoaded', () => {
-      if (document.getElementById("storyList")) loadStories();
-    });
+    // document.addEventListener('DOMContentLoaded', () => {
+    //   if (document.getElementById("storyList")) loadStories();
+    // });
 
     // Sort stories
     function enableStorySorting() {
@@ -1338,29 +1318,6 @@
         reader.readAsDataURL(file);
       }
     });
-
-    
-    // Trigger loading when "Assign Coaches" section is shown
-    function showSection(sectionId) {
-      localStorage.setItem('adminSection', sectionId); // Remember the section
-
-      document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
-      const target = document.getElementById(sectionId);
-      if (target) {
-        target.classList.add('active');
-
-        if (sectionId === 'coachRegistry') {
-          loadPendingCoaches();
-          loadApprovedCoaches();
-        }
-        if (sectionId === 'manageStories') {
-          loadStories();
-        }
-        if (sectionId === 'athlete-packages') {
-          loadAthletePackages();
-        }
-      }
-    }
 
     document.addEventListener('DOMContentLoaded', function () {
       if (!document.querySelector('.page-section.active')) {

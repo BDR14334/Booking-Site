@@ -280,11 +280,6 @@
         <div class="footer-left">
           <p>&copy; 2025 Zephyrs Strength & Performance</p>
         </div>
-        <!-- <div class="footer-links">
-          <a href="/about">About</a>
-          <a href="/packages">Packages</a>
-          <a href="/contact">Contact</a>
-        </div> -->
         <div class="footer-social">
           <a href="https://instagram.com/zsp7142" target="_blank" aria-label="Instagram">
             <i class="bx bxl-instagram"></i>
@@ -359,12 +354,15 @@
         body: JSON.stringify(data)
       });
 
+      const iconSpan = document.querySelector("#contactPopup .icon");
       if (res.ok) {
-        document.getElementById("contactPopupMessage").innerText = "Thank you! Your message has been sent.";
+        document.getElementById("contactPopupMessage").innerText = "Thank you! \nYour message has been sent.";
+        if (iconSpan) iconSpan.style.display = "none"; // Hide warning icon on success
         document.getElementById("contactPopup").style.display = "block";
         document.getElementById("contactForm").reset();
       } else {
-        document.getElementById("contactPopupMessage").innerText = "Sorry, there was a problem sending your message.";
+        document.getElementById("contactPopupMessage").innerText = "\nSorry, there was a problem sending your message.";
+        if (iconSpan) iconSpan.style.display = "inline"; // Show warning icon on error
         document.getElementById("contactPopup").style.display = "block";
       }
     });
