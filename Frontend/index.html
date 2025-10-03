@@ -635,6 +635,14 @@
       observer.observe(document.body, { childList: true, subtree: true });
     });
 
+    document.addEventListener("DOMContentLoaded", function() {
+      var video = document.querySelector('.hero-video');
+      if (video) {
+        video.muted = true;
+        video.play();
+      }
+    });
+
     loadHomeStories();
 
 
