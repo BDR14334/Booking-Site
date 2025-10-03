@@ -196,8 +196,9 @@
 <script>
     let registrationJustSucceeded = false;
 
-    function showCustomAlert(message) {
+    function showCustomAlert(message, isError = false) {
         document.getElementById('customAlertMessage').innerText = message;
+        document.getElementById('customAlertIcon').style.display = isError ? 'inline' : 'none';
         document.getElementById('customAlertPopup').style.display = 'block';
     }
 
@@ -285,7 +286,7 @@
             const first_name = document.querySelector('#register input[placeholder="First Name"]').value.trim();
             const last_name = document.querySelector('#register input[placeholder="Last Name"]').value.trim();
             const email = document.querySelector('#register input[placeholder="Email"]').value.trim();
-            const password = document.querySelector('#register input[placeholder="Password"]').value;
+            const password = document.querySelector('#register input[placeholder="Password"]').value.trim();
             const role = document.getElementById("registerRoleSelect").value;
             const username = document.getElementById("registerUsername").value.trim();
 
@@ -387,7 +388,7 @@
 </script>
     <!-- Styled Alert Popup -->
     <div id="customAlertPopup" class="popup-modal">
-        <span class="icon">&#9888;</span>
+        <span class="icon" id="customAlertIcon" style="display:none;">&#9888;</span>
         <span id="customAlertMessage">Placeholder message</span>
         <br>
         <button onclick="closeCustomAlertPopup()">OK</button>

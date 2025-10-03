@@ -104,7 +104,9 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Username or email already taken.' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const cleanPassword = password.trim();
+    // Use cleanPassword instead of password for hashing
+    const hashedPassword = await bcrypt.hash(cleanPassword, 10);
 
     const newUser = await pool.query(
       `INSERT INTO public.users (first_name, last_name, username, email, password_hash, role) 
@@ -139,6 +141,8 @@ router.post('/register', async (req, res) => {
 // LOGIN
 router.post('/login', async (req, res) => {
   const { identifier, password, remember } = req.body; //remember
+
+   console.log('Login body:', req.body);
 
   if (!identifier || !password) {
     return res.status(400).json({ error: 'Email and password are required.' });
