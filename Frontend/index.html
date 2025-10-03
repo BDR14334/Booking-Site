@@ -641,16 +641,22 @@
         video.muted = true;
         video.setAttribute('muted', ''); // for Safari
         video.setAttribute('playsinline', ''); // for iOS
-        video.play().catch(function() {
-          // If autoplay fails, try again after first user interaction
-          var tryPlay = function() {
-            video.play();
-            document.removeEventListener('touchstart', tryPlay);
-            document.removeEventListener('click', tryPlay);
-          };
-          document.addEventListener('touchstart', tryPlay, { once: true });
-          document.addEventListener('click', tryPlay, { once: true });
-        });
+        // Try to play immediately
+        var playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(function(error) {
+            // Only fallback if autoplay is blocked
+            var tryPlay = function() {
+              video.play();
+              document.removeEventListener('touchstart', tryPlay);
+              document.removeEventListener('click', tryPlay);
+              document.removeEventListener('scroll', tryPlay);
+            };
+            document.addEventListener('touchstart', tryPlay, { once: true });
+            document.addEventListener('click', tryPlay, { once: true });
+            document.addEventListener('scroll', tryPlay, { once: true });
+          });
+        }
       }
     });
 
