@@ -4,8 +4,8 @@ console.log("authStatus.js loaded");
 const API_BASE = (()=>{
   const host = window.location.hostname;
   if (host === "localhost") return "http://localhost:5000";
-  if (host === "www.zephyrsstrengthandperformance.com") return "https://booking-site-rz5b.onrender.com"; // backend URL stays on Render
-  return "https://booking-site-rz5b.onrender.com"; // default fallback
+  if (host === "https://www.zephyrsstrengthandperformance.com") return "https://api.zephyrsstrengthandperformance.com/"; // backend URL stays on Render
+  return "https://api.zephyrsstrengthandperformance.com/"; // default fallback
 })();
 // === Global Functions ===
 
