@@ -138,7 +138,7 @@ router.post('/register', async (req, res) => {
 
 // LOGIN
 router.post('/login', async (req, res) => {
-  const { identifier, password } = req.body;
+  const { identifier, password, remember } = req.body; //remember
 
   if (!identifier || !password) {
     return res.status(400).json({ error: 'Email and password are required.' });
@@ -166,7 +166,10 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials.' });
     }
 
-    // Generate token
+    // Adjust token expiration
+    const expiresIn = remember ? '30d' : '1h'; // JWT expiry string
+    const cookieMaxAge = remember ? 30 * 24 * 60 * 60 * 1000 : 3600000;
+
     const token = jwt.sign(
       {
         id: user.id,
@@ -176,15 +179,14 @@ router.post('/login', async (req, res) => {
         last_name: user.last_name,
       },
       JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn }
     );
 
-    // Set cookie
     res.cookie("token", token, {
       httpOnly: true,
-      secure: true,       // only over HTTPS
-      sameSite: "None",   // allows cross-site frontend/backend
-      maxAge: 3600000     // 1 hour
+      secure: true,
+      sameSite: "None",
+      maxAge: cookieMaxAge // 👈 Dynamic based on Remember Me
     });
 
     // Send welcome email on first login

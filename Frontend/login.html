@@ -240,12 +240,13 @@
 
             const identifier = document.getElementById("loginIdentifier").value.trim();
             const password = document.getElementById("loginPassword").value.trim();
+            const remember = document.getElementById("login-check").checked; //remember
 
             const res = await fetch(`${API_BASE}/auth/login`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               credentials: 'include',
-              body: JSON.stringify({ identifier, password })
+              body: JSON.stringify({ identifier, password, remember }) //remember
             });
 
             const data = await res.json();
