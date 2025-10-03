@@ -189,7 +189,8 @@ router.post('/login', async (req, res) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: true,
-      sameSite: "None",
+      sameSite: 'none',
+      domain: '.zephyrsstrengthandperformance.com', // important
       maxAge: cookieMaxAge // 👈 Dynamic based on Remember Me
     });
 
@@ -241,7 +242,8 @@ router.post('/logout', (req, res) => {
   res.clearCookie('token', {
     httpOnly: true,
     secure: true,
-    sameSite: 'None'
+    sameSite: 'none',
+    domain: '.zephyrsstrengthandperformance.com' // important
   });
   res.status(200).json({ message: 'Logout successful' });
 });
@@ -375,7 +377,8 @@ router.post('/reset-password', async (req, res) => {
     res.clearCookie('reset_token', {
       httpOnly: true,
       secure: true,
-      sameSite: 'None'
+      sameSite: 'none',
+      domain: '.zephyrsstrengthandperformance.com', // important
     });
 
     res.json({ message: 'Password successfully updated.' });
@@ -435,7 +438,8 @@ router.get('/reset-link/:token', (req, res) => {
   res.cookie("reset_token", rawToken, {
     httpOnly: true,
     secure: true,
-    sameSite: "None",
+    sameSite: 'none',
+    domain: '.zephyrsstrengthandperformance.com', // important
     maxAge: 15 * 60 * 1000 // 15 minutes
   });
   res.redirect('/reset-password');
