@@ -820,3 +820,57 @@ header{
     outline: none !important;
     border: none !important;
 }
+
+@media (max-width: 904px) {
+  .input-box .toggle-password {
+    /* Adjust these values for mobile layout */
+    padding-right: 580px;     /* less padding for narrower input */
+    top: -60px;               /* tweak vertical alignment */
+    transform: translateX(60%); /* less horizontal shift */
+    font-size: 1.2rem !important;
+    visibility: visible;      /* show for demo, JS can control */
+    opacity: 1;
+  }
+}
+
+@media (max-width: 500px) {
+  .input-box .toggle-password {
+    /* Padding decreases as viewport shrinks, but never below 200px */
+    padding-right: 110rem;
+    transform: translateX(20%);
+  }
+}
+
+@media (max-width: 450px) {
+  .input-box .toggle-password {
+    /* Padding decreases as viewport shrinks, but never below 200px */
+    padding-right: 95rem;
+  }
+}
+@media (max-width: 400px) {
+  .input-box .toggle-password {
+    /* Padding decreases as viewport shrinks, but never below 200px */
+    padding-right: 85rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .input-box .toggle-password {
+    /* Padding decreases as viewport shrinks, but never below 200px */
+    padding-right: 75rem;
+  }
+}
+
+@media (max-width: 300px) {
+  .input-box .toggle-password {
+    /* Padding decreases as viewport shrinks, but never below 200px */
+    padding-right: 60rem;
+  }
+}
+
+@media (max-width: 200px) {
+  .input-box .toggle-password {
+    /* Padding decreases as viewport shrinks, but never below 200px */
+    padding-right: 40rem;
+  }
+}
