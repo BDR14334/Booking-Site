@@ -791,3 +791,32 @@ header{
     margin: 15px 0;
   }
 }
+
+/* Override ONLY for the eye icon */
+.input-box .toggle-password {
+    position: relative !important;
+    top: -36px;
+    padding-right: 466px; 
+    transform: translateX(90%);
+    cursor: pointer !important;
+    font-size: 1.4rem !important;
+    color: #fff !important; /* blue */
+    transition: color 0.2s ease, opacity 0.2s ease;
+    z-index: 8 !important;
+    visibility: hidden;  
+    opacity: 0;          
+}
+
+/* Highlight when password is visible */
+.input-box .toggle-password:hover {
+    color: #ff4800 !important;
+}
+
+.input-box .toggle-password,
+.input-box .toggle-password:active,
+.input-box .toggle-password:focus,
+.input-box .toggle-password:hover {
+    text-decoration: none !important;
+    outline: none !important;
+    border: none !important;
+}

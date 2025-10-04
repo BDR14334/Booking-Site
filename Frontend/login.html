@@ -100,6 +100,7 @@
             <div class="input-box">
                 <input type="password" class="input-field" id="loginPassword" placeholder="Password">
                 <i class="bx bx-lock-alt"></i>
+                <i class="bx bx-show toggle-password" id="toggleLoginPassword"></i>
             </div>
 
             <!-- Submit button -->
@@ -167,8 +168,9 @@
             </div>
 
             <div class="input-box">
-                <input type="password" class="input-field" placeholder="Password">
+                <input type="password" class="input-field" id="registerPassword" placeholder="Password">
                 <i class="bx bx-lock-alt"></i>
+                <i class="bx bx-show toggle-password" id="toggleRegisterPassword"></i>
             </div>
 
             <!-- Submit button -->
@@ -385,6 +387,43 @@
         sidebar.style.display = "none";
       }
     });
+
+    function setupPasswordToggle(inputId, toggleId) {
+      const input = document.getElementById(inputId);
+      const toggle = document.getElementById(toggleId);
+
+      if (input && toggle) {
+        // Toggle password visibility
+        toggle.addEventListener("click", () => {
+          const isPassword = input.type === "password";
+          input.type = isPassword ? "text" : "password";
+
+          toggle.classList.toggle("bx-show", !isPassword);
+          toggle.classList.toggle("bx-hide", isPassword);
+          toggle.classList.toggle("active", !isPassword);
+        });
+
+        // Show the eye only if the user typed characters
+        function updateEyeVisibility() {
+          if (input.value.length > 0) {
+            toggle.style.visibility = "visible";
+            toggle.style.opacity = "1";
+          } else {
+            toggle.style.visibility = "hidden";
+            toggle.style.opacity = "0";
+          }
+        }
+
+        input.addEventListener("input", updateEyeVisibility);
+
+        // Run once at start in case field pre-fills
+        updateEyeVisibility();
+      }
+    }
+
+    // Apply to login + register password fields
+    setupPasswordToggle("loginPassword", "toggleLoginPassword");
+    setupPasswordToggle("registerPassword", "toggleRegisterPassword");
 </script>
     <!-- Styled Alert Popup -->
     <div id="customAlertPopup" class="popup-modal">
