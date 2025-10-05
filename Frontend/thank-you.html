@@ -208,7 +208,7 @@
     });
 
     function goToDashboard() {
-      fetch("/auth/me", { credentials: "include" })
+      fetch(`${API_BASE}/auth/me`, { credentials: "include" })
         .then(res => {
           if (!res.ok) {
             window.location.href = "/login";
