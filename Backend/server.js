@@ -75,6 +75,77 @@ app.post('/payment/create-payment-intent', async (req, res) => {
   }
 });
 
+const db = require('../Backend/db'); // adjust path as needed
+
+app.get('/packages', async (req, res) => {
+  const packages = await db.getPackages(); // You may need to implement this function
+
+  // Build SEO meta tags and JSON-LD from package data
+  const packageNames = packages.map(pkg => pkg.title).join(', ');
+  const packageDescriptions = packages.map(pkg => pkg.description).join(' | ');
+
+  const seoHead = `
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Packages | Zephyrs Strength & Performance</title>
+    <meta name="description" content="Packages: ${packageNames}. ${packageDescriptions}" />
+    <meta name="keywords" content="${packageNames}" />
+    <meta name="author" content="Zephyrs Strength & Performance" />
+    <meta name="robots" content="index, follow" />
+    <link rel="icon" type="image/png" href="img/favicon.png" />
+    <link rel="canonical" href="https://www.zephyrsstrengthandperformance.com/packages" />
+    <meta property="og:title" content="Packages | Zephyrs Strength & Performance" />
+    <meta property="og:description" content="Packages: ${packageNames}. ${packageDescriptions}" />
+    <meta property="og:image" content="https://www.zephyrsstrengthandperformance.com/img/ZSP-logo1.png" />
+    <meta property="og:url" content="https://www.zephyrsstrengthandperformance.com/packages" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Packages | Zephyrs Strength & Performance" />
+    <meta name="twitter:description" content="Packages: ${packageNames}. ${packageDescriptions}" />
+    <meta name="twitter:image" content="https://www.zephyrsstrengthandperformance.com/img/ZSP-logo1.png" />
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="style.css" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ProductCatalog",
+      "name": "Zephyrs Strength & Performance Packages",
+      "url": "https://www.zephyrsstrengthandperformance.com/packages",
+      "description": "${packageDescriptions}",
+      "brand": {
+        "@type": "SportsOrganization",
+        "name": "Zephyrs Strength & Performance"
+      },
+      "itemListElement": [
+        ${packages.map(pkg => `
+          {
+            "@type": "Product",
+            "name": "${pkg.title}",
+            "description": "${pkg.description}",
+            "offers": {
+              "@type": "Offer",
+              "price": "${pkg.price}",
+              "priceCurrency": "USD"
+            }
+          }
+        `).join(',')}
+      ]
+    }
+    </script>
+  `;
+
+  // Read your static packages.html file
+  const fs = require('fs');
+  const html = fs.readFileSync(path.join(__dirname, '../Frontend/packages.html'), 'utf8');
+
+  // Replace the <head> section with your dynamic SEO head
+  const finalHtml = html.replace(/<head>[\s\S]*?<\/head>/, `<head>${seoHead}</head>`);
+
+  res.send(finalHtml);
+});
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
