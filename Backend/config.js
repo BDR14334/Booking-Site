@@ -4,4 +4,6 @@ const allowedOrigins = [
   'https://www.zephyrsstrengthandperformance.com'
 ];
 
-module.exports = { allowedOrigins };
+const siteBaseUrl = 'https://www.zephyrsstrengthandperformance.com';
+
+module.exports = { allowedOrigins, siteBaseUrl };

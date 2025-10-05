@@ -6,6 +6,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { v4: uuidv4 } = require('uuid');
 const bodyParser = require('body-parser'); // Add at the top if not already present
 const sendEmail = require('../utils/email'); // Add this line
+const { siteBaseUrl } = require('../config');
 
 // GET availability by package packageId
 router.get('/availability/by-package/:packageId', async (req, res) => {
@@ -241,6 +242,19 @@ router.post('/booking', async (req, res) => {
       .join('');
     const athleteCount = athleteNamesRes.rows.length;
 
+    // Fetch user role (example, adjust as needed)
+    const userRoleRes = await pool.query(
+      `SELECT u.role FROM customer c JOIN users u ON c.user_id = u.id WHERE c.id = $1`,
+      [customer_id]
+    );
+    const userRole = userRoleRes.rows[0]?.role || 'athlete';
+
+    let dashboardPath = '/athlete-dashboard#bookSessions';
+    if (userRole === 'adult-athlete') {
+      dashboardPath = '/adult-athlete-dashboard#bookSessions';
+    }
+    const dashboardLink = `${siteBaseUrl}${dashboardPath}`;
+
     // Send receipt email
     const paymentDate = new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' });
 
@@ -265,9 +279,8 @@ router.post('/booking', async (req, res) => {
           ${athleteList}
         </ul>
         <p><b>Ready to schedule sessions?</b>
-          <a href="https://booking-site-frontend.onrender.com/athlete-dashboard.html#bookSessions" 
-             target="_blank" style="color:#ff4800;font-weight:bold;">
-             Click here
+          <a href="${dashboardLink}" target="_blank" style="color:#ff4800;font-weight:bold;">
+            Click Here
           </a>
         </p>
         <br/>
@@ -318,6 +331,9 @@ router.post('/create-checkout-session', async (req, res) => {
 
     // 3. Create Stripe checkout session
     const athleteCount = Array.isArray(athleteIds) ? athleteIds.length : 1;
+    const successUrl = `${siteBaseUrl}/booking/payment-success?session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = `${siteBaseUrl}/packages`;
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [{
@@ -329,8 +345,8 @@ router.post('/create-checkout-session', async (req, res) => {
         quantity: athleteCount, // <-- FIXED: charge for each athlete
       }],
       mode: 'payment',
-      success_url: `http://localhost:5000/booking/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `http://localhost:5000/packages`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       metadata: {
         order_id: orderId,
         customer_id: customerId,
@@ -497,8 +513,8 @@ router.post('/webhook', rawBodyParser, async (req, res) => {
           <ul>${athleteList}</ul>
           <p>
             <b>Ready to schedule sessions?</b><br>
-            <a href="https://booking-site-frontend.onrender.com/athlete-dashboard.html#bookSessions" target="_blank" style="color:#ff4800;font-weight:bold;">
-              Click here to choose your sessions
+            <a href="${dashboardLink}" target="_blank" style="color:#ff4800;font-weight:bold;">
+              Click Here
             </a>
           </p>
           <br/>

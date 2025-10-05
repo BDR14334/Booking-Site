@@ -12,7 +12,6 @@ function requireRole(expectedRole) {
   };
 }
 
-// --- Adult Athlete route (place this FIRST) ---
 router.get('/adult-athlete/by-user/:user_id', async (req, res) => {
   const { user_id } = req.params;
   try {
