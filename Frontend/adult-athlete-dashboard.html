@@ -568,28 +568,15 @@
 <script src="https://assets.calendly.com/assets/external/widget.js" async></script>
 <script>
 
-  let isAuthorized = true; // default
-
-  async function checkRole() {
-    const res = await fetch(`${API_BASE}/auth/me`, { credentials: 'include' });
+  (async function checkRole() {
+    const res = await fetch(`${API_BASE}/auth/me`, {
+      credentials: 'include'
+    });
     const data = await res.json();
     if (!data.user || data.user.role !== 'adult-athlete') {
-      isAuthorized = false;
       showGlobalPopup('Not authorized for Adult Athlete Dashboard', "/login");
-
-      // Hide all sensitive sections and forms
-      document.getElementById('editInfo').style.display = 'none';
-      document.getElementById('bookSessions').style.display = 'none';
-
-      // Optionally disable all inputs/buttons
-      document.querySelectorAll('input, select, button').forEach(el => {
-        el.disabled = true;
-      });
-
-      return;
     }
-    isAuthorized = true;
-  }
+  })();
 
   function handleBackClick() {
      window.location.href = "/";
@@ -841,9 +828,6 @@
   }
 
   document.addEventListener('DOMContentLoaded', async () => {
-    await checkRole();
-    if (!isAuthorized) return; // Stop further logic if not authorized
-
     await loadCustomerData();
     await loadPaidPackages();
 
