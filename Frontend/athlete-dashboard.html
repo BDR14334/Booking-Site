@@ -640,8 +640,7 @@
     });
     const data = await res.json();
     if (!data.user || data.user.role !== 'athlete') {
-      showGlobalPopup('Not authorized for Youth Athlete Dashboard');
-      window.location.href = "/login";
+      showGlobalPopup('Not authorized for Youth Athlete Dashboard', "/login");
     }
   })();
 
@@ -878,8 +877,7 @@
         throw new Error('User data not found');
       }
     } catch (error) {
-      showGlobalPopup('Session expired or unauthorized. Please log in again.');
-      window.location.href = "/login";
+      showGlobalPopup('Session expired or unauthorized. Please log in again.', "/login");
     }
   }
 
@@ -1255,9 +1253,10 @@ function closeCalendly() {
     document.getElementById('athleteErrorPopup').style.display = 'none';
   }
 
-  function showGlobalPopup(message) {
+  let pendingRedirect = null;
+
+  function showGlobalPopup(message, redirectUrl = null) {
     const iconSpan = document.getElementById('globalPopupIcon');
-    // Show icon only for error/warning messages
     if (
       message.toLowerCase().includes('error') ||
       message.toLowerCase().includes('failed') ||
@@ -1273,9 +1272,16 @@ function closeCalendly() {
     }
     document.getElementById('globalPopupMessage').innerText = message;
     document.getElementById('globalPopup').style.display = 'block';
+
+    // Set redirect flag if needed
+    pendingRedirect = redirectUrl;
   }
   function closeGlobalPopup() {
     document.getElementById('globalPopup').style.display = 'none';
+    if (pendingRedirect) {
+      window.location.href = pendingRedirect;
+      pendingRedirect = null;
+    }
   }
 
 </script>

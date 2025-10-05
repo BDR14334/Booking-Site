@@ -574,8 +574,7 @@
     });
     const data = await res.json();
     if (!data.user || data.user.role !== 'adult-athlete') {
-      showGlobalPopup('Not authorized for Adult Athlete Dashboard');
-      setTimeout(() => { window.location.href = "/login"; }, 1800);
+      showGlobalPopup('Not authorized for Adult Athlete Dashboard', "/login");
     }
   })();
 
@@ -683,8 +682,7 @@
         throw new Error('User data not found');
       }
     } catch (error) {
-      showGlobalPopup('Session expired or unauthorized. Please log in again.');
-      setTimeout(() => { window.location.href = "/login"; }, 1800);
+      showGlobalPopup('Session expired or unauthorized. Please log in again.', "/login");
     }
   }
 
@@ -925,13 +923,18 @@
   });
 
   function closeGlobalPopup() {
-    document.getElementById("globalPopup").style.display = "none";
+    document.getElementById('globalPopup').style.display = 'none';
+    if (pendingRedirect) {
+      window.location.href = pendingRedirect;
+      pendingRedirect = null;
+    }
   }
 
+  let pendingRedirect = null;
+
   // Show global popup with message
-  function showGlobalPopup(message) {
+  function showGlobalPopup(message, redirectUrl = null) {
     const iconSpan = document.getElementById('globalPopupIcon');
-    // Show icon only for error/warning messages
     if (
       message.toLowerCase().includes('error') ||
       message.toLowerCase().includes('failed') ||
@@ -947,6 +950,9 @@
     }
     document.getElementById('globalPopupMessage').innerText = message;
     document.getElementById('globalPopup').style.display = 'block';
+
+    // Set redirect flag if needed
+    pendingRedirect = redirectUrl;
   }
 
   function openCalendly(url) {
