@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset
+      xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+            http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+
+<url>
+  <loc>https://www.zephyrsstrengthandperformance.com/</loc>
+  <lastmod>2025-10-05T23:20:13+00:00</lastmod>
+  <priority>1.00</priority>
+</url>
+<url>
+  <loc>https://www.zephyrsstrengthandperformance.com/about</loc>
+  <lastmod>2025-10-05T23:20:13+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://www.zephyrsstrengthandperformance.com/packages</loc>
+  <lastmod>2025-10-05T23:20:13+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://www.zephyrsstrengthandperformance.com/contact</loc>
+  <lastmod>2025-10-05T23:20:13+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://www.zephyrsstrengthandperformance.com/login</loc>
+  <lastmod>2025-10-05T23:20:13+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+
+
+</urlset>

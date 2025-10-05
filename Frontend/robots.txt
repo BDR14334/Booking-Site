@@ -1,0 +1,10 @@
+# robots.txt for Zephyrs Strength & Performance
+
+User-agent: *
+Allow: /index.html
+Allow: /about.html
+Allow: /packages.html
+Allow: /contact.html
+Allow: /login.html
+
+Sitemap: https://www.zephyrsstrengthandperformance.com/sitemap.xml
