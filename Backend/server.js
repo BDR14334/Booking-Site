@@ -4,8 +4,8 @@ const path = require('path');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const { v4: uuidv4 } = require('uuid');
+const fs = require('fs');
 require('dotenv').config();
-const db = require('./db'); 
 
 const authRoutes = require('./routes/auth');
 const coachRoutes = require('./routes/coach'); 
@@ -14,6 +14,7 @@ const athleteRoutes = require('./routes/athlete');
 const bookingRoutes = require('./routes/booking');  
 const timeslotRoutes = require('./routes/timeslot'); 
 const contactRoutes = require('./routes/contact');
+const db = require('./db'); // Adjust path if needed
 
 // NEW: Load Stripe
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Make sure your .env has this key
@@ -78,35 +79,18 @@ app.post('/payment/create-payment-intent', async (req, res) => {
 
 app.get('/packages', async (req, res) => {
   try {
-    const packages = await db.getPackages();
+    // Fetch packages from your database
+    const packages = await db.getPackages(); // You need to implement getPackages()
 
-    // Build SEO meta tags and JSON-LD from package data
+    // Build dynamic SEO meta tags and JSON-LD
     const packageNames = packages.map(pkg => pkg.title).join(', ');
     const packageDescriptions = packages.map(pkg => pkg.description).join(' | ');
 
-    const seoTags = `
-      <meta charset="UTF-8" />
-      <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    const seoHead = `
       <title>Packages | Zephyrs Strength & Performance</title>
       <meta name="description" content="Packages: ${packageNames}. ${packageDescriptions}" />
       <meta name="keywords" content="${packageNames}" />
-      <meta name="author" content="Zephyrs Strength & Performance" />
-      <meta name="robots" content="index, follow" />
-      <link rel="icon" type="image/png" href="img/favicon.png" />
-      <link rel="canonical" href="https://www.zephyrsstrengthandperformance.com/packages" />
-      <meta property="og:title" content="Packages | Zephyrs Strength & Performance" />
-      <meta property="og:description" content="Packages: ${packageNames}. ${packageDescriptions}" />
-      <meta property="og:image" content="https://www.zephyrsstrengthandperformance.com/img/ZSP-logo1.png" />
-      <meta property="og:url" content="https://www.zephyrsstrengthandperformance.com/packages" />
-      <meta property="og:type" content="website" />
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Packages | Zephyrs Strength & Performance" />
-      <meta name="twitter:description" content="Packages: ${packageNames}. ${packageDescriptions}" />
-      <meta name="twitter:image" content="https://www.zephyrsstrengthandperformance.com/img/ZSP-logo1.png" />
-      <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-      <link rel="stylesheet" href="style.css" />
+      <!-- ...other meta tags... -->
       <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -137,23 +121,27 @@ app.get('/packages', async (req, res) => {
     `;
 
     // Read your static packages.html file
-    const fs = require('fs');
     const html = fs.readFileSync(path.join(__dirname, '../Frontend/packages.html'), 'utf8');
 
-    // Inject SEO tags right after the opening <head> tag
-    const finalHtml = html.replace('<head>', `<head>\n${seoTags}\n`);
+    // Replace the <head> section with your dynamic SEO head
+    const finalHtml = html.replace(/<head>[\s\S]*?<\/head>/, `<head>${seoHead}</head>`);
 
     res.send(finalHtml);
   } catch (err) {
-    console.error('Error loading packages:', err);
     res.status(500).send('Error loading packages');
   }
 });
 
-// serving sitemap.xml with correct MIME type for Google
-app.get('/sitemap.xml', (req, res) => {
-  res.header('Content-Type', 'application/xml');
-  res.sendFile(path.join(__dirname, '../Frontend/sitemap.xml'));
+// Prevent search engines from indexing the API
+app.use((req, res, next) => {
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  next();
+});
+
+// Serve robots.txt for bots
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.send('User-agent: *\nDisallow: /');
 });
 
 // Start the server

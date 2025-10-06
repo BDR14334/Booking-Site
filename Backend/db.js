@@ -33,4 +33,13 @@ pool.connect()
   .then(() => console.log('✅ Connected to PostgreSQL'))
   .catch(err => console.error('❌ Database connection error:', err.stack));
 
-module.exports = pool;
+async function getPackages() {
+  const result = await pool.query('SELECT title, description, price FROM packages');
+  return result.rows;
+}
+
+// Export pool and getPackages
+module.exports = {
+  pool,
+  getPackages
+};
