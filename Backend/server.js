@@ -5,6 +5,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
+const db = require('./db'); 
 
 const authRoutes = require('./routes/auth');
 const coachRoutes = require('./routes/coach'); 
@@ -74,8 +75,6 @@ app.post('/payment/create-payment-intent', async (req, res) => {
     res.status(500).json({ error: 'Payment processing failed' });
   }
 });
-
-const db = require('../Backend/db'); // adjust path as needed
 
 app.get('/packages', async (req, res) => {
   try {
@@ -149,6 +148,12 @@ app.get('/packages', async (req, res) => {
     console.error('Error loading packages:', err);
     res.status(500).send('Error loading packages');
   }
+});
+
+// serving sitemap.xml with correct MIME type for Google
+app.get('/sitemap.xml', (req, res) => {
+  res.header('Content-Type', 'application/xml');
+  res.sendFile(path.join(__dirname, '../Frontend/sitemap.xml'));
 });
 
 // Start the server
