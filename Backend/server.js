@@ -28,6 +28,19 @@ const allowedOrigins = [
   'https://www.zephyrsstrengthandperformance.com'
 ];
 
+// Block everything on API from indexing
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.send('User-agent: *\nDisallow: /');
+});
+
+// And also block all responses with X-Robots-Tag
+app.use((req, res, next) => {
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  next();
+});
+
+
 // CORS config to allow credentials (cookies) from frontend
 app.use(cors({
   origin: function (origin, callback) {
@@ -132,17 +145,9 @@ app.get('/packages', async (req, res) => {
   }
 });
 
-// Prevent search engines from indexing the API
-app.use((req, res, next) => {
-  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
-  next();
-});
-
-// Serve robots.txt for bots
-app.get('/robots.txt', (req, res) => {
-  res.type('text/plain');
-  res.send('User-agent: *\nDisallow: /');
-});
+// Prevent API favicon confusion
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+app.get('/favicon.png', (req, res) => res.status(204).end());
 
 // Start the server
 app.listen(PORT, () => {
