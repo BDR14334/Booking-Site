@@ -5,16 +5,16 @@ require('dotenv').config();
 let pool;
 
 if (process.env.DATABASE_URL) {
-  // Production/Render/Supabase
+  // ✅ Production (Render/Supabase)
   pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
       require: true,
-      rejectUnauthorized: false, // needed for Supabase
+      rejectUnauthorized: false, // Required for Render/Supabase SSL
     },
   });
 } else {
-  // Local development (no SSL)
+  // ✅ Local development
   pool = new Pool({
     host: 'localhost',
     port: 5432,
@@ -24,22 +24,30 @@ if (process.env.DATABASE_URL) {
   });
 }
 
-// Global error handler to prevent crashes
+// Handle unexpected errors so server doesn't crash
 pool.on('error', (err) => {
-  console.error('Unexpected PG client error:', err);
+  console.error('❌ Unexpected PostgreSQL client error:', err);
 });
 
-pool.connect()
+pool
+  .connect()
   .then(() => console.log('✅ Connected to PostgreSQL'))
-  .catch(err => console.error('❌ Database connection error:', err.stack));
+  .catch((err) => console.error('❌ Database connection error:', err.stack));
+
 
 async function getPackages() {
-  const result = await pool.query('SELECT title, description, price FROM packages');
-  return result.rows;
+  try {
+    const result = await pool.query(
+      'SELECT name AS title, description, price FROM packages ORDER BY id'
+    );
+    return result.rows;
+  } catch (err) {
+    console.error('Error fetching packages:', err);
+    throw err;
+  }
 }
 
-// Export pool and getPackages
-module.exports = {
-  pool,
-  getPackages
-};
+// 👇 This keeps compatibility with all your existing routes
+pool.getPackages = getPackages;
+
+module.exports = pool;
