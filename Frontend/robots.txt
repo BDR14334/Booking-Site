@@ -1,10 +1,10 @@
 # robots.txt for Zephyrs Strength & Performance
 
 User-agent: *
-Allow: /index.html
-Allow: /about.html
-Allow: /packages.html
-Allow: /contact.html
-Allow: /login.html
+Allow: /index
+Allow: /about
+Allow: /packages
+Allow: /contact
+Allow: /login
 
 Sitemap: https://www.zephyrsstrengthandperformance.com/sitemap.xml
