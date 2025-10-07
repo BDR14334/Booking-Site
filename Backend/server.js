@@ -149,6 +149,12 @@ app.get('/packages', async (req, res) => {
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 app.get('/favicon.png', (req, res) => res.status(204).end());
 
+// Keep-alive endpoint for uptime monitors
+app.get('/ping', (req, res) => {
+  res.status(200).send('pong');
+});
+
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
