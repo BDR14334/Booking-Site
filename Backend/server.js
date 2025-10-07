@@ -150,9 +150,16 @@ app.get('/favicon.ico', (req, res) => res.status(204).end());
 app.get('/favicon.png', (req, res) => res.status(204).end());
 
 // Keep-alive endpoint for uptime monitors
-app.get('/ping', (req, res) => {
-  res.status(200).send('pong');
+app.get('/ping', async (req, res) => {
+  try {
+    await db.query('SELECT NOW()');
+    res.status(200).send('pong-db-ok');
+  } catch (err) {
+    console.error('Ping DB check failed:', err.message);
+    res.status(500).send('pong-db-fail');
+  }
 });
+
 
 
 // Start the server
