@@ -1,4 +1,7 @@
 {
+  "redirects": [
+    { "source": "https://zephyrsstrengthandperformance.com/*", "destination": "https://www.zephyrsstrengthandperformance.com/:splat", "status": 301 }
+  ],
   "clean_urls": true,
   "routes": [
     { "source": "/athlete-dashboard", "destination": "/athlete-dashboard.html" },
