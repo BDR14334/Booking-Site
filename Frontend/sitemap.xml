@@ -5,31 +5,36 @@
       xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
             http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 
-<url>
+ <url>
   <loc>https://www.zephyrsstrengthandperformance.com/</loc>
-  <lastmod>2025-10-05T23:20:13+00:00</lastmod>
+  <lastmod>2025-10-05</lastmod>
   <priority>1.00</priority>
 </url>
+
 <url>
   <loc>https://www.zephyrsstrengthandperformance.com/about</loc>
-  <lastmod>2025-10-05T23:20:13+00:00</lastmod>
+  <lastmod>2025-10-05</lastmod>
   <priority>0.80</priority>
 </url>
+
 <url>
   <loc>https://www.zephyrsstrengthandperformance.com/packages</loc>
-  <lastmod>2025-10-05T23:20:13+00:00</lastmod>
+  <lastmod>2025-10-05</lastmod>
   <priority>0.80</priority>
 </url>
+
 <url>
   <loc>https://www.zephyrsstrengthandperformance.com/contact</loc>
-  <lastmod>2025-10-05T23:20:13+00:00</lastmod>
+  <lastmod>2025-10-05</lastmod>
   <priority>0.80</priority>
 </url>
+
 <url>
   <loc>https://www.zephyrsstrengthandperformance.com/login</loc>
-  <lastmod>2025-10-05T23:20:13+00:00</lastmod>
-  <priority>0.80</priority>
+  <lastmod>2025-10-05</lastmod>
+  <priority>0.60</priority>
 </url>
+
 
 
 </urlset>
