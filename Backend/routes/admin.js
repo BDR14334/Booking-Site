@@ -8,9 +8,17 @@ const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
 const { authenticateToken, requireRole } = require('./auth');
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_KEY;
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+// Guard Supabase client initialization so local dev doesn't crash
+let supabase = null;
+if (process.env.NODE_ENV === 'production') {
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SUPABASE_KEY = process.env.SUPABASE_KEY;
+  if (SUPABASE_URL && SUPABASE_KEY) {
+    supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  } else {
+    console.warn('Supabase env vars missing in production; image upload will be disabled.');
+  }
+}
 
 // Saves images for success stories
 const storage = multer.diskStorage({
@@ -113,6 +121,36 @@ router.get('/stories', async (req, res) => {
   } catch (err) {
     console.error('Error fetching stories:', err);
     res.status(500).json({ error: 'Could not load stories' });
+  }
+});
+
+// Reorder stories without schema changes by adjusting created_at to encode order
+router.post('/reorder-stories', authenticateToken, requireRole('admin'), async (req, res) => {
+  const { orderedIds } = req.body || {};
+  if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+    return res.status(400).json({ error: 'orderedIds array required' });
+  }
+
+  // Validate IDs
+  const ids = orderedIds.map(id => parseInt(id, 10));
+  if (ids.some(n => !Number.isInteger(n))) {
+    return res.status(400).json({ error: 'All orderedIds must be integers' });
+  }
+
+  try {
+    await pool.query('BEGIN');
+    // Use current time as base; subtract i seconds so later items sort below earlier ones
+    const base = Date.now();
+    for (let i = 0; i < ids.length; i++) {
+      const ts = new Date(base - i * 1000); // 1s spacing
+      await pool.query('UPDATE success_stories SET created_at = $1 WHERE id = $2', [ts, ids[i]]);
+    }
+    await pool.query('COMMIT');
+    res.json({ message: 'Order saved', orderedIds: ids });
+  } catch (err) {
+    try { await pool.query('ROLLBACK'); } catch (_) {}
+    console.error('Error reordering stories:', err);
+    res.status(500).json({ error: 'Failed to save order' });
   }
 });
 
@@ -434,6 +472,9 @@ async function sendCoachIdEmail(email, code) {
 
 // --- Helper for Supabase image upload ---
 async function uploadImageToSupabase(fileBuffer, fileName, mimeType) {
+  if (!supabase) {
+    throw new Error('Supabase client not initialized');
+  }
   const { data, error } = await supabase.storage
     .from('stories')
     .upload(fileName, fileBuffer, { contentType: mimeType, upsert: true });

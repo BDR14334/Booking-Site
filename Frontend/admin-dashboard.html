@@ -857,21 +857,33 @@
  
       form.addEventListener('submit', async function (e) {
         e.preventDefault();
- 
+
+        // Prevent accidental double submits
+        if (form.dataset.saving === '1') return;
+        form.dataset.saving = '1';
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn ? submitBtn.textContent : '';
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Saving...';
+        }
+
         const formData = new FormData(form);
-        const packageTitle = formData.get('packageTitle');
-        const sessionNumber = formData.get('sessionNumber');
-        const price = formData.get('price');
+        const packageTitle = (formData.get('packageTitle') || '').toString().trim();
+        const sessionNumber = (formData.get('sessionNumber') || '').toString().trim();
+        const price = (formData.get('price') || '').toString().trim();
         const description = form.querySelector('textarea[name="description"]').value.trim();
-        const features = formData.getAll('features[]').filter(item => item.trim() !== '');
-        const calendlyUrl = formData.get('calendlyUrl');
+        const features = formData.getAll('features[]').map(v => v.toString().trim()).filter(item => item !== '');
+        const calendlyUrl = (formData.get('calendlyUrl') || '').toString().trim();
         const isMemberPriced = !!form.querySelector('input[name="isMemberPriced"]').checked;
 
         if (!description.length) {
-          alert("Please add at least one feature description.");
+          alert("Please enter a package description.");
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalBtnText; }
+          form.dataset.saving = '0';
           return;
         }
- 
+
         const payload = {
           packageTitle,
           sessionNumber,
@@ -881,7 +893,7 @@
           calendlyUrl,
           isMemberPriced
         };
- 
+
         const method = pkg.id ? 'PUT' : 'POST';
         const endpoint = pkg.id
           ? `${API_BASE}/admin/update-package/${pkg.id}`
@@ -894,27 +906,39 @@
             credentials: 'include',
             body: JSON.stringify(payload)
           });
-    
+
           const result = await response.json();
+          const returned = result && (result.package || result);
+
           if (response.ok) {
             alert('Package saved!');
-            console.log(result);
+            console.log('Save result:', result);
 
-            if (!pkg.id && result.id) {
-              // Store the returned ID in the pkg object and update form reference
-              pkg.id = result.id;
-
-              // Optionally update the submit handler so the form switches to PUT mode now
-              form.removeEventListener('submit', arguments.callee); // remove current handler
-              const newForm = createPackageForm(pkg); // re-render with ID
-              box.replaceWith(newForm); // swap the box so it updates behavior
+            // If this was a create (POST), switch this box to update mode using the new ID
+            if (!pkg.id && returned && returned.id) {
+              const updatedPkg = {
+                id: returned.id,
+                title: packageTitle,
+                sessions: sessionNumber,
+                price: price,
+                description,
+                features,
+                calendlyUrl,
+                is_member_priced: isMemberPriced
+              };
+              const newForm = createPackageForm(updatedPkg);
+              box.replaceWith(newForm);
             }
           } else {
-            alert('Failed to save package: ' + result.error);
+            const errMsg = (result && (result.error || result.message)) || 'Unknown error';
+            alert('Failed to save package: ' + errMsg);
           }
         } catch (error) {
           console.error('Error submitting package:', error);
           alert('An error occurred. Check console for details.');
+        } finally {
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalBtnText; }
+          form.dataset.saving = '0';
         }
       });
 
@@ -1030,10 +1054,18 @@
       Sortable.create(container, {
         animation: 150,
         handle: '.drag-handle', // Only allow dragging by the handle (the dots)
-        onEnd: function () {
-          // Save the new order of story IDs to localStorage
+        onEnd: async function () {
           const order = Array.from(container.querySelectorAll('.storyForm')).map(form => form.dataset.id);
-          localStorage.setItem('storyOrder', JSON.stringify(order));
+          try {
+            await fetch(`${API_BASE}/admin/reorder-stories`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ orderedIds: order })
+            });
+          } catch (err) {
+            console.error('Failed to persist story order:', err);
+          }
         }
       });
     }
@@ -1041,21 +1073,11 @@
       const res = await fetch(`${API_BASE}/admin/stories`);
       const stories = await res.json();
 
-      // Get saved order from localStorage
-      const savedOrder = JSON.parse(localStorage.getItem('storyOrder') || '[]');
-      // Sort stories according to saved order
-      const orderedStories = savedOrder.length
-        ? savedOrder
-            .map(id => stories.find(story => String(story.id) === String(id)))
-            .filter(Boolean)
-            .concat(stories.filter(story => !savedOrder.includes(String(story.id))))
-        : stories;
-
       const container = document.querySelector('.story-box-container');
       const addButton = document.querySelector(".add-story-box");
       container.innerHTML = ""; // Clear current story boxes
-
-      orderedStories.forEach(story => {
+      // Stories already ordered by created_at DESC after reorder endpoint manipulates timestamps
+      stories.forEach(story => {
         let imgSrc;
         if (story.image_url) {
           imgSrc = story.image_url.startsWith('http')
