@@ -12,6 +12,9 @@ if (process.env.DATABASE_URL) {
       require: true,
       rejectUnauthorized: false, // Required for Render/Supabase SSL
     },
+    idleTimeoutMillis: 10000,      // close idle clients reasonably fast
+    connectionTimeoutMillis: 5000, // fail fast if DB is unreachable
+    keepAlive: true
   });
 } else {
   // ✅ Local development
@@ -21,6 +24,9 @@ if (process.env.DATABASE_URL) {
     user: 'postgres',
     password: process.env.SUPABASE_PASSWORD,
     database: 'Booking',
+    idleTimeoutMillis: 10000,
+    connectionTimeoutMillis: 5000,
+    keepAlive: true
   });
 }
 
@@ -29,10 +35,8 @@ pool.on('error', (err) => {
   console.error('❌ Unexpected PostgreSQL client error:', err);
 });
 
-pool
-  .connect()
-  .then(() => console.log('✅ Connected to PostgreSQL'))
-  .catch((err) => console.error('❌ Database connection error:', err.stack));
+// Do NOT call pool.connect() here; let pg manage connections per query to avoid leaks
+console.log('🔌 PostgreSQL pool initialized');
 
 
 async function getPackages() {

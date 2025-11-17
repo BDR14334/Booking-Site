@@ -156,19 +156,18 @@ router.put('/update/:id', async (req, res) => {
   const { id } = req.params;
   const { first_name, last_name, email, phone, user_id } = req.body;
 
-  const client = await pool.connect();
   try {
-    await client.query('BEGIN');
-
     // Check if user ID exists
-    const userRes = await client.query('SELECT id FROM public.users WHERE id = $1', [user_id]);
+    const userRes = await pool.query('SELECT id FROM public.users WHERE id = $1', [user_id]);
     if (userRes.rows.length === 0) {
-      await client.query('ROLLBACK');
       return res.status(400).json({ error: 'User not found' });
     }
 
     // Fetch current values
-    const current = await client.query('SELECT * FROM public.customer WHERE id = $1', [id]);
+    const current = await pool.query('SELECT * FROM public.customer WHERE id = $1', [id]);
+    if (current.rows.length === 0) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
     const existing = current.rows[0];
 
     // Use existing value if new value is empty
@@ -177,8 +176,8 @@ router.put('/update/:id', async (req, res) => {
     const updatedEmail = email || existing.email;
     const updatedPhone = phone || existing.phone;
 
-    // Update customer.email
-    await client.query(
+    // Update customer
+    await pool.query(
       `UPDATE public.customer
        SET first_name = $1, last_name = $2, email = $3, phone = $4, user_id = $5
        WHERE id = $6`,
@@ -186,25 +185,20 @@ router.put('/update/:id', async (req, res) => {
     );
 
     // Update users.email
-    await client.query(
+    await pool.query(
       `UPDATE public.users
        SET email = $1
        WHERE id = $2`,
       [updatedEmail, user_id]
     );
 
-    await client.query('COMMIT');
     res.status(200).json({ message: 'Client updated successfully' });
   } catch (err) {
-    await client.query('ROLLBACK');
-    // Unique violation (Postgres error code 23505)
     if (err.code === '23505') {
       return res.status(400).json({ error: 'That email is already in use. Please use a different email.' });
     }
     console.error('Error updating client:', err.message);
     res.status(500).json({ error: 'Error updating client' });
-  } finally {
-    client.release();
   }
 });
 
@@ -519,12 +513,9 @@ router.post('/adult-athlete/create', async (req, res) => {
 router.put('/adult-athlete/update/:id', async (req, res) => {
   const { id } = req.params;
   const { first_name, last_name, dob, email, phone, user_id, sport } = req.body;
-  const client = await pool.connect();
   try {
-    await client.query('BEGIN');
-
     // Update customer table with dob and email
-    const customerRes = await client.query(
+    const customerRes = await pool.query(
       `UPDATE public.customer
        SET first_name = $1, last_name = $2, dob = $3, email = $4, phone = $5, user_id = $6
        WHERE id = $7
@@ -533,7 +524,7 @@ router.put('/adult-athlete/update/:id', async (req, res) => {
     );
 
     // Update users.email
-    await client.query(
+    await pool.query(
       `UPDATE public.users
        SET email = $1
        WHERE id = $2`,
@@ -559,16 +550,15 @@ router.put('/adult-athlete/update/:id', async (req, res) => {
     }
     const age_group = getAgeGroup(dob);
 
-    // Check if athlete row exists
-    const athleteCheck = await client.query(
+    // Upsert athlete by customer_id
+    const athleteCheck = await pool.query(
       `SELECT id FROM athlete WHERE customer_id = $1 LIMIT 1`,
       [id]
     );
 
     let athleteRes;
     if (athleteCheck.rows.length > 0) {
-      // Update athlete
-      athleteRes = await client.query(
+      athleteRes = await pool.query(
         `UPDATE athlete
          SET sport = $1, age_group = $2, first_name = $3, last_name = $4
          WHERE customer_id = $5
@@ -576,8 +566,7 @@ router.put('/adult-athlete/update/:id', async (req, res) => {
         [sport, age_group, first_name, last_name, id]
       );
     } else {
-      // Insert athlete if not exists
-      athleteRes = await client.query(
+      athleteRes = await pool.query(
         `INSERT INTO athlete (customer_id, first_name, last_name, age_group, sport)
          VALUES ($1, $2, $3, $4, $5)
          RETURNING *`,
@@ -585,18 +574,13 @@ router.put('/adult-athlete/update/:id', async (req, res) => {
       );
     }
 
-    await client.query('COMMIT');
     res.status(200).json({ customer: customerRes.rows[0], athlete: athleteRes.rows[0] });
   } catch (err) {
-    await client.query('ROLLBACK');
-    // Unique violation (Postgres error code 23505)
     if (err.code === '23505') {
       return res.status(400).json({ error: 'That email is already in use. Please use a different email.' });
     }
     console.error('Error updating adult athlete:', err.message);
     res.status(500).json({ error: 'Error updating adult athlete' });
-  } finally {
-    client.release();
   }
 });
 

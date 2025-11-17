@@ -294,7 +294,7 @@ router.post('/booking', async (req, res) => {
     console.error('Booking error:', err.message);
     res.status(400).json({ error: err.message });
   } finally {
-    client.release();
+    client.release(true);
   }
 });
 
@@ -536,7 +536,7 @@ router.post('/webhook', rawBodyParser, async (req, res) => {
       console.error('Error finalizing charge (transaction):', err.message);
       throw err;
     } finally {
-      client.release();
+      client.release(true);
     }
   }
 
