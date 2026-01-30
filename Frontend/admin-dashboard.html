@@ -12,46 +12,88 @@
   <link  href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet"/>
   <link rel="icon" type="image/png" href="img/favicon.png" />
   <style>
-    .sidebar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 220px;
-      height: 100%;
-      background-color: #343a40;
-      color: white;
-      padding-top: 1rem;
-      display: none;
-      z-index: 999;
-    }
-
-    #sidebarcontainer{
-       margin-top: 36px;
-    }
-
-    .sidebar a {
-      padding: 10px 20px;
-      display: block;
-      color: white;
-      text-decoration: none;
-      cursor: pointer;
-    }
-
-    .sidebar a:hover {
-      background-color: #495057;
-    }
-
     .profile-dropdown {
       position: relative;
     }
 
     #mainContent {
-      margin-left: 30px;
-      padding: 20px;
-      transition: margin-left 0.3s;
+      margin-left: 0;
+      padding: 16px;
     }
-    body.sidebar-open #mainContent {
-      margin-left: 240px;
+
+    /* --- Mobile UX upgrades --- */
+
+    /* Sidebar (offcanvas) link styling + dots */
+    #adminOffcanvas .offcanvas-body a[data-section] {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+    }
+
+    #adminOffcanvas .offcanvas-body a[data-section]::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.35);
+      flex: 0 0 auto;
+    }
+
+    #adminOffcanvas .offcanvas-body a[data-section]:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    #adminOffcanvas .offcanvas-body a[data-section].active {
+      background: rgba(255, 72, 0, 0.18);
+    }
+
+    #adminOffcanvas .offcanvas-body a[data-section].active::before {
+      background: #ff4800;
+      box-shadow: 0 0 0 2px rgba(255, 72, 0, 0.25);
+    }
+
+    /* Mobile-only: make offcanvas full-screen (<500px) */
+    @media (max-width: 499.98px) {
+      #adminOffcanvas.offcanvas {
+        width: 100vw !important;
+      }
+
+      #adminOffcanvas .offcanvas-header {
+        padding: 16px 16px;
+      }
+
+      #adminOffcanvas .offcanvas-title {
+        font-size: 1.25rem;
+      }
+
+      #adminOffcanvas .offcanvas-body a[data-section] {
+        font-size: 1.1rem;
+        padding: 14px 12px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      button,
+      .btn,
+      .dropdown-btn,
+      .dropdown-menu .dropdown-item {
+        min-height: 44px;
+      }
+
+      input,
+      textarea,
+      select {
+        min-height: 44px;
+        font-size: 16px;
+      }
+
+      #stripe-section #transactionSearchInput,
+      #activeUsersSection #activeUserSearchInput {
+        width: 100% !important;
+        max-width: none !important;
+      }
     }
 
     .page-section {
@@ -289,10 +331,28 @@
     .dropdown-content {
       display: none;
       padding: 10px;
-      border: 1px solid #ddd;
+      border: 1px solid rgba(255,255,255,0.12);
       border-top: none;
-      background: #fff;
+      background: #2a2f36;
       border-radius: 0 0 6px 6px;
+    }
+
+    /* Dark dropdown background, white table/card */
+    .dropdown-content .table {
+      margin-bottom: 0;
+      background: #fff;
+      color: #111;
+    }
+
+    .dropdown-content .table th,
+    .dropdown-content .table td {
+      background: #fff;
+      color: #111;
+      border-color: #ddd;
+    }
+
+    .dropdown-content p {
+      color: rgba(255,255,255,0.9);
     }
 
     .dropdown-content.show {
@@ -316,6 +376,203 @@
     }
     .dropdown-btn {
       position: relative;
+    }
+
+    /* --- Mobile-friendly Athlete Package Usage (Admin) --- */
+    #athlete-packages .package-section {
+      margin-bottom: 14px;
+    }
+
+    /* Make header + search wrap nicely on small screens */
+    #athlete-packages .athlete-packages-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    #athlete-packages .athlete-packages-header h2 {
+      margin: 0;
+    }
+
+    #athlete-packages #athleteSearchInput {
+      max-width: 420px;
+      width: 260px;
+    }
+
+    /* Use non-overlapping bubble layout inside this section */
+    #athlete-packages .dropdown-btn {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      white-space: normal;
+    }
+
+    #athlete-packages .athlete-bubble {
+      position: static;
+      margin-left: auto;
+    }
+
+    /* Bigger touch targets for +/- buttons */
+    #athlete-packages .session-adjust-btn {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 8px 12px;
+      font-size: 18px;
+      line-height: 1;
+      font-weight: 700;
+    }
+
+    #athlete-packages .session-actions {
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: flex-end;
+      width: 100%;
+    }
+
+    /* Stacked "card" rows on mobile */
+    @media (max-width: 768px) {
+      #athlete-packages #athleteSearchInput {
+        width: 100% !important;
+        max-width: none;
+      }
+
+      #athlete-packages .dropdown-content {
+        padding: 10px 8px;
+      }
+
+      #athlete-packages table.table {
+        border: 0;
+        margin-bottom: 0;
+      }
+
+      #athlete-packages table.table thead {
+        display: none;
+      }
+
+      #athlete-packages table.table,
+      #athlete-packages table.table tbody,
+      #athlete-packages table.table tr,
+      #athlete-packages table.table td {
+        display: block;
+        width: 100%;
+      }
+
+      /* Let the dark dropdown background show between cards */
+      #athlete-packages table.table,
+      #athlete-packages table.table tbody {
+        background: transparent;
+      }
+
+      #athlete-packages table.table tr {
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 12px 0;
+        background: #fff;
+      }
+
+      #athlete-packages table.table td {
+        border: 0;
+        border-bottom: 1px solid #eee;
+        background: #fff;
+        color: #111;
+        padding: 10px 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      #athlete-packages table.table td:last-child {
+        border-bottom: 0;
+      }
+
+      #athlete-packages table.table td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: #555;
+        flex: 0 0 auto;
+      }
+
+      #athlete-packages table.table td[data-label="Actions"]::before {
+        content: "";
+        display: none;
+      }
+    }
+
+    /* Mobile stacked tables for Stripe + Active Users */
+    @media (max-width: 768px) {
+      #stripe-section table.table,
+      #activeUsersSection table.table {
+        border: 0;
+        margin-bottom: 0;
+      }
+
+      #stripe-section table.table thead,
+      #activeUsersSection table.table thead {
+        display: none;
+      }
+
+      #stripe-section table.table,
+      #stripe-section table.table tbody,
+      #stripe-section table.table tr,
+      #stripe-section table.table td,
+      #activeUsersSection table.table,
+      #activeUsersSection table.table tbody,
+      #activeUsersSection table.table tr,
+      #activeUsersSection table.table td {
+        display: block;
+        width: 100%;
+      }
+
+      /* Let the dark dropdown background show between cards */
+      #stripe-section table.table,
+      #stripe-section table.table tbody,
+      #activeUsersSection table.table,
+      #activeUsersSection table.table tbody {
+        background: transparent;
+      }
+
+      #stripe-section table.table tr,
+      #activeUsersSection table.table tr {
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 12px 0;
+        background: #fff;
+      }
+
+      #stripe-section table.table td,
+      #activeUsersSection table.table td {
+        border: 0;
+        border-bottom: 1px solid #eee;
+        background: #fff;
+        color: #111;
+        padding: 10px 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      #stripe-section table.table td:last-child,
+      #activeUsersSection table.table td:last-child {
+        border-bottom: 0;
+      }
+
+      #stripe-section table.table td::before,
+      #activeUsersSection table.table td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: #555;
+        flex: 0 0 auto;
+      }
     }
 
     .drag-handle {
@@ -364,7 +621,11 @@
         Menu
       </button>
       <ul class="dropdown-menu dropdown-menu-end">
-        <li><a class="dropdown-item" href="javascript:void(0)" id="toggleSidebar">Admin Menu</a></li>
+        <li>
+          <a class="dropdown-item" href="javascript:void(0)" data-bs-toggle="offcanvas" data-bs-target="#adminOffcanvas">
+            Admin Menu
+          </a>
+        </li>
         <li><a class="dropdown-item" href="/" id="toggleSite">Website</a></li>
         <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="logout()">Logout</a></li>
       </ul>
@@ -372,17 +633,21 @@
   </nav>
 
 
-  <!-- Sidebar -->
-  <div class="sidebar bg-dark" id="sidebarMenu">
-    <div id="sidebarcontainer"> 
-      <a onclick="showSection('dashboard')">🏠 Dashboard</a>
-      <a onclick="showSection('coachRegistry')">📋 Coach Registry</a>
-      <a onclick="showSection('addPackages')">📦 Add Packages</a>
-      <a onclick="showSection('activeUsersSection')">🟢 Active Users</a>
-      <a onclick="showSection('athlete-packages')">🎟️ Athletes To Packages</a>
-      <a onclick="showSection('stripe-section')">💳 Stripe Payments</a>
-      <a onclick="showSection('manageStories')">🏅 Manage Success Stories</a>
-      <button id="closeSidebarBtn" style="margin: 10px 0 0 0; color:white; cursor:pointer;">Close Sidebar</button>
+  <!-- Offcanvas Sidebar -->
+  <div class="offcanvas offcanvas-start text-bg-dark" tabindex="-1" id="adminOffcanvas" aria-labelledby="adminOffcanvasLabel">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title" id="adminOffcanvasLabel">Admin Menu</h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+
+    <div class="offcanvas-body">
+      <a class="d-block py-2 text-white text-decoration-none" href="javascript:void(0)" data-section="dashboard">🏠 Dashboard</a>
+      <a class="d-block py-2 text-white text-decoration-none" href="javascript:void(0)" data-section="coachRegistry">📋 Coach Registry</a>
+      <a class="d-block py-2 text-white text-decoration-none" href="javascript:void(0)" data-section="addPackages">📦 Add Packages</a>
+      <a class="d-block py-2 text-white text-decoration-none" href="javascript:void(0)" data-section="activeUsersSection">🟢 Active Users</a>
+      <a class="d-block py-2 text-white text-decoration-none" href="javascript:void(0)" data-section="athlete-packages">🎟️ Athletes To Packages</a>
+      <a class="d-block py-2 text-white text-decoration-none" href="javascript:void(0)" data-section="stripe-section">💳 Stripe Payments</a>
+      <a class="d-block py-2 text-white text-decoration-none" href="javascript:void(0)" data-section="manageStories">🏅 Manage Success Stories</a>
     </div>
   </div>
 
@@ -488,7 +753,7 @@
     </section>
 
     <section id="athlete-packages" class="page-section">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+      <div class="athlete-packages-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
         <h2 style="margin: 0;">Manage Athlete Package Usage</h2>
         <input
           type="text"
@@ -531,19 +796,21 @@
           Recent Transactions
         </button>
         <div class="dropdown-content show" style="display:block;">
-          <table class="table table-bordered table-sm">
-            <thead>
-              <tr>
-                <th>Customer</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Transaction ID</th>
-                <th>Receipt ID</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody id="transactionList"></tbody>
-          </table>
+            <div class="table-responsive">
+              <table class="table table-bordered table-sm">
+                <thead>
+                  <tr>
+                    <th>Customer</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Transaction ID</th>
+                    <th>Receipt ID</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody id="transactionList"></tbody>
+              </table>
+            </div>
         </div>
       </div>
     </section>
@@ -608,15 +875,17 @@
         return;
       }
 
-      // 2. Sidebar/menu logic
-      const sidebar = document.getElementById('sidebarMenu');
-      const menuBtn = document.getElementById('toggleSidebar');
-      const closeBtn = document.getElementById('closeSidebarBtn');
+      // 2. Section switching (offcanvas)
       let currentSection = 'dashboard';
-      let sidebarOpen = false;
 
-      function pushState(sectionId, sidebarOpen) {
-        history.pushState({ sectionId, sidebarOpen }, '', '');
+      function pushState(sectionId) {
+        history.pushState({ sectionId }, '', '');
+      }
+
+      function setActiveNav(sectionId) {
+        document.querySelectorAll('#adminOffcanvas [data-section]').forEach(link => {
+          link.classList.toggle('active', link.getAttribute('data-section') === sectionId);
+        });
       }
 
       function showSection(sectionId) {
@@ -636,40 +905,42 @@
             loadAthletePackages();
           }
         }
-        pushState(currentSection, sidebarOpen);
+        setActiveNav(currentSection);
+        pushState(currentSection);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
       window.showSection = showSection;
 
-      // Sidebar open/close
-      menuBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        sidebarOpen = !sidebarOpen;
-        sidebar.style.display = sidebarOpen ? 'block' : 'none';
-        document.body.classList.toggle('sidebar-open', sidebarOpen);
-        pushState(currentSection, sidebarOpen);
-      });
-      closeBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        sidebarOpen = false;
-        sidebar.style.display = 'none';
-        document.body.classList.remove('sidebar-open');
-        pushState(currentSection, sidebarOpen);
+      document.addEventListener('click', (e) => {
+        const link = e.target.closest('[data-section]');
+        if (!link) return;
+
+        const sectionId = link.getAttribute('data-section');
+        if (!sectionId) return;
+
+        showSection(sectionId);
+
+        const offcanvasEl = document.getElementById('adminOffcanvas');
+        if (offcanvasEl && window.bootstrap) {
+          try {
+            const instance = bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl);
+            instance.hide();
+          } catch (err) {
+            // Ignore if offcanvas isn't available/initialized
+          }
+        }
       });
 
       // Handle browser navigation
       window.addEventListener('popstate', function(event) {
         const state = event.state;
-        if (state) {
-          currentSection = state.sectionId || 'dashboard';
-          sidebarOpen = !!state.sidebarOpen;
-          showSection(currentSection);
-          sidebar.style.display = sidebarOpen ? 'block' : 'none';
-          document.body.classList.toggle('sidebar-open', sidebarOpen);
+        if (state && state.sectionId) {
+          showSection(state.sectionId);
         }
       });
 
       // Set initial state and show dashboard
-      pushState(currentSection, sidebarOpen);
+      pushState(currentSection);
       showSection('dashboard');
     });
 
@@ -1341,11 +1612,6 @@
       }
     });
 
-    document.addEventListener('DOMContentLoaded', function () {
-      if (!document.querySelector('.page-section.active')) {
-        showSection('dashboard');
-      }
-    });
     
   </script>
 
@@ -1465,6 +1731,9 @@
       if (filteredAthletes.length === 0) {
         content.innerHTML = `<p>No athletes booked for this package.</p>`;
       } else {
+        const tableWrapper = document.createElement('div');
+        tableWrapper.className = 'table-responsive';
+
         const table = document.createElement('table');
         table.className = "table table-bordered table-sm";
         table.innerHTML = `
@@ -1481,20 +1750,24 @@
           <tbody>
             ${filteredAthletes.map(a => `
               <tr>
-                <td>${a.athlete_name}</td>
-                <td>${a.age ? a.age : (a.age_group || '')}</td>
-                <td>${a.sport || ''}</td>
-                <td>${a.sessions_purchased}</td>
-                <td>${a.sessions_remaining}</td>
-                <td>
-                  <button type="button" class="btn btn-warning btn-sm" onclick="event.stopPropagation(); updateSession(${a.usage_id}, -1)">−</button>
-                  <button type="button" class="btn btn-success btn-sm" onclick="event.stopPropagation(); updateSession(${a.usage_id}, 1)">+</button>
+                <td data-label="Athlete">${a.athlete_name}</td>
+                <td data-label="Age">${a.age ? a.age : (a.age_group || '')}</td>
+                <td data-label="Sport">${a.sport || ''}</td>
+                <td data-label="Sessions Purchased">${a.sessions_purchased}</td>
+                <td data-label="Sessions Remaining">${a.sessions_remaining}</td>
+                <td data-label="Actions">
+                  <div class="session-actions">
+                    <button type="button" class="btn btn-warning btn-sm session-adjust-btn" onclick="event.stopPropagation(); updateSession(${a.usage_id}, -1)">−</button>
+                    <button type="button" class="btn btn-success btn-sm session-adjust-btn" onclick="event.stopPropagation(); updateSession(${a.usage_id}, 1)">+</button>
+                  </div>
                 </td>
               </tr>
             `).join('')}
           </tbody>
         `;
-        content.appendChild(table);
+
+        tableWrapper.appendChild(table);
+        content.appendChild(tableWrapper);
       }
 
       wrapper.appendChild(header);
