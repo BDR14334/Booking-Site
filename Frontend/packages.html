@@ -259,6 +259,46 @@
       background: rgba(167, 99, 40, 0.444);
     }
 
+    .packages-empty {
+      max-width: 900px;
+      margin: 0 auto 40px;
+      padding: 18px 20px;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.15);
+      color: #fff;
+      text-align: center;
+      box-shadow: 0 5px 50px black;
+      font-size: 18px;
+      line-height: 1.45;
+    }
+
+    .packages-empty .empty-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .packages-empty p {
+      margin: 8px 0;
+    }
+
+
+    /*When they're no packages, center the message in the section */
+    #packageContainer.empty-state {
+      min-height: 45vh;
+      align-items: center;
+    }
+
+    .packages-empty a {
+      color: #ff4800;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .packages-empty a:hover {
+      text-decoration: underline;
+    }
+
 
     #athleteContainer .box.selected {
       border: 2px solid #ff4800;
@@ -716,10 +756,28 @@
         }
 
         // Step 2: Fetch all packages
-        const response = await fetch(`${API_BASE}/admin/get-packages`, {
-          credentials: 'include'
-        });
-        const packages = await response.json();
+        let packages = [];
+        try {
+          const response = await fetch(`${API_BASE}/admin/get-packages`, {
+            credentials: 'include'
+          });
+
+          if (response.ok) {
+            packages = await response.json();
+          } else {
+            // Try to parse JSON error but don't break if it's not JSON
+            try {
+              const errJson = await response.json();
+              console.warn('Packages API error:', errJson);
+            } catch (_) {
+              console.warn('Packages API error: non-JSON response');
+            }
+            packages = [];
+          }
+        } catch (err) {
+          console.warn('Failed to fetch packages:', err);
+          packages = [];
+        }
 
         console.log("isMember:", isMember, packages.map(p => ({
           id: p.id,
@@ -751,7 +809,13 @@
         }
 
         const container = document.getElementById('packageContainer');
+        container.classList.remove('empty-state');
         container.innerHTML = '';
+
+        const hostname = (window.location.hostname || '').replace(/^www\./, '');
+        const contactEmail = hostname && !hostname.includes('localhost')
+          ? `info@${hostname}`
+          : 'info@zephyrsstrengthandperformance.com';
 
         // Step 4: Apply saved ordering (optional)
         const savedOrder = JSON.parse(localStorage.getItem('packageOrder') || '[]');
@@ -762,7 +826,21 @@
               .concat(visiblePackages.filter(pkg => !savedOrder.includes(String(pkg.id))))
           : visiblePackages;
 
-        // Step 5: Render only the visible packages
+        // Step 5: Render only the visible packages (or show empty state)
+        if (!orderedPackages || orderedPackages.length === 0) {
+          // If there are no packages to show, don't display the membership notice.
+          noticeEl.style.display = "none";
+          container.classList.add('empty-state');
+          container.innerHTML = `
+            <div class="packages-empty">
+              <div class="empty-title">No active packages are available right now</div>
+              <p>Please visit our <a href="/contact">contact page</a> for more info.</p>
+              <p>Include your info and inquiry, and we'll be in touch shortly.</p>
+            </div>
+          `;
+          return;
+        }
+
         orderedPackages.forEach(pkg => {
           const box = document.createElement('a');
           box.className = 'box';
@@ -1012,7 +1090,27 @@
             })
           });
 
-          const { clientSecret } = await intentRes.json();
+          let intentJson = {};
+          try {
+            intentJson = await intentRes.json();
+          } catch (_) {
+            intentJson = {};
+          }
+
+          if (!intentRes.ok) {
+            showLoading(false);
+            showCustomModal(intentJson.error || "Unable to start payment. Please try again.");
+            payNowBtn.disabled = false;
+            return;
+          }
+
+          const { clientSecret } = intentJson;
+          if (!clientSecret) {
+            showLoading(false);
+            showCustomModal("Unable to start payment (missing client secret).");
+            payNowBtn.disabled = false;
+            return;
+          }
 
           const result = await stripe.confirmCardPayment(clientSecret, {
             payment_method: {

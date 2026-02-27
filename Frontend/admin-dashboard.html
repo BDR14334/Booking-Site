@@ -1220,18 +1220,19 @@
 
       if (pkg.id) {
         deleteBtn.addEventListener('click', async () => {
-          if (confirm('Are you sure you want to delete this package?')) {
+          if (confirm('Archive this package? (It will be hidden from the storefront, but past purchases stay intact.)')) {
             try {
               const res = await fetch(`${API_BASE}/admin/delete-package/${pkg.id}`, {
                 method: 'DELETE',
                 credentials: 'include'
               });
               if (res.ok) {
-                alert('Package deleted.');
+                alert('Package archived.');
                 box.remove();
               } else {
                 const result = await res.json();
-                alert('Failed to delete package: ' + result.error);
+                const errMsg = (result && (result.error || result.message)) || 'Unknown error';
+                alert('Failed to archive package: ' + errMsg);
               }
             } catch (err) {
               console.error('Error deleting package:', err);
@@ -1341,7 +1342,7 @@
       });
     }
     async function loadStories() {
-      const res = await fetch(`${API_BASE}/admin/stories`);
+      const res = await fetch(`${API_BASE}/admin/stories`, { credentials: 'include' });
       const stories = await res.json();
 
       const container = document.querySelector('.story-box-container');
@@ -1430,6 +1431,8 @@
       try {
         const res = await fetch(`${API_BASE}/admin/delete-story/${id}`, {
           method: "DELETE"
+          ,
+          credentials: 'include'
         });
 
         if (res.ok) {
@@ -1473,6 +1476,7 @@
       try {
         const res = await fetch(url, {
           method,
+          credentials: 'include',
           body: formData
         });
 
@@ -1481,7 +1485,7 @@
         if (res.ok) {
           alert(storyId ? "Story updated!" : "Story added!");
           loadStories(); // Refresh UI
-          showSection('manageStories'); // Ensure the section stays visible
+          if (window.showSection) window.showSection('manageStories'); // Ensure the section stays visible
         } else {
           alert(result.error || "Failed to save story.");
         }
@@ -1612,6 +1616,7 @@
       }
     });
 
+    // (Removed) Redundant DOMContentLoaded handler that referenced a non-global showSection.
     
   </script>
 
@@ -1642,7 +1647,8 @@
     try {
       // Fetch all packages and all athlete usages
       const [packagesRes, usagesRes] = await Promise.all([
-        fetch(`${API_BASE}/admin/all-packages`, { credentials: 'include' }),
+        // Include inactive so archived packages still show in admin usage view.
+        fetch(`${API_BASE}/admin/all-packages?includeInactive=true`, { credentials: 'include' }),
         fetch(`${API_BASE}/admin/athlete-packages`, { credentials: 'include' })
       ]);
       allPackagesList = await packagesRes.json();
@@ -1655,11 +1661,13 @@
   }
 
   function renderAthletePackagesDropdowns(search = "") {
-    // Group usages by package name
-    const grouped = {};
-    allAthleteUsages.forEach(pkg => {
-      if (!grouped[pkg.package_name]) grouped[pkg.package_name] = [];
-      grouped[pkg.package_name].push(pkg);
+    // Group usages by package_id (NOT by name) so deletes/renames/duplicate names
+    // don't cause athletes to appear under the wrong package header.
+    const groupedById = {};
+    (allAthleteUsages || []).forEach(row => {
+      const key = row && row.package_id != null ? String(row.package_id) : 'unknown';
+      if (!groupedById[key]) groupedById[key] = [];
+      groupedById[key].push(row);
     });
 
     const container = document.getElementById('package-dropdowns');
@@ -1668,9 +1676,25 @@
     // Lowercase search for comparison
     const searchLower = search.trim().toLowerCase();
 
-    allPackagesList.forEach(pkg => {
-      const packageName = pkg.name;
-      let athletes = grouped[packageName] || [];
+    // Render packages from the packages table (including inactive), plus any
+    // package_ids present in usage data but missing from the packages table.
+    const knownPackageIds = new Set((allPackagesList || []).map(p => String(p.id)));
+    const extraIds = Object.keys(groupedById).filter(id => !knownPackageIds.has(id));
+    const extras = extraIds.map(id => {
+      const sample = (groupedById[id] && groupedById[id][0]) || {};
+      const name = sample.package_display_name || sample.package_name || '(unknown package)';
+      return { id, name, _virtual: true };
+    });
+
+    const displayPackages = ([]
+      .concat(allPackagesList || [])
+      .concat(extras))
+      .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+
+    displayPackages.forEach(pkg => {
+      const packageKey = pkg && pkg.id != null ? String(pkg.id) : 'unknown';
+      const displayName = pkg && pkg.name ? pkg.name : '(unknown package)';
+      let athletes = groupedById[packageKey] || [];
 
       // Filter by search
       let filteredAthletes = athletes;
@@ -1704,7 +1728,7 @@
 
       // Create the dropdown header with bubble
       header.innerHTML = `
-        ${packageName}
+        ${displayName}
         <span class="athlete-bubble">${activeCount}</span>
       `;
 
@@ -1717,14 +1741,14 @@
         content.classList.toggle('show');
         // Update openDropdowns after toggle
         if (content.classList.contains('show')) {
-          if (!openDropdowns.includes(packageName)) openDropdowns.push(packageName);
+          if (!openDropdowns.includes(packageKey)) openDropdowns.push(packageKey);
         } else {
-          openDropdowns = openDropdowns.filter(name => name !== packageName);
+          openDropdowns = openDropdowns.filter(k => k !== packageKey);
         }
       };
 
       // If this dropdown was open before, keep it open (unless searching)
-      if (!searchLower && openDropdowns.includes(packageName)) {
+      if (!searchLower && openDropdowns.includes(packageKey)) {
         content.classList.add('show');
       }
 

@@ -326,13 +326,15 @@ router.get('/receipts/:athleteId', async(req, res) => {
         `SELECT 
             b.id AS booking_id, b.status AS booking_status,
             pmt.amount AS amount_paid, pmt.payment_method, pmt.payment_status, pmt.transaction_id, pmt.created_at AS payment_date,
-            pk.name AS package_name, pk.price AS package_price, pk.description AS package_description,
+            COALESCE(pk.name, '(deleted package)') AS package_name,
+            pk.price AS package_price,
+            COALESCE(pk.description, '') AS package_description,
             ts.date, ts.start_time, ts.end_time,
             a.first_name AS athlete_first, a.last_name AS athlete_last,
             c.first_name AS customer_first, c.last_name AS customer_last, 
-            u.first_name AS coach_first, u.last_name AS coach_last, 
+            u.first_name AS coach_first, u.last_name AS coach_last
           FROM booking b
-          JOIN packages pk ON b.package_id = pk.id
+          LEFT JOIN packages pk ON b.package_id = pk.id
           JOIN timeslots ts ON b.timeslot_id = ts.id
           JOIN athlete a ON b.athlete_id = a.id
           JOIN customer c ON b.customer_id = c.id
@@ -363,9 +365,9 @@ router.get('/receipts/by-customer/:customerId', async (req, res) => {
           pmt.payment_status,
           pmt.transaction_id,
           pmt.created_at AS payment_date,
-          pk.name AS package_name,
+          COALESCE(pk.name, '(deleted package)') AS package_name,
           pk.price AS package_price,
-          pk.description AS package_description,
+          COALESCE(pk.description, '') AS package_description,
           a.first_name AS athlete_first,
           a.last_name AS athlete_last,
           c.first_name AS customer_first,
@@ -377,7 +379,7 @@ router.get('/receipts/by-customer/:customerId', async (req, res) => {
               ORDER BY ts.date, ts.start_time
           ) AS sessions
       FROM booking b
-      JOIN packages pk ON b.package_id = pk.id
+      LEFT JOIN packages pk ON b.package_id = pk.id
       JOIN athlete a ON b.athlete_id = a.id
       JOIN customer c ON b.customer_id = c.id
       JOIN timeslots ts ON b.timeslot_id = ts.id
@@ -385,7 +387,7 @@ router.get('/receipts/by-customer/:customerId', async (req, res) => {
       LEFT JOIN payments pmt ON o.id = pmt.order_id
       WHERE b.customer_id = $1
       GROUP BY b.order_id, pmt.amount, pmt.payment_method, pmt.payment_status, pmt.transaction_id, pmt.created_at,
-               pk.name, pk.price, pk.description,
+               COALESCE(pk.name, '(deleted package)'), pk.price, COALESCE(pk.description, ''),
                a.first_name, a.last_name,
                c.first_name, c.last_name
       ORDER BY pmt.created_at DESC`,
@@ -406,19 +408,39 @@ router.get('/receipts/by-customer/:customerId', async (req, res) => {
 router.get('/paid-packages/:customerId', authenticateToken, async (req, res) => {
   const { customerId } = req.params;
   try {
+    const customerIdNum = Number(customerId);
+    if (!Number.isInteger(customerIdNum) || customerIdNum <= 0) {
+      return res.status(400).json({ error: 'Invalid customerId' });
+    }
+
+    // Authorization: allow admins to view any customer; otherwise only the owning user can view.
+    const ownerRes = await pool.query(
+      'SELECT user_id FROM customer WHERE id = $1 LIMIT 1',
+      [customerIdNum]
+    );
+    if (ownerRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+
+    const owningUserId = ownerRes.rows[0].user_id;
+    const isAdmin = req.user && req.user.role === 'admin';
+    if (!isAdmin && String(owningUserId) !== String(req.user.id)) {
+      return res.status(403).json({ error: 'Not authorized to view these packages' });
+    }
+
     const result = await pool.query(
       `SELECT 
           pu.id as usage_id,
-          p.id as package_id, 
-          p.name, 
+          pu.package_id as package_id,
+          COALESCE(p.name, '(deleted package)') as name,
           p.calendly_url, 
           pu.sessions_remaining,
           pu.athlete_id
        FROM package_usage pu
-       JOIN packages p ON pu.package_id = p.id
+       LEFT JOIN packages p ON pu.package_id = p.id
        WHERE pu.customer_id = $1 AND pu.sessions_remaining > 0
        ORDER BY pu.id DESC`,
-      [customerId]
+      [customerIdNum]
     );
     res.json(result.rows);
   } catch (err) {

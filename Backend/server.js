@@ -16,9 +16,6 @@ const timeslotRoutes = require('./routes/timeslot');
 const contactRoutes = require('./routes/contact');
 const db = require('./db'); // Adjust path if needed
 
-// NEW: Load Stripe
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Make sure your .env has this key
-
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -53,7 +50,7 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 
 // Serve static HTML + image assets
@@ -69,26 +66,6 @@ app.use('/admin', adminRoutes);
 app.use('/booking', bookingRoutes);
 app.use('/timeslot', timeslotRoutes);
 app.use('/contact', contactRoutes); 
-
-// NEW: Stripe payment intent route
-app.post('/payment/create-payment-intent', async (req, res) => {
-  try {
-    const { amount, currency, metadata } = req.body;
-
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount, // in cents
-      currency,
-      metadata,
-    });
-
-    res.status(200).json({
-      clientSecret: paymentIntent.client_secret
-    });
-  } catch (err) {
-    console.error('Stripe error:', err);
-    res.status(500).json({ error: 'Payment processing failed' });
-  }
-});
 
 app.get('/packages', async (req, res) => {
   try {

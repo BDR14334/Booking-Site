@@ -8,6 +8,33 @@ const bodyParser = require('body-parser'); // Add at the top if not already pres
 const sendEmail = require('../utils/email'); // Add this line
 const { siteBaseUrl } = require('../config');
 
+async function getActiveAdminRecipients() {
+  // If users.is_active exists, send only to admins.
+  try {
+    const res = await pool.query(
+      `SELECT LOWER(TRIM(email)) AS email
+       FROM users
+       WHERE role = 'admin'
+         AND COALESCE(is_active, true) = true
+         AND email IS NOT NULL
+         AND TRIM(email) <> ''`
+    );
+    return Array.from(new Set((res.rows || []).map(r => r.email).filter(Boolean)));
+  } catch (err) {
+    if (err && err.code === '42703') {
+      const res = await pool.query(
+        `SELECT LOWER(TRIM(email)) AS email
+         FROM users
+         WHERE role = 'admin'
+           AND email IS NOT NULL
+           AND TRIM(email) <> ''`
+      );
+      return Array.from(new Set((res.rows || []).map(r => r.email).filter(Boolean)));
+    }
+    throw err;
+  }
+}
+
 // GET availability by package packageId
 router.get('/availability/by-package/:packageId', async (req, res) => {
   const { packageId } = req.params;
@@ -288,6 +315,35 @@ router.post('/booking', async (req, res) => {
       `
     );
 
+    // Admin purchase notification (best-effort)
+    try {
+      const adminRecipients = await getActiveAdminRecipients();
+      if (adminRecipients.length > 0) {
+        const adminSubject = `New package purchase: ${pkg.name}`;
+        const adminHtml = `
+          <div style="font-family:Arial,sans-serif;color:#222;line-height:1.5;max-width:720px;">
+            <h2 style="margin:0 0 10px;">New Package Purchase</h2>
+            <p style="margin:0 0 12px;"><b>Customer:</b> ${customerName} (${customerEmail})</p>
+            <ul style="margin:0 0 12px;">
+              <li><b>Package:</b> ${pkg.name}</li>
+              <li><b>Price per package:</b> $${pkg.price}</li>
+              <li><b>Packages purchased:</b> ${athleteCount}</li>
+              <li><b>Total:</b> $${pkg.price * athleteCount}</li>
+              <li><b>Receipt Number:</b> ${receiptCodeStr}</li>
+              <li><b>Status:</b> ${payment.status}</li>
+              <li><b>Payment Date:</b> ${paymentDate}</li>
+            </ul>
+            <p style="margin:0 0 8px;"><b>Athletes assigned:</b></p>
+            <ul>${athleteList}</ul>
+          </div>
+        `;
+
+        await sendEmail(adminRecipients, adminSubject, adminHtml);
+      }
+    } catch (adminEmailErr) {
+      console.warn('Admin purchase notification failed:', adminEmailErr);
+    }
+
     res.status(200).json({ message: 'Booking successful & receipt sent' });
   } catch (err) {
     await client.query('ROLLBACK'); // Undo all DB changes if any error
@@ -303,18 +359,40 @@ router.post('/create-checkout-session', async (req, res) => {
   const { customerId, packageId, athleteIds } = req.body;
 
   try {
+    const packageIdNum = Number(packageId);
+    if (!Number.isInteger(packageIdNum) || packageIdNum <= 0) {
+      return res.status(400).json({ error: 'Invalid package selected' });
+    }
+
     // 1. Fetch package
-    const pkgRes = await pool.query(
-      'SELECT id, name, price, calendly_url FROM packages WHERE id = $1',
-      [packageId]
-    );
+    let pkgRes;
+    try {
+      pkgRes = await pool.query(
+        'SELECT id, name, price, calendly_url FROM packages WHERE id = $1 AND COALESCE(is_active, true) = true',
+        [packageIdNum]
+      );
+    } catch (err) {
+      // Local DB may not have is_active yet
+      if (err && err.code === '42703') {
+        pkgRes = await pool.query(
+          'SELECT id, name, price, calendly_url FROM packages WHERE id = $1',
+          [packageIdNum]
+        );
+      } else {
+        throw err;
+      }
+    }
 
     if (pkgRes.rows.length === 0) {
       return res.status(400).json({ error: 'Invalid package selected' });
     }
 
     const pkg = pkgRes.rows[0];
-    const priceCents = Math.round(parseFloat(pkg.price) * 100);
+    const unitPrice = Number(pkg.price);
+    if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
+      return res.status(400).json({ error: 'Invalid package price' });
+    }
+    const priceCents = Math.round(unitPrice * 100);
 
     // Generate a 6-digit random code for receipt
     const receiptCode = Math.floor(100000 + Math.random() * 900000);
@@ -324,7 +402,7 @@ router.post('/create-checkout-session', async (req, res) => {
       `INSERT INTO orders (customer_id, package_id, status, order_date, receipt_code)
        VALUES ($1, $2, 'pending', NOW(), $3)
        RETURNING id, receipt_code`,
-      [customerId, packageId, receiptCode]
+      [customerId, packageIdNum, receiptCode]
     );
     const orderId = orderRes.rows[0].id;
     const receiptCodeStr = `ZSP-${orderRes.rows[0].receipt_code}`;
@@ -350,7 +428,7 @@ router.post('/create-checkout-session', async (req, res) => {
       metadata: {
         order_id: orderId,
         customer_id: customerId,
-        package_id: packageId,
+        package_id: packageIdNum,
         athlete_ids: JSON.stringify(athleteIds),
         receipt_code: receiptCodeStr
       }
@@ -375,18 +453,51 @@ router.post('/create-payment-intent', async (req, res) => {
   const { customerId, packageId, athleteIds } = req.body;
 
   try {
-    const pkgRes = await pool.query(
-      'SELECT id, name, price FROM packages WHERE id = $1',
-      [packageId]
-    );
+    const packageIdNum = Number(packageId);
+    if (!Number.isInteger(packageIdNum) || packageIdNum <= 0) {
+      return res.status(400).json({ error: 'Invalid package selected' });
+    }
+
+    const athleteCount = Array.isArray(athleteIds) ? athleteIds.length : 0;
+    if (!Number.isInteger(athleteCount) || athleteCount <= 0) {
+      return res.status(400).json({ error: 'Please select at least one athlete' });
+    }
+
+    let pkgRes;
+    try {
+      pkgRes = await pool.query(
+        'SELECT id, name, price FROM packages WHERE id = $1 AND COALESCE(is_active, true) = true',
+        [packageIdNum]
+      );
+    } catch (err) {
+      // Local DB may not have is_active yet
+      if (err && err.code === '42703') {
+        pkgRes = await pool.query(
+          'SELECT id, name, price FROM packages WHERE id = $1',
+          [packageIdNum]
+        );
+      } else {
+        throw err;
+      }
+    }
 
     if (pkgRes.rows.length === 0) {
       return res.status(400).json({ error: 'Invalid package selected' });
     }
 
     const pkg = pkgRes.rows[0];
-    const athleteCount = Array.isArray(athleteIds) ? athleteIds.length : 1;
-    const amountCents = Math.round(parseFloat(pkg.price) * 100 * athleteCount);
+    const unitPrice = (() => {
+      if (typeof pkg.price === 'number') return pkg.price;
+      if (typeof pkg.price === 'string') {
+        const normalized = pkg.price.replace(/[^0-9.\-]/g, '');
+        return Number.parseFloat(normalized);
+      }
+      return Number.NaN;
+    })();
+    if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
+      return res.status(400).json({ error: 'Invalid package price' });
+    }
+    const amountCents = Math.round(unitPrice * 100 * athleteCount);
 
     // Create a Stripe PaymentIntent
     const paymentIntent = await stripe.paymentIntents.create({
@@ -394,7 +505,7 @@ router.post('/create-payment-intent', async (req, res) => {
       currency: 'usd',
       metadata: {
         customer_id: customerId,
-        package_id: packageId,
+        package_id: packageIdNum,
         athlete_count: athleteCount,
         athlete_ids: JSON.stringify(athleteIds)
       }
@@ -528,6 +639,34 @@ router.post('/webhook', rawBodyParser, async (req, res) => {
         );
       } catch (emailErr) {
         console.error('Failed to send receipt email:', emailErr);
+      }
+
+      // Admin purchase notification (best-effort)
+      try {
+        const adminRecipients = await getActiveAdminRecipients();
+        if (adminRecipients.length > 0) {
+          const adminSubject = `New package purchase: ${packageName}`;
+          const adminHtml = `
+            <div style="font-family:Arial,sans-serif;color:#222;line-height:1.5;max-width:720px;">
+              <h2 style="margin:0 0 10px;">New Package Purchase</h2>
+              <p style="margin:0 0 12px;"><b>Customer:</b> ${customerName} (${customerEmail || '—'})</p>
+              <ul style="margin:0 0 12px;">
+                <li><b>Package:</b> ${packageName}</li>
+                <li><b>Total Charged:</b> $${(amount).toFixed(2)}</li>
+                <li><b>Receipt Number:</b> ${receiptCodeStr || 'N/A'}</li>
+                <li><b>Status:</b> ${paymentStatus}</li>
+                <li><b>Payment Date:</b> ${paymentDate}</li>
+                <li><b>Stripe Transaction ID:</b> ${transactionId}</li>
+              </ul>
+              <p style="margin:0 0 8px;"><b>Athletes assigned:</b></p>
+              <ul>${athleteList || ''}</ul>
+            </div>
+          `;
+
+          await sendEmail(adminRecipients, adminSubject, adminHtml);
+        }
+      } catch (adminEmailErr) {
+        console.warn('Admin purchase notification failed:', adminEmailErr);
       }
 
       return { alreadyProcessed: false };

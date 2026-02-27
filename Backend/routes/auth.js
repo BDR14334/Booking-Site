@@ -16,6 +16,40 @@ const ADMIN_SECRET_ID = process.env.ADMIN_SECRET_ID;
 // Use the first allowed origin as the default FRONTEND_BASE_URL
 const FRONTEND_BASE_URL = process.env.FRONTEND_BASE_URL || allowedOrigins[0];
 
+async function notifyAdminsNewUserCreated(newUserRow, profile) {
+  try {
+    const admins = await pool.query(
+      "SELECT email FROM public.users WHERE role = 'admin' AND email IS NOT NULL AND email <> ''"
+    );
+
+    const adminEmails = admins.rows
+      .map(r => r.email)
+      .filter(Boolean);
+
+    if (adminEmails.length === 0) return;
+
+    const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ');
+    const createdAt = newUserRow?.created_at
+      ? new Date(newUserRow.created_at).toLocaleString()
+      : '';
+
+    await sendEmail(
+      adminEmails,
+      'New account created',
+      `
+        <p>A new user account was created.</p>
+        <ul>
+          <li><strong>Name:</strong> ${fullName || '(not provided)'}</li>
+          <li><strong>Email:</strong> ${newUserRow?.email || ''}</li>
+          ${createdAt ? `<li><strong>Created:</strong> ${createdAt}</li>` : ''}
+        </ul>
+      `
+    );
+  } catch (err) {
+    console.error('Failed to notify admins of new user:', err?.message || err);
+  }
+}
+
 // Authenticate token
 function authenticateToken(req, res, next) {
   // Only check cookies and Authorization header (never localStorage/sessionStorage)
@@ -129,6 +163,11 @@ router.post('/register', async (req, res) => {
         [first_name, last_name, email, newUser.rows[0].id, '']
       );
     }
+
+    // Notify admins (doesn't block registration if this fails)
+    setImmediate(() => {
+      notifyAdminsNewUserCreated(newUser.rows[0], { first_name, last_name }).catch(() => undefined);
+    });
 
     res.status(201).json({ message: 'User registered successfully', user: newUser.rows[0] });
 

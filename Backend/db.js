@@ -41,10 +41,21 @@ console.log('🔌 PostgreSQL pool initialized');
 
 async function getPackages() {
   try {
-    const result = await pool.query(
-      'SELECT name AS title, description, price FROM packages ORDER BY id'
-    );
-    return result.rows;
+    try {
+      const result = await pool.query(
+        'SELECT name AS title, description, price FROM packages WHERE is_active = true ORDER BY id'
+      );
+      return result.rows;
+    } catch (err) {
+      // Local DB may not have been migrated yet
+      if (err && err.code === '42703') {
+        const fallback = await pool.query(
+          'SELECT name AS title, description, price FROM packages ORDER BY id'
+        );
+        return fallback.rows;
+      }
+      throw err;
+    }
   } catch (err) {
     console.error('Error fetching packages:', err);
     throw err;

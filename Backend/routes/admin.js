@@ -7,6 +7,38 @@ const path = require('path');
 const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
 const { authenticateToken, requireRole } = require('./auth');
+const sendEmail = require('../utils/email');
+
+async function getAdminRecipientsFromDb() {
+  // Pull recipient list from admin accounts (not from contact inbox).
+  // If a users.is_active column exists, we filter to active admins; otherwise, we send to all admins.
+  try {
+    const res = await pool.query(
+      `SELECT LOWER(TRIM(email)) AS email
+       FROM users
+       WHERE role = 'admin'
+         AND COALESCE(is_active, true) = true
+         AND email IS NOT NULL
+         AND TRIM(email) <> ''`
+    );
+    const emails = (res.rows || []).map(r => r.email).filter(Boolean);
+    return Array.from(new Set(emails));
+  } catch (err) {
+    // If is_active doesn't exist (common), retry without it.
+    if (err && err.code === '42703') {
+      const res = await pool.query(
+        `SELECT LOWER(TRIM(email)) AS email
+         FROM users
+         WHERE role = 'admin'
+           AND email IS NOT NULL
+           AND TRIM(email) <> ''`
+      );
+      const emails = (res.rows || []).map(r => r.email).filter(Boolean);
+      return Array.from(new Set(emails));
+    }
+    throw err;
+  }
+}
 
 // Guard Supabase client initialization so local dev doesn't crash
 let supabase = null;
@@ -36,7 +68,7 @@ const upload = multer({ storage });
 
 // Athlete Stories Section
 // Adds new success story to database
-router.post('/add-story', upload.single('athleteImage'), async (req, res) => {
+router.post('/add-story', authenticateToken, requireRole('admin'), upload.single('athleteImage'), async (req, res) => {
   const { athleteName, storyText } = req.body;
   const imageFile = req.file;
   if (!athleteName || !storyText || !imageFile) {
@@ -71,7 +103,7 @@ router.post('/add-story', upload.single('athleteImage'), async (req, res) => {
   }
 });
 
-router.put('/update-story/:id', upload.single('athleteImage'), async (req, res) => {
+router.put('/update-story/:id', authenticateToken, requireRole('admin'), upload.single('athleteImage'), async (req, res) => {
   const { id } = req.params;
   const { athleteName, storyText } = req.body;
   const imageFile = req.file;
@@ -155,7 +187,7 @@ router.post('/reorder-stories', authenticateToken, requireRole('admin'), async (
 });
 
 // Delete a success story by ID
-router.delete('/delete-story/:id', async (req, res) => {
+router.delete('/delete-story/:id', authenticateToken, requireRole('admin'), async (req, res) => {
   const { id } = req.params;
   try {
     // 1. Get the story to find the image filename
@@ -189,9 +221,26 @@ router.delete('/delete-story/:id', async (req, res) => {
 // --- Packages Section (with Calendly URL) ---
 
 // Create a new package
-router.post('/create-package', async (req, res) => {
+router.post('/create-package', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
     const { packageTitle, price, sessionNumber, description, features, calendlyUrl, isMemberPriced } = req.body;
+    const cleanedTitle = typeof packageTitle === 'string' ? packageTitle.trim() : '';
+    if (!cleanedTitle) {
+      return res.status(400).json({ error: 'Package must include a title.' });
+    }
+
+    const rawPrice = price === undefined || price === null ? '' : String(price).trim();
+    const parsedPrice = rawPrice ? Number(rawPrice.replace(/[^0-9.\-]/g, '')) : NaN;
+    if (!Number.isFinite(parsedPrice)) {
+      return res.status(400).json({ error: 'Price must be a valid number (e.g. 49.99).' });
+    }
+
+    const rawSessions = sessionNumber === undefined || sessionNumber === null ? '' : String(sessionNumber).trim();
+    const parsedSessions = rawSessions ? parseInt(rawSessions, 10) : NaN;
+    if (!Number.isInteger(parsedSessions) || parsedSessions <= 0) {
+      return res.status(400).json({ error: 'Number of sessions must be a positive integer.' });
+    }
+
     const cleanedDescription = typeof description === 'string' ? description.trim() : '';
     if (!cleanedDescription) {
       return res.status(400).json({ error: 'Package must include a description.' });
@@ -206,7 +255,7 @@ router.post('/create-package', async (req, res) => {
       `INSERT INTO packages (name, price, description, features, sessions_included, calendly_url, is_member_priced)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [packageTitle, price, cleanedDescription, cleanedFeatures, sessionNumber, calendlyUrl, !!isMemberPriced]
+      [cleanedTitle, parsedPrice, cleanedDescription, cleanedFeatures, parsedSessions, calendlyUrl, !!isMemberPriced]
     );
     res.status(201).json({ message: 'Package created', package: result.rows[0] });
   } catch (err) {
@@ -216,9 +265,26 @@ router.post('/create-package', async (req, res) => {
 });
 
 // Update an existing package by ID
-router.put('/update-package/:id', async (req, res) => {
+router.put('/update-package/:id', authenticateToken, requireRole('admin'), async (req, res) => {
   const { id } = req.params;
   const { packageTitle, sessionNumber, price, description, features, calendlyUrl, isMemberPriced } = req.body;
+  const cleanedTitle = typeof packageTitle === 'string' ? packageTitle.trim() : '';
+  if (!cleanedTitle) {
+    return res.status(400).json({ error: 'Package must include a title.' });
+  }
+
+  const rawPrice = price === undefined || price === null ? '' : String(price).trim();
+  const parsedPrice = rawPrice ? Number(rawPrice.replace(/[^0-9.\-]/g, '')) : NaN;
+  if (!Number.isFinite(parsedPrice)) {
+    return res.status(400).json({ error: 'Price must be a valid number (e.g. 49.99).' });
+  }
+
+  const rawSessions = sessionNumber === undefined || sessionNumber === null ? '' : String(sessionNumber).trim();
+  const parsedSessions = rawSessions ? parseInt(rawSessions, 10) : NaN;
+  if (!Number.isInteger(parsedSessions) || parsedSessions <= 0) {
+    return res.status(400).json({ error: 'Number of sessions must be a positive integer.' });
+  }
+
   const cleanedDescription = typeof description === 'string' ? description.trim() : '';
   const cleanedFeatures = Array.isArray(features)
     ? features.map(f => f.trim()).filter(f => f !== '')
@@ -241,7 +307,7 @@ router.put('/update-package/:id', async (req, res) => {
            is_member_priced = $7
        WHERE id = $8
        RETURNING *`,
-      [packageTitle, sessionNumber, price, cleanedDescription, cleanedFeatures, calendlyUrl, !!isMemberPriced, id]
+      [cleanedTitle, parsedSessions, parsedPrice, cleanedDescription, cleanedFeatures, calendlyUrl, !!isMemberPriced, id]
     );
     if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Package not found.' });
@@ -254,35 +320,237 @@ router.put('/update-package/:id', async (req, res) => {
 });
 
 // Delete a package by ID
-router.delete('/delete-package/:id', async (req, res) => {
+router.delete('/delete-package/:id', authenticateToken, requireRole('admin'), async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pool.query('DELETE FROM packages WHERE id = $1 RETURNING *', [id]);
+    // Default behavior: archive (soft delete).
+    // If you truly want to hard delete, call: DELETE /admin/delete-package/:id?hard=true
+    const hardDelete = String(req.query.hard || '').toLowerCase() === 'true';
+
+    // If a package was ever purchased/used, deleting it either:
+    // - fails (FK constraint), or
+    // - breaks receipts/dashboards (inner joins).
+    // So we block deletion when it's in use.
+    const depsRes = await pool.query(
+      `SELECT
+         (SELECT COUNT(*)::int FROM package_usage WHERE package_id = $1) AS usage_count,
+         (SELECT COUNT(*)::int FROM orders WHERE package_id = $1) AS orders_count,
+         (SELECT COUNT(*)::int FROM booking WHERE package_id = $1) AS booking_count,
+         (SELECT COUNT(*)::int FROM timeslots WHERE package_id = $1) AS timeslots_count`,
+      [id]
+    );
+
+    const deps = depsRes.rows[0] || {};
+    const inUse = [deps.usage_count, deps.orders_count, deps.booking_count, deps.timeslots_count]
+      .some(n => Number(n) > 0);
+
+    // Archive: always allowed (even if in use)
+    if (!hardDelete) {
+      // Fetch impacted assignments (sessions remaining) so admins get a heads-up.
+      // NOTE: This is best-effort; archiving should still succeed even if this query/email fails.
+      let packageInfo = null;
+      let impacted = [];
+      try {
+        const pkgRes = await pool.query('SELECT id, name FROM packages WHERE id = $1', [id]);
+        packageInfo = pkgRes.rows[0] || { id, name: '(unknown package)' };
+
+        const impactedRes = await pool.query(
+          `SELECT
+             pu.customer_id,
+             pu.athlete_id,
+             pu.sessions_remaining,
+             COALESCE(
+               NULLIF(TRIM(concat_ws(' ', a.first_name, a.last_name)), ''),
+               '(unknown athlete)'
+             ) AS athlete_name,
+             COALESCE(
+               NULLIF(TRIM(concat_ws(' ', u.first_name, u.last_name)), ''),
+               NULLIF(TRIM(concat_ws(' ', c.first_name, c.last_name)), ''),
+               '(unknown customer)'
+             ) AS customer_name,
+             COALESCE(NULLIF(TRIM(u.email), ''), NULL) AS customer_email
+           FROM package_usage pu
+           LEFT JOIN athlete a ON pu.athlete_id = a.id
+           LEFT JOIN customer c ON pu.customer_id = c.id
+           LEFT JOIN users u ON c.user_id = u.id
+           WHERE pu.package_id = $1 AND pu.sessions_remaining > 0
+           ORDER BY pu.sessions_remaining DESC, customer_name ASC, athlete_name ASC`,
+          [id]
+        );
+        impacted = impactedRes.rows || [];
+      } catch (notifyPrepErr) {
+        console.warn('Archive notification pre-query failed:', notifyPrepErr);
+      }
+
+      let result;
+      try {
+        result = await pool.query(
+          'UPDATE packages SET is_active = false WHERE id = $1 RETURNING id, name, is_active',
+          [id]
+        );
+      } catch (err) {
+        // If DB wasn't migrated yet
+        if (err && err.code === '42703') {
+          return res.status(500).json({
+            error: 'Archiving is not available because packages.is_active does not exist in this database.',
+            suggestion: 'Run: ALTER TABLE public.packages ADD COLUMN IF NOT EXISTS is_active boolean NOT NULL DEFAULT true;'
+          });
+        }
+        throw err;
+      }
+      if (result.rowCount === 0) {
+        return res.status(404).json({ error: 'Package not found' });
+      }
+
+      // Notify admins (best-effort; do not block response).
+      try {
+        const recipients = await getAdminRecipientsFromDb();
+        const totalImpacted = impacted.length;
+        const totalSessionsRemaining = impacted.reduce(
+          (sum, row) => sum + (Number(row.sessions_remaining) || 0),
+          0
+        );
+
+        // Only notify admins if someone is actually affected.
+        if (recipients.length > 0 && totalImpacted > 0 && totalSessionsRemaining > 0) {
+          const rowsHtml = impacted
+            .map(r => {
+              const safeCustomer = String(r.customer_name || '').replace(/[<>]/g, '');
+              const safeAthlete = String(r.athlete_name || '').replace(/[<>]/g, '');
+              const safeEmail = String(r.customer_email || '').replace(/[<>]/g, '');
+              const safeSessions = Number(r.sessions_remaining) || 0;
+              return `
+                <tr>
+                  <td style="padding:6px 8px;border-bottom:1px solid #eee;">${safeCustomer}</td>
+                  <td style="padding:6px 8px;border-bottom:1px solid #eee;">${safeEmail || '—'}</td>
+                  <td style="padding:6px 8px;border-bottom:1px solid #eee;">${safeAthlete}</td>
+                  <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right;">${safeSessions}</td>
+                </tr>`;
+            })
+            .join('');
+
+          const pkgName = (packageInfo && packageInfo.name) ? packageInfo.name : '(unknown package)';
+          const subject = `Package archived: ${pkgName} (ID ${id})`;
+          const archivedAt = new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' });
+
+          const html = `
+            <div style="font-family:Arial,sans-serif;color:#222;line-height:1.5;max-width:720px;">
+              <h2 style="margin:0 0 10px;">Package Archived (Admin Notice)</h2>
+              <p style="margin:0 0 12px;">
+                The package <b>${pkgName}</b> (ID <b>${id}</b>) was archived on <b>${archivedAt}</b>.
+                This will hide it from the public packages list, but existing entitlements may still be active.
+              </p>
+              <p style="margin:0 0 12px;">
+                <b>Impacted assignments with sessions remaining:</b> ${totalImpacted} &nbsp;|&nbsp;
+                <b>Total sessions remaining:</b> ${totalSessionsRemaining}
+              </p>
+
+              <table style="border-collapse:collapse;width:100%;font-size:14px;">
+                <thead>
+                  <tr>
+                    <th align="left" style="padding:6px 8px;border-bottom:2px solid #ddd;">Customer</th>
+                    <th align="left" style="padding:6px 8px;border-bottom:2px solid #ddd;">Customer Email</th>
+                    <th align="left" style="padding:6px 8px;border-bottom:2px solid #ddd;">Athlete</th>
+                    <th align="right" style="padding:6px 8px;border-bottom:2px solid #ddd;">Sessions Remaining</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rowsHtml}
+                </tbody>
+              </table>
+
+              <p style="margin:14px 0 0;">
+                <b>Reminder:</b> If anyone still has sessions remaining, be aware they can still book/use them.
+              </p>
+            </div>`;
+
+          await sendEmail(recipients, subject, html);
+        }
+      } catch (notifyErr) {
+        console.warn('Admin archive notification failed:', notifyErr);
+      }
+
+      return res.json({ message: 'Package archived', package: result.rows[0] });
+    }
+
+    // Hard delete: only allowed if not in use
+    if (inUse) {
+      return res.status(409).json({
+        error: 'Package is in use and cannot be hard-deleted.',
+        details: {
+          usage: deps.usage_count || 0,
+          orders: deps.orders_count || 0,
+          bookings: deps.booking_count || 0,
+          timeslots: deps.timeslots_count || 0
+        },
+        suggestion: 'Archive/disable the package instead.'
+      });
+    }
+
+    const result = await pool.query('DELETE FROM packages WHERE id = $1 RETURNING id, name', [id]);
     if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Package not found' });
     }
     res.json({ message: 'Package deleted', deletedPackage: result.rows[0] });
   } catch (err) {
     console.error('Error deleting package:', err);
+    // FK violation (if constraints exist)
+    if (err && err.code === '23503') {
+      return res.status(409).json({
+        error: 'Package is referenced by other records and cannot be hard-deleted.',
+        suggestion: 'Archive/disable the package instead.'
+      });
+    }
     res.status(500).json({ error: 'Server error deleting package' });
   }
 });
 
 // Get all packages (with Calendly URL)
-router.get('/get-packages', async (req, res) => {
+router.get(
+  '/get-packages',
+  (req, res, next) => {
+    const includeInactive = String(req.query.includeInactive || '').toLowerCase() === 'true';
+    if (!includeInactive) return next();
+    return authenticateToken(req, res, () => requireRole('admin')(req, res, next));
+  },
+  async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT 
-        id,
-        name AS package_title,
-        sessions_included AS session_number,
-        price,
-        description,
-        features,
-        calendly_url,
-        is_member_priced
-      FROM packages
-    `);
+    const includeInactive = String(req.query.includeInactive || '').toLowerCase() === 'true';
+    let result;
+    try {
+      result = await pool.query(`
+        SELECT 
+          id,
+          name AS package_title,
+          sessions_included AS session_number,
+          price,
+          description,
+          features,
+          calendly_url,
+          is_member_priced,
+          is_active
+        FROM packages
+        WHERE ($1::boolean = true) OR (is_active = true)
+      `, [includeInactive]);
+    } catch (err) {
+      // Local DB may not have been migrated yet
+      if (err && err.code === '42703') {
+        result = await pool.query(`
+          SELECT 
+            id,
+            name AS package_title,
+            sessions_included AS session_number,
+            price,
+            description,
+            features,
+            calendly_url,
+            is_member_priced
+          FROM packages
+        `);
+      } else {
+        throw err;
+      }
+    }
     const packages = result.rows.map(pkg => ({
       id: pkg.id,
       title: pkg.package_title,
@@ -291,7 +559,8 @@ router.get('/get-packages', async (req, res) => {
       description: typeof pkg.description === 'string' ? pkg.description : '',
       features: Array.isArray(pkg.features) ? pkg.features : [],
       calendlyUrl: pkg.calendly_url || '',
-      is_member_priced: pkg.is_member_priced // <-- add this line
+      is_member_priced: pkg.is_member_priced,
+      is_active: pkg.is_active
     }));
     res.json(packages);
   } catch (error) {
@@ -300,10 +569,29 @@ router.get('/get-packages', async (req, res) => {
   }
 });
 
+// Everything below this point is admin-only.
+router.use(authenticateToken, requireRole('admin'));
+
 // Get all packages (simple list)
 router.get('/all-packages', async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, name FROM packages ORDER BY name');
+    const includeInactive = String(req.query.includeInactive || '').toLowerCase() === 'true';
+    let result;
+    try {
+      result = await pool.query(
+        `SELECT id, name
+         FROM packages
+         WHERE ($1::boolean = true) OR (is_active = true)
+         ORDER BY name`,
+        [includeInactive]
+      );
+    } catch (err) {
+      if (err && err.code === '42703') {
+        result = await pool.query('SELECT id, name FROM packages ORDER BY name');
+      } else {
+        throw err;
+      }
+    }
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: 'Failed to load packages' });
@@ -334,7 +622,7 @@ router.get('/pending-coaches', async (req, res) => {
 
 // Post coaches as approved to login
 router.post('/approve-coach', async (req, res) => {
-  const { coachId, email, coachCode } = req.body;
+  const { coachId, coachCode } = req.body;
   try {
     // Get user details from users table
     const userResult = await pool.query(
@@ -351,7 +639,7 @@ router.post('/approve-coach', async (req, res) => {
        VALUES ($1, $2, $3, $4, $5)`,
       [coachId, coachCode, first_name, last_name, userEmail]
     );
-    await sendCoachIdEmail(email, coachCode);
+    await sendCoachIdEmail(userEmail, coachCode);
     res.status(200).json({ message: 'Coach approved and ID sent' });
   } catch (err) {
     console.error('Error approving coach:', err);
@@ -492,7 +780,11 @@ router.get('/athlete-packages', async (req, res) => {
         a.first_name || ' ' || a.last_name AS athlete_name,
         a.age_group,
         a.sport,
-        p.name AS package_name,
+        COALESCE(p.name, '(deleted package)') AS package_name,
+        CASE
+          WHEN p.id IS NULL THEN '(deleted package) [ID ' || pu.package_id::text || ']'
+          ELSE p.name
+        END AS package_display_name,
         pu.sessions_remaining,
         pu.sessions_purchased,
         pu.athlete_id,
@@ -501,9 +793,9 @@ router.get('/athlete-packages', async (req, res) => {
         EXTRACT(YEAR FROM age(c.dob)) AS age
       FROM package_usage pu
       JOIN athlete a ON pu.athlete_id = a.id
-      JOIN packages p ON pu.package_id = p.id
+      LEFT JOIN packages p ON pu.package_id = p.id
       JOIN customer c ON a.customer_id = c.id
-      ORDER BY p.name, athlete_name
+      ORDER BY (CASE WHEN p.id IS NULL THEN '(deleted package)' ELSE p.name END), athlete_name
     `);
     res.json(result.rows);
   } catch (err) {
