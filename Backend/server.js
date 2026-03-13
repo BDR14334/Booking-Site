@@ -14,17 +14,15 @@ const athleteRoutes = require('./routes/athlete');
 const bookingRoutes = require('./routes/booking');  
 const timeslotRoutes = require('./routes/timeslot'); 
 const contactRoutes = require('./routes/contact');
+const { allowedOrigins } = require('./config');
 const db = require('./db'); // Adjust path if needed
 
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const allowedOrigins = [
-  'http://localhost:5500',
-  'https://booking-site-frontend.onrender.com',
-  'https://www.zephyrsstrengthandperformance.com',
-  'https://zsp-frontend-staging.onrender.com'
-];
+const normalizedAllowedOrigins = new Set(
+  allowedOrigins.map(origin => origin.replace(/\/$/, '').toLowerCase())
+);
 
 // Block everything on API from indexing
 app.get('/robots.txt', (req, res) => {
@@ -42,7 +40,13 @@ app.use((req, res, next) => {
 // CORS config to allow credentials (cookies) from frontend
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+
+    const normalizedOrigin = origin.replace(/\/$/, '').toLowerCase();
+    if (normalizedAllowedOrigins.has(normalizedOrigin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));

@@ -503,7 +503,12 @@
 
     function loadHomeStories() {
       fetch(`${API_BASE}/admin/stories`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) {
+            throw new Error(`Stories request failed: ${res.status}`);
+          }
+          return res.json();
+        })
         .then(stories => {
           // Remove any existing section
           const oldSection = document.getElementById("athleteStoriesSection");
@@ -593,7 +598,9 @@
 
     function scrollCarousel(direction) {
       const container = document.getElementById("storyCards");
+      if (!container) return;
       const viewport = container.parentElement; // .carousel-viewport
+      if (!viewport) return;
       const card = container.querySelector(".athlete-card");
       if (!card) return;
 
@@ -625,7 +632,9 @@
     function updateCarousel() {
       // Only update arrow visibility, no transform needed
       const container = document.getElementById("storyCards");
+      if (!container) return;
       const viewport = container.parentElement;
+      if (!viewport) return;
       const card = container.querySelector(".athlete-card");
       if (!card) return;
 
