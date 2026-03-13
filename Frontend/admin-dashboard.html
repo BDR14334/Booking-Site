@@ -378,6 +378,10 @@
       position: relative;
     }
 
+    #activeUsersSection .manual-assign-controls {
+      min-width: 360px;
+    }
+
     /* --- Mobile-friendly Athlete Package Usage (Admin) --- */
     #athlete-packages .package-section {
       margin-bottom: 14px;
@@ -572,6 +576,28 @@
         font-weight: 700;
         color: #555;
         flex: 0 0 auto;
+      }
+
+      #activeUsersSection td.manual-assign-cell {
+        justify-content: flex-start;
+        align-items: stretch;
+      }
+
+      #activeUsersSection td.manual-assign-cell::before {
+        content: "";
+        display: none;
+      }
+
+      #activeUsersSection .manual-assign-controls {
+        min-width: 0 !important;
+        width: 100%;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      #activeUsersSection .manual-assign-controls .form-select,
+      #activeUsersSection .manual-assign-controls .btn {
+        width: 100%;
       }
     }
 
@@ -942,6 +968,17 @@
       // Set initial state and show dashboard
       pushState(currentSection);
       showSection('dashboard');
+
+      // Open the admin menu on initial dashboard load/login.
+      const offcanvasEl = document.getElementById('adminOffcanvas');
+      if (offcanvasEl && window.bootstrap) {
+        try {
+          const instance = bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl);
+          instance.show();
+        } catch (err) {
+          console.warn('Unable to open admin menu on load:', err);
+        }
+      }
     });
 
     // Accept Registered Coaches
@@ -1694,7 +1731,14 @@
     displayPackages.forEach(pkg => {
       const packageKey = pkg && pkg.id != null ? String(pkg.id) : 'unknown';
       const displayName = pkg && pkg.name ? pkg.name : '(unknown package)';
-      let athletes = groupedById[packageKey] || [];
+      const sessionsIncluded = Number(pkg && pkg.sessions_included);
+      const hasSessionInName = /\bsessions?\b/i.test(displayName);
+      const titleWithSessions = Number.isFinite(sessionsIncluded) && sessionsIncluded > 0 && !hasSessionInName
+        ? `${displayName} - ${sessionsIncluded} Session${sessionsIncluded === 1 ? '' : 's'}`
+        : displayName;
+      // Only show athletes that still have remaining sessions.
+      // If none remain for this package, don't show the package at all.
+      let athletes = (groupedById[packageKey] || []).filter(a => Number(a.sessions_remaining) > 0);
 
       // Filter by search
       let filteredAthletes = athletes;
@@ -1704,10 +1748,9 @@
         );
       }
 
-      // Only show packages that have at least one matching athlete if searching
-      if (searchLower && filteredAthletes.length === 0) {
-        return; // Skip this package
-      }
+      // Only show packages that have at least one matching athlete
+      // (and at least one athlete with remaining sessions, due to the filter above).
+      if (filteredAthletes.length === 0) return;
 
       // Sort: athletes with sessions_remaining > 0 first
       filteredAthletes.sort((a, b) => b.sessions_remaining - a.sessions_remaining);
@@ -1723,12 +1766,12 @@
       const header = document.createElement('button');
       header.classList.add('dropdown-btn');
 
-      // Count athletes with sessions_remaining > 0
-      const activeCount = filteredAthletes.filter(a => a.sessions_remaining > 0).length;
+      // Count athletes shown (all have sessions_remaining > 0)
+      const activeCount = filteredAthletes.length;
 
       // Create the dropdown header with bubble
       header.innerHTML = `
-        ${displayName}
+        ${titleWithSessions}
         <span class="athlete-bubble">${activeCount}</span>
       `;
 
@@ -1752,47 +1795,41 @@
         content.classList.add('show');
       }
 
-      if (filteredAthletes.length === 0) {
-        content.innerHTML = `<p>No athletes booked for this package.</p>`;
-      } else {
-        const tableWrapper = document.createElement('div');
-        tableWrapper.className = 'table-responsive';
+      const tableWrapper = document.createElement('div');
+      tableWrapper.className = 'table-responsive';
 
-        const table = document.createElement('table');
-        table.className = "table table-bordered table-sm";
-        table.innerHTML = `
-          <thead>
-            <tr>
-              <th>Athlete</th>
-              <th>Age</th>
-              <th>Sport</th>
-              <th>Sessions Purchased</th>
-              <th>Sessions Remaining</th>
-              <th>Actions</th>
+      const table = document.createElement('table');
+      table.className = "table table-bordered table-sm";
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>Athlete</th>
+            <th>Age</th>
+            <th>Sport</th>
+            <th>Sessions Remaining</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filteredAthletes.map(a => `
+            <tr data-usage-id="${a.usage_id}">
+              <td data-label="Athlete">${a.athlete_name}</td>
+              <td data-label="Age">${a.age ? a.age : (a.age_group || '')}</td>
+              <td data-label="Sport">${a.sport || ''}</td>
+              <td data-label="Sessions Remaining" class="sessions-remaining">${a.sessions_remaining}</td>
+              <td data-label="Actions">
+                <div class="session-actions">
+                  <button type="button" class="btn btn-warning btn-sm session-adjust-btn" onclick="event.stopPropagation(); updateSession(${a.usage_id}, -1)">−</button>
+                  <button type="button" class="btn btn-success btn-sm session-adjust-btn" onclick="event.stopPropagation(); updateSession(${a.usage_id}, 1)">+</button>
+                </div>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            ${filteredAthletes.map(a => `
-              <tr>
-                <td data-label="Athlete">${a.athlete_name}</td>
-                <td data-label="Age">${a.age ? a.age : (a.age_group || '')}</td>
-                <td data-label="Sport">${a.sport || ''}</td>
-                <td data-label="Sessions Purchased">${a.sessions_purchased}</td>
-                <td data-label="Sessions Remaining">${a.sessions_remaining}</td>
-                <td data-label="Actions">
-                  <div class="session-actions">
-                    <button type="button" class="btn btn-warning btn-sm session-adjust-btn" onclick="event.stopPropagation(); updateSession(${a.usage_id}, -1)">−</button>
-                    <button type="button" class="btn btn-success btn-sm session-adjust-btn" onclick="event.stopPropagation(); updateSession(${a.usage_id}, 1)">+</button>
-                  </div>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        `;
+          `).join('')}
+        </tbody>
+      `;
 
-        tableWrapper.appendChild(table);
-        content.appendChild(tableWrapper);
-      }
+      tableWrapper.appendChild(table);
+      content.appendChild(tableWrapper);
 
       wrapper.appendChild(header);
       wrapper.appendChild(content);
@@ -1807,14 +1844,73 @@
 
   // Update session count (subtract or add)
   async function updateSession(usageId, delta) {
-    await fetch(`${API_BASE}/admin/athlete-packages/${usageId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ subtract: -delta }) // negative delta for add, positive for subtract
-    });
-    // Do not reset openDropdowns, just reload data
-    loadAthletePackages();
+    try {
+      const res = await fetch(`${API_BASE}/admin/athlete-packages/${usageId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ subtract: -delta }) // negative delta for add, positive for subtract
+      });
+
+      let payload = null;
+      try {
+        payload = await res.json();
+      } catch (_) {
+        payload = null;
+      }
+
+      if (!res.ok) {
+        const msg = (payload && payload.error) ? payload.error : 'Failed to update sessions.';
+        alert(msg);
+        return;
+      }
+
+      // Update in-memory copy so it stays consistent until the admin leaves/reloads.
+      if (Array.isArray(allAthleteUsages)) {
+        const idx = allAthleteUsages.findIndex(r => String(r.usage_id) === String(usageId));
+        if (idx !== -1 && payload && typeof payload.sessions_remaining !== 'undefined') {
+          allAthleteUsages[idx].sessions_remaining = payload.sessions_remaining;
+        }
+      }
+
+      // Update the DOM in-place to avoid re-rendering (which causes re-sorting/jumping).
+      const row = document.querySelector(`tr[data-usage-id="${usageId}"]`);
+      if (!row) return;
+
+      const sessionsCell = row.querySelector('.sessions-remaining');
+      if (!sessionsCell) return;
+
+      const newRemaining = payload && typeof payload.sessions_remaining !== 'undefined'
+        ? Number(payload.sessions_remaining)
+        : (Number(sessionsCell.textContent) + delta);
+
+      if (!Number.isFinite(newRemaining)) return;
+
+      if (newRemaining <= 0) {
+        // Remove the athlete row (consistent with "only show athletes with remaining sessions").
+        row.remove();
+
+        // Update the bubble count (rows remaining in this package).
+        const packageSection = sessionsCell.closest('.package-section');
+        if (!packageSection) return;
+
+        const bubble = packageSection.querySelector('.athlete-bubble');
+        const tbody = packageSection.querySelector('tbody');
+        const remainingRows = tbody ? tbody.querySelectorAll('tr[data-usage-id]').length : 0;
+        if (bubble) bubble.textContent = String(remainingRows);
+
+        // If no rows left, remove the whole package section from view.
+        if (remainingRows === 0) {
+          packageSection.remove();
+        }
+        return;
+      }
+
+      sessionsCell.textContent = String(newRemaining);
+    } catch (err) {
+      console.error('Failed to update sessions:', err);
+      alert('Failed to update sessions.');
+    }
   }
   window.updateSession = updateSession;
 
@@ -1864,11 +1960,21 @@
   }
 
   let allActiveUsers = [];
+  let allParentDetails = [];
+  let allAssignablePackages = [];
 
   async function loadActiveUsers() {
     try {
-      const res = await fetch(`${API_BASE}/admin/active-users`, { credentials: 'include' });
-      allActiveUsers = await res.json();
+      const [usersRes, parentsRes, packagesRes] = await Promise.all([
+        fetch(`${API_BASE}/admin/active-users`, { credentials: 'include' }),
+        fetch(`${API_BASE}/admin/active-users/details`, { credentials: 'include' }),
+        fetch(`${API_BASE}/admin/all-packages`, { credentials: 'include' })
+      ]);
+
+      allActiveUsers = usersRes.ok ? await usersRes.json() : [];
+      allParentDetails = parentsRes.ok ? await parentsRes.json() : [];
+      allAssignablePackages = packagesRes.ok ? await packagesRes.json() : [];
+
       renderActiveUsersDropdowns();
     } catch (err) {
       console.error('Failed to load active users', err);
@@ -1881,6 +1987,24 @@
   }
 
   function renderActiveUsersDropdowns(search = "") {
+    function formatAthleteNameWithAge(athlete) {
+      const first = athlete && athlete.first_name ? String(athlete.first_name).trim() : '';
+      const last = athlete && athlete.last_name ? String(athlete.last_name).trim() : '';
+      const fullName = `${first} ${last}`.trim();
+      if (!fullName) return '';
+
+      const age = athlete && athlete.age != null ? String(athlete.age).trim() : '';
+      const ageGroup = athlete && athlete.age_group ? String(athlete.age_group).trim() : '';
+      const sport = athlete && athlete.sport ? String(athlete.sport).trim() : '';
+      const ageLabel = age || ageGroup;
+
+      const metaParts = [];
+      if (ageLabel) metaParts.push(ageLabel);
+      if (sport) metaParts.push(sport);
+
+      return metaParts.length ? `${fullName} (${metaParts.join(', ')})` : fullName;
+    }
+
     // Group users by role
     const groups = {
       'adult-athlete': [],
@@ -1891,26 +2015,34 @@
     // Lowercase search for comparison
     const searchLower = search.trim().toLowerCase();
 
-    // Filter users by name or email if searching
+    // Non-parent roles still come from /admin/active-users
     allActiveUsers.forEach(user => {
+      if (!user || !user.role) return;
+      if (user.role === 'athlete') return; // Parents/Guardians handled via /details
+
       if (
         !searchLower ||
         (user.full_name && user.full_name.toLowerCase().includes(searchLower)) ||
         (user.email && user.email.toLowerCase().includes(searchLower))
       ) {
-        if (groups[user.role]) {
-          groups[user.role].push(user);
-        }
+        if (groups[user.role]) groups[user.role].push(user);
       }
     });
 
-    // Role display mapping
-    function getRoleDisplay(role) {
-      if (role === 'adult-athlete') return 'Adult Athlete';
-      if (role === 'athlete') return 'Parent/Guardian';
-      if (role === 'admin') return 'Admin';
-      return role.charAt(0).toUpperCase() + role.slice(1);
-    }
+    // Parents/Guardians from /admin/active-users/details
+    const parentMatches = (allParentDetails || []).filter(parent => {
+      if (!searchLower) return true;
+
+      const parentName = String(parent.parent_name || '').toLowerCase();
+      const email = String(parent.email || '').toLowerCase();
+      const athleteNames = Array.isArray(parent.athletes)
+        ? parent.athletes
+            .map(a => formatAthleteNameWithAge(a).toLowerCase())
+            .join(' ')
+        : '';
+      return parentName.includes(searchLower) || email.includes(searchLower) || athleteNames.includes(searchLower);
+    });
+    groups['athlete'] = parentMatches;
 
     // Dropdown order and labels
     const dropdowns = [
@@ -1951,35 +2083,156 @@
       if (users.length > 0) {
         const table = document.createElement('table');
         table.className = 'table table-bordered table-sm';
-        table.innerHTML = `
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Role</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Member</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${users.map(user => `
+        const packageOptions = (allAssignablePackages || [])
+          .map(p => {
+            const sessions = Number(p.sessions_included);
+            const sessionsLabel = Number.isFinite(sessions) ? ` (${sessions} sessions)` : '';
+            return `<option value="${p.id}">${p.name}${sessionsLabel}</option>`;
+          })
+          .join('');
+        if (role === 'athlete') {
+          table.innerHTML = `
+            <thead>
               <tr>
-                <td>${user.full_name}</td>
-                <td>${getRoleDisplay(user.role)}</td>
-                <td>${user.email}</td>
-                <td>${user.phone || '-'}</td>
-                <td>
-                  <label class="form-check-label" style="margin-bottom:0;">
-                    <input class="form-check-input" type="checkbox"
-                      ${user.is_member ? 'checked' : ''}
-                      onchange="toggleMember(${user.customer_id}, this.checked, this)" />
-                    <span class="member-status-text">${user.is_member ? 'Yes' : 'No'}</span>
-                  </label>
-                </td>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Member</th>
+                <th>Athletes</th>
+                <th>Sessions Purchased</th>
+                <th>Manual Package Assignment</th>
               </tr>
-            `).join('')}
-          </tbody>
-        `;
+            </thead>
+            <tbody>
+              ${users.map(parent => {
+                const athletes = Array.isArray(parent.athletes) ? parent.athletes : [];
+                const athleteNames = athletes.length
+                  ? athletes.map(a => formatAthleteNameWithAge(a)).filter(Boolean).join(', ')
+                  : '-';
+
+                const athleteOptions = athletes.length
+                  ? athletes
+                      .map(a => `<option value="${a.athlete_id}">${formatAthleteNameWithAge(a)}</option>`)
+                      .join('')
+                  : '';
+
+                return `
+                  <tr data-customer-id="${parent.customer_id}">
+                    <td>${parent.parent_name || ''}</td>
+                    <td>${parent.email || ''}</td>
+                    <td>${parent.phone || '-'}</td>
+                    <td>
+                      <label class="form-check-label" style="margin-bottom:0;">
+                        <input class="form-check-input" type="checkbox"
+                          ${parent.is_member ? 'checked' : ''}
+                          onchange="toggleMember(${parent.customer_id}, this.checked, this)" />
+                        <span class="member-status-text">${parent.is_member ? 'Yes' : 'No'}</span>
+                      </label>
+                    </td>
+                    <td>${athleteNames}</td>
+                    <td class="parent-sessions-purchased">${Number(parent.total_sessions_purchased || 0)}</td>
+                    <td class="manual-assign-cell">
+                      <div class="d-flex gap-2 manual-assign-controls">
+                        <select class="form-select form-select-sm manual-athlete-select" ${athletes.length ? '' : 'disabled'}>
+                          <option value="">Select athlete...</option>
+                          ${athleteOptions}
+                        </select>
+                        <select class="form-select form-select-sm manual-package-select" ${(allAssignablePackages || []).length ? '' : 'disabled'}>
+                          <option value="">Select package...</option>
+                          ${packageOptions}
+                        </select>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="manualAssignPackage(${parent.customer_id}, this)" ${athletes.length && (allAssignablePackages || []).length ? '' : 'disabled'}>
+                          Assign
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          `;
+        } else if (role === 'adult-athlete') {
+          table.innerHTML = `
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Member</th>
+                <th>Age</th>
+                <th>Activity Level</th>
+                <th>Assign Package</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${users.map(user => {
+                const athleteId = Number(user.athlete_id || 0);
+                const canAssign = athleteId > 0 && (allAssignablePackages || []).length > 0;
+                const rawAge = user.age == null ? '' : String(user.age).trim();
+                const parsedAge = Number(rawAge);
+                const ageValue = rawAge === '' ? '-' : (Number.isFinite(parsedAge) ? parsedAge : rawAge);
+                const activityValue = user.activity_level || user.sport || '-';
+
+                return `
+                  <tr data-customer-id="${user.customer_id}" data-athlete-id="${athleteId > 0 ? athleteId : ''}">
+                    <td>${user.full_name || ''}</td>
+                    <td>${user.email || ''}</td>
+                    <td>${user.phone || '-'}</td>
+                    <td>
+                      <label class="form-check-label" style="margin-bottom:0;">
+                        <input class="form-check-input" type="checkbox"
+                          ${user.is_member ? 'checked' : ''}
+                          onchange="toggleMember(${user.customer_id}, this.checked, this)" />
+                        <span class="member-status-text">${user.is_member ? 'Yes' : 'No'}</span>
+                      </label>
+                    </td>
+                    <td>${ageValue}</td>
+                    <td>${activityValue}</td>
+                    <td class="manual-assign-cell">
+                      <div class="d-flex gap-2 manual-assign-controls">
+                        <select class="form-select form-select-sm manual-package-select" ${(allAssignablePackages || []).length ? '' : 'disabled'}>
+                          <option value="">Select package...</option>
+                          ${packageOptions}
+                        </select>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="manualAssignPackage(${user.customer_id}, this)" ${canAssign ? '' : 'disabled'}>
+                          Assign
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          `;
+        } else {
+          table.innerHTML = `
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Member</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${users.map(user => `
+                <tr>
+                  <td>${user.full_name}</td>
+                  <td>${user.email}</td>
+                  <td>${user.phone || '-'}</td>
+                  <td>
+                    <label class="form-check-label" style="margin-bottom:0;">
+                      <input class="form-check-input" type="checkbox"
+                        ${user.is_member ? 'checked' : ''}
+                        onchange="toggleMember(${user.customer_id}, this.checked, this)" />
+                      <span class="member-status-text">${user.is_member ? 'Yes' : 'No'}</span>
+                    </label>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          `;
+        }
         content.appendChild(table);
       } else {
         content.innerHTML = `<p>No users in this group.</p>`;
@@ -2030,6 +2283,81 @@
       if (statusSpan) statusSpan.textContent = checked ? 'Yes' : 'No';
     }
   }
+
+  async function manualAssignPackage(customerId, buttonEl) {
+    const row = buttonEl && buttonEl.closest ? buttonEl.closest('tr') : null;
+    if (!row) return;
+
+    const athleteSel = row.querySelector('.manual-athlete-select');
+    const packageSel = row.querySelector('.manual-package-select');
+    const rowAthleteId = String(row.dataset.athleteId || '').trim();
+    const athleteId = (athleteSel ? athleteSel.value : '') || rowAthleteId;
+    const packageId = packageSel ? packageSel.value : '';
+    const isAdultAssignRow = row.hasAttribute('data-athlete-id') && !athleteSel;
+
+    if (!athleteId) {
+      alert(isAdultAssignRow
+        ? 'No athlete profile found for this account. Ask the user to complete profile details first.'
+        : 'Please select an athlete.');
+      return;
+    }
+    if (!packageId) {
+      alert('Please select a package.');
+      return;
+    }
+
+    const prevDisabled = buttonEl.disabled;
+    buttonEl.disabled = true;
+    try {
+      const res = await fetch(`${API_BASE}/admin/manual-assign-package`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          customerId,
+          athleteId: Number(athleteId),
+          packageId: Number(packageId),
+          paymentMethod: 'cash'
+        })
+      });
+
+      let json = null;
+      try {
+        json = await res.json();
+      } catch (_) {
+        json = null;
+      }
+
+      if (!res.ok || !json || json.success !== true) {
+        alert((json && json.error) ? json.error : 'Failed to assign package.');
+        return;
+      }
+
+      // Fast UI update (if totals are returned)
+      const purchasedCell = row.querySelector('.parent-sessions-purchased');
+      if (json.totals) {
+        const totalPurchased = Number(json.totals.total_sessions_purchased || 0);
+
+        if (purchasedCell) purchasedCell.textContent = String(totalPurchased);
+
+        const parentIndex = allParentDetails.findIndex(p => Number(p.customer_id) === Number(customerId));
+        if (parentIndex !== -1) {
+          allParentDetails[parentIndex].total_sessions_purchased = totalPurchased;
+        }
+      }
+
+      if (athleteSel) athleteSel.value = '';
+      if (packageSel) packageSel.value = '';
+
+      alert('Package assigned successfully!');
+    } catch (err) {
+      console.error('Manual assign failed', err);
+      alert('Failed to assign package.');
+    } finally {
+      buttonEl.disabled = prevDisabled;
+    }
+  }
+  window.manualAssignPackage = manualAssignPackage;
 
 
   document.addEventListener('DOMContentLoaded', () => {

@@ -1,11 +1,15 @@
 console.log("authStatus.js loaded");
 
 // Use local backend if running locally, otherwise use deployed backend
-const API_BASE = (()=>{
-  const host = window.location.hostname;
-  if (host === "localhost") return "http://localhost:5000";
-  if (host === "https://www.zephyrsstrengthandperformance.com") return "https://api.zephyrsstrengthandperformance.com"; // backend URL stays on Render
-  return "https://api.zephyrsstrengthandperformance.com"; // default fallback
+const API_BASE = (() => {
+  const host = window.location.hostname; // e.g., localhost, www.zephyrsstrengthandperformance.com
+  if (host === 'localhost') return 'http://localhost:5000';
+  // Any prod host under zephyrsstrengthandperformance.com uses the Render API domain
+  if (host === 'zephyrsstrengthandperformance.com' || host.endsWith('.zephyrsstrengthandperformance.com')) {
+    return 'https://api.zephyrsstrengthandperformance.com';
+  }
+  // Fallback to API domain
+  return 'https://api.zephyrsstrengthandperformance.com';
 })();
 // === Global Functions ===
 

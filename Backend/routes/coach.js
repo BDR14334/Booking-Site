@@ -212,7 +212,7 @@ router.get('/bookings/:coachUserId', async (req, res) => {
       `SELECT
          a.first_name AS athlete_first,
          a.last_name AS athlete_last,
-         pk.name AS package_name,
+         COALESCE(pk.name, '(deleted package)') AS package_name,
          json_agg(json_build_object(
            'date', ts.date,
            'start_time', ts.start_time
@@ -220,11 +220,11 @@ router.get('/bookings/:coachUserId', async (req, res) => {
        FROM booking b
        JOIN athlete a ON b.athlete_id = a.id
        JOIN timeslots ts ON b.timeslot_id = ts.id
-       JOIN packages pk ON b.package_id = pk.id
+       LEFT JOIN packages pk ON b.package_id = pk.id
        JOIN timeslot_assignments ta ON ts.id = ta.timeslot_id
        WHERE ta.coach_user_id = $1
-       GROUP BY a.first_name, a.last_name, pk.name
-       ORDER BY a.last_name, a.first_name, pk.name`,
+       GROUP BY a.first_name, a.last_name, COALESCE(pk.name, '(deleted package)')
+       ORDER BY a.last_name, a.first_name, COALESCE(pk.name, '(deleted package)')`,
       [coachUserId]
     );
     res.json(result.rows);
