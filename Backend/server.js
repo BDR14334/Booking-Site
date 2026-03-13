@@ -20,9 +20,10 @@ const db = require('./db'); // Adjust path if needed
 const app = express();
 const PORT = process.env.PORT || 5000;
 const allowedOrigins = [
-  'http://localhost:5500',       // dev
-  'https://booking-site-frontend.onrender.com', // 🚀 your deployed frontend
-  'https://www.zephyrsstrengthandperformance.com'
+  'http://localhost:5500',
+  'https://booking-site-frontend.onrender.com',
+  'https://www.zephyrsstrengthandperformance.com',
+  'https://zsp-frontend-staging.onrender.com'
 ];
 
 // Block everything on API from indexing
