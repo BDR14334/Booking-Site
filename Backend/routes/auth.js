@@ -229,6 +229,7 @@ router.post('/login', async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
+      path: '/',
       maxAge: cookieMaxAge // 👈 Dynamic based on Remember Me
     });
 
@@ -280,7 +281,8 @@ router.post('/logout', (req, res) => {
   res.clearCookie('token', {
     httpOnly: true,
     secure: true,
-    sameSite: 'none'
+    sameSite: 'none',
+    path: '/'
   });
   res.status(200).json({ message: 'Logout successful' });
 });

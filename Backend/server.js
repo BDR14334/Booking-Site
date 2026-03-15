@@ -24,6 +24,8 @@ const normalizedAllowedOrigins = new Set(
   allowedOrigins.map(origin => origin.replace(/\/$/, '').toLowerCase())
 );
 
+app.set("trust proxy", 1);
+
 // Block everything on API from indexing
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain');

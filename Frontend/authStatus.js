@@ -2,12 +2,23 @@ console.log("authStatus.js loaded");
 
 // Use local backend if running locally, otherwise use deployed backend
 const API_BASE = (() => {
-  const host = window.location.hostname; // e.g., localhost, www.zephyrsstrengthandperformance.com
+  const host = (window.location.hostname || '').toLowerCase(); // e.g., localhost, www.zephyrsstrengthandperformance.com
+  const stagingHosts = new Set([
+    'zsp-frontend-staging.onrender.com',
+    'booking-site-frontend.onrender.com'
+  ]);
+
   if (host === 'localhost') return 'http://localhost:5000';
+
+  if (stagingHosts.has(host)) {
+    return 'https://zsp-backend-staging.onrender.com';
+  }
+
   // Any prod host under zephyrsstrengthandperformance.com uses the Render API domain
   if (host === 'zephyrsstrengthandperformance.com' || host.endsWith('.zephyrsstrengthandperformance.com')) {
     return 'https://api.zephyrsstrengthandperformance.com';
   }
+
   // Fallback to API domain
   return 'https://api.zephyrsstrengthandperformance.com';
 })();
