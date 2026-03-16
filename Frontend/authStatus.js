@@ -1,5 +1,3 @@
-console.log("authStatus.js loaded");
-
 // Use local backend if running locally, otherwise use deployed backend
 const API_BASE = (() => {
   const host = (window.location.hostname || '').toLowerCase(); // e.g., localhost, www.zephyrsstrengthandperformance.com
@@ -22,6 +20,61 @@ const API_BASE = (() => {
   // Fallback to API domain
   return 'https://api.zephyrsstrengthandperformance.com';
 })();
+
+// --- Auth header fallback (staging/local) ---
+// iOS/Safari may block cross-site cookies on some shared-hosting domains.
+// If a token is present in storage, attach it as an Authorization header on API calls.
+(function installAuthHeaderFetchShim() {
+  if (window.__zspAuthHeaderShimInstalled) return;
+  window.__zspAuthHeaderShimInstalled = true;
+
+  const originalFetch = window.fetch.bind(window);
+
+  function getStoredToken() {
+    try {
+      return localStorage.getItem('token') || sessionStorage.getItem('token');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function getUrl(input) {
+    if (typeof input === 'string') return input;
+    if (input && typeof input.url === 'string') return input.url;
+    return '';
+  }
+
+  window.fetch = function (input, init) {
+    const token = getStoredToken();
+    const url = getUrl(input);
+
+    if (!token || typeof url !== 'string' || !url.startsWith(`${API_BASE}/`)) {
+      return originalFetch(input, init);
+    }
+
+    // Avoid adding auth headers to login/register (unnecessary preflights).
+    if (url.startsWith(`${API_BASE}/auth/login`) || url.startsWith(`${API_BASE}/auth/register`)) {
+      return originalFetch(input, init);
+    }
+
+    const mergedHeaders = new Headers();
+
+    if (input instanceof Request) {
+      input.headers.forEach((value, key) => mergedHeaders.set(key, value));
+    }
+
+    if (init && init.headers) {
+      new Headers(init.headers).forEach((value, key) => mergedHeaders.set(key, value));
+    }
+
+    if (!mergedHeaders.has('authorization')) {
+      mergedHeaders.set('Authorization', `Bearer ${token}`);
+    }
+
+    const nextInit = { ...(init || {}), headers: mergedHeaders };
+    return originalFetch(input, nextInit);
+  };
+})();
 // === Global Functions ===
 
 // Sidebar toggle function
@@ -38,6 +91,12 @@ function handleLogout() {
   })
   .then(res => res.json())
   .then(() => {
+    try {
+      localStorage.removeItem('token');
+      sessionStorage.removeItem('token');
+    } catch (_) {
+      // ignore
+    }
     window.location.reload();
   });
 }
@@ -223,6 +282,13 @@ function updateNavButton() {
 
 function handleSessionExpired() {
   console.warn("Session expired — handling logout");
+
+  try {
+    localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
+  } catch (_) {
+    // ignore
+  }
 
   const sidebar = document.getElementById("profileSidebar");
   if (sidebar) sidebar.style.display = "none";

@@ -279,6 +279,19 @@
                 if (res.ok) {
                     const { user } = data;
 
+                    // Staging/local fallback: if the API returns a token (see backend), store it.
+                    // This allows iOS/Safari to stay logged in even when cross-site cookies are blocked.
+                    if (data.token) {
+                        try {
+                            localStorage.removeItem('token');
+                            sessionStorage.removeItem('token');
+                            const storage = remember ? localStorage : sessionStorage;
+                            storage.setItem('token', data.token);
+                        } catch (_) {
+                            // Ignore storage errors (private mode, disabled storage, etc.)
+                        }
+                    }
+
                     // Redirect based on user.role
                     if (user.role === "adult-athlete") {
                         if (user.is_first_login) {
