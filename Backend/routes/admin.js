@@ -335,13 +335,12 @@ router.delete('/delete-package/:id', authenticateToken, requireRole('admin'), as
       `SELECT
          (SELECT COUNT(*)::int FROM package_usage WHERE package_id = $1) AS usage_count,
          (SELECT COUNT(*)::int FROM orders WHERE package_id = $1) AS orders_count,
-         (SELECT COUNT(*)::int FROM booking WHERE package_id = $1) AS booking_count,
          (SELECT COUNT(*)::int FROM timeslots WHERE package_id = $1) AS timeslots_count`,
       [id]
     );
 
     const deps = depsRes.rows[0] || {};
-    const inUse = [deps.usage_count, deps.orders_count, deps.booking_count, deps.timeslots_count]
+    const inUse = [deps.usage_count, deps.orders_count, deps.timeslots_count]
       .some(n => Number(n) > 0);
 
     // Archive: always allowed (even if in use)
@@ -480,7 +479,6 @@ router.delete('/delete-package/:id', authenticateToken, requireRole('admin'), as
         details: {
           usage: deps.usage_count || 0,
           orders: deps.orders_count || 0,
-          bookings: deps.booking_count || 0,
           timeslots: deps.timeslots_count || 0
         },
         suggestion: 'Archive/disable the package instead.'
