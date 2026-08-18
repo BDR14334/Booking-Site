@@ -104,8 +104,6 @@ router.get('/me', (req, res) => {
 router.post('/register', async (req, res) => {
   const { first_name, last_name, username, email, password, role, admin_id } = req.body;
 
-  console.log('Register body:', req.body);
-
   if (!validRoles.includes(role)) {
     return res.status(400).json({ error: 'Invalid or missing role. Must be admin, coach, or athlete.' });
   }
@@ -181,8 +179,6 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   const { identifier, password, remember } = req.body; //remember
 
-   console.log('Login body:', req.body);
-
   if (!identifier || !password) {
     return res.status(400).json({ error: 'Email and password are required.' });
   }
@@ -229,6 +225,7 @@ router.post('/login', async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
+      path: '/',
       maxAge: cookieMaxAge // 👈 Dynamic based on Remember Me
     });
 
@@ -257,8 +254,12 @@ router.post('/login', async (req, res) => {
       }
     }
 
-    // Respond with token and user info
-    res.status(200).json({
+    // Respond with user info; include the token only for staging/local origins.
+    // (Safari/iOS may block cross-site cookies on shared-hosting domains like onrender.com.)
+    const origin = (req.get('origin') || '').toLowerCase();
+    const shouldExposeToken = origin.startsWith('http://localhost') || origin.endsWith('.onrender.com');
+
+    const responseBody = {
       message: 'Login successful',
       user: {
         id: user.id,
@@ -266,7 +267,13 @@ router.post('/login', async (req, res) => {
         role: user.role,
         is_first_login: user.is_first_login,
       },
-    });
+    };
+
+    if (shouldExposeToken) {
+      responseBody.token = token;
+    }
+
+    res.status(200).json(responseBody);
 
   } catch (err) {
     console.error('Login error:', err.message);
@@ -280,7 +287,8 @@ router.post('/logout', (req, res) => {
   res.clearCookie('token', {
     httpOnly: true,
     secure: true,
-    sameSite: 'none'
+    sameSite: 'none',
+    path: '/'
   });
   res.status(200).json({ message: 'Logout successful' });
 });

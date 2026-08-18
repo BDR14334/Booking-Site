@@ -261,46 +261,74 @@
             registerAdminIdContainer.style.display = (this.value === "admin") ? "block" : "none";
         });
 
-        // LOGIN form submission logic
-        document.querySelector('#login .submit').addEventListener('click', async (e) => {
+        async function handleLoginSubmit(e) {
             e.preventDefault();
+            try {
+                const identifier = document.getElementById("loginIdentifier").value.trim();
+                const password = document.getElementById("loginPassword").value.trim();
+                const remember = document.getElementById("login-check").checked; //remember
 
-            const identifier = document.getElementById("loginIdentifier").value.trim();
-            const password = document.getElementById("loginPassword").value.trim();
-            const remember = document.getElementById("login-check").checked; //remember
+                const res = await fetch(`${API_BASE}/auth/login`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  credentials: 'include',
+                  body: JSON.stringify({ identifier, password, remember }) //remember
+                });
 
-            const res = await fetch(`${API_BASE}/auth/login`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'include',
-              body: JSON.stringify({ identifier, password, remember }) //remember
-            });
+                const data = await res.json();
+                if (res.ok) {
+                    const { user } = data;
 
-            const data = await res.json();
-            if (res.ok) {
-                const { user } = data;
-
-                // Redirect based on user.role
-                if (user.role === "adult-athlete") {
-                    if (user.is_first_login) {
-                        sessionStorage.setItem("isFirstLogin", "true");
+                    // Staging/local fallback: if the API returns a token (see backend), store it.
+                    // This allows iOS/Safari to stay logged in even when cross-site cookies are blocked.
+                    if (data.token) {
+                        try {
+                            localStorage.removeItem('token');
+                            sessionStorage.removeItem('token');
+                            const storage = remember ? localStorage : sessionStorage;
+                            storage.setItem('token', data.token);
+                        } catch (_) {
+                            // Ignore storage errors (private mode, disabled storage, etc.)
+                        }
                     }
-                    window.location.href = "/adult-athlete-dashboard";
-                } else if (user.role === "athlete") {
-                    if (user.is_first_login) {
-                        sessionStorage.setItem("isFirstLogin", "true");
+
+                    // Redirect based on user.role
+                    if (user.role === "adult-athlete") {
+                        if (user.is_first_login) {
+                            sessionStorage.setItem("isFirstLogin", "true");
+                        }
+                        window.location.href = "/adult-athlete-dashboard";
+                    } else if (user.role === "athlete") {
+                        if (user.is_first_login) {
+                            sessionStorage.setItem("isFirstLogin", "true");
+                        }
+                        window.location.href = "/athlete-dashboard";
+                    } else if (user.role === "coach") {
+                        window.location.href = "/coach-dashboard";
+                    } else if (user.role === "admin") {
+                        window.location.href = "/admin-dashboard";
+                    } else {
+                        window.location.href = "/"; // fallback
                     }
-                    window.location.href = "/athlete-dashboard";
-                } else if (user.role === "coach") {
-                    window.location.href = "/coach-dashboard";
-                } else if (user.role === "admin") {
-                    window.location.href = "/admin-dashboard";
                 } else {
-                    window.location.href = "/"; // fallback
+                    showCustomAlert(data.error || "Login failed.");
                 }
-            } else {
-                showCustomAlert(data.error || "Login failed.");
+            } catch (err) {
+                console.error('[login] Login flow failed:', err);
+                showCustomAlert("Unable to complete login. Please try again.");
             }
+        }
+
+        // LOGIN form submission logic
+        document.querySelector('#login .submit').addEventListener('click', handleLoginSubmit);
+
+        // Handle Enter key on login inputs in mobile keyboards.
+        ['loginIdentifier', 'loginPassword'].forEach((id) => {
+            document.getElementById(id)?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    handleLoginSubmit(e);
+                }
+            });
         });
 
 

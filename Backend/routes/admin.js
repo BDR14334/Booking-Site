@@ -335,13 +335,12 @@ router.delete('/delete-package/:id', authenticateToken, requireRole('admin'), as
       `SELECT
          (SELECT COUNT(*)::int FROM package_usage WHERE package_id = $1) AS usage_count,
          (SELECT COUNT(*)::int FROM orders WHERE package_id = $1) AS orders_count,
-         (SELECT COUNT(*)::int FROM booking WHERE package_id = $1) AS booking_count,
          (SELECT COUNT(*)::int FROM timeslots WHERE package_id = $1) AS timeslots_count`,
       [id]
     );
 
     const deps = depsRes.rows[0] || {};
-    const inUse = [deps.usage_count, deps.orders_count, deps.booking_count, deps.timeslots_count]
+    const inUse = [deps.usage_count, deps.orders_count, deps.timeslots_count]
       .some(n => Number(n) > 0);
 
     // Archive: always allowed (even if in use)
@@ -480,7 +479,6 @@ router.delete('/delete-package/:id', authenticateToken, requireRole('admin'), as
         details: {
           usage: deps.usage_count || 0,
           orders: deps.orders_count || 0,
-          bookings: deps.booking_count || 0,
           timeslots: deps.timeslots_count || 0
         },
         suggestion: 'Archive/disable the package instead.'
@@ -579,7 +577,7 @@ router.get('/all-packages', async (req, res) => {
     let result;
     try {
       result = await pool.query(
-        `SELECT id, name
+        `SELECT id, name, sessions_included
          FROM packages
          WHERE ($1::boolean = true) OR (is_active = true)
          ORDER BY name`,
@@ -587,7 +585,7 @@ router.get('/all-packages', async (req, res) => {
       );
     } catch (err) {
       if (err && err.code === '42703') {
-        result = await pool.query('SELECT id, name FROM packages ORDER BY name');
+        result = await pool.query('SELECT id, name, sessions_included FROM packages ORDER BY name');
       } else {
         throw err;
       }
@@ -833,20 +831,219 @@ router.get('/active-users', async (req, res) => {
     const result = await pool.query(`
       SELECT 
         u.id,
-        c.id AS customer_id,  -- add this line
+        c.id AS customer_id,
         u.first_name || ' ' || u.last_name AS full_name,
         u.role,
         u.email,
         c.phone,
-        c.is_member
+        c.is_member,
+        CASE
+          WHEN u.role = 'adult-athlete'
+            THEN COALESCE(EXTRACT(YEAR FROM age(c.dob))::int::text, aa.age_group)
+        END AS age,
+        CASE WHEN u.role = 'adult-athlete' THEN aa.sport END AS activity_level,
+        CASE WHEN u.role = 'adult-athlete' THEN aa.id END AS athlete_id
       FROM users u
       LEFT JOIN customer c ON u.id = c.user_id
+      LEFT JOIN LATERAL (
+        SELECT a.id, a.sport, a.age_group
+        FROM athlete a
+        WHERE a.customer_id = c.id
+        ORDER BY a.id
+        LIMIT 1
+      ) aa ON u.role = 'adult-athlete'
       ORDER BY u.first_name, u.last_name
     `);
     res.json(result.rows);
   } catch (err) {
     console.error('Error fetching active users:', err);
     res.status(500).json({ error: 'Failed to load active users' });
+  }
+});
+
+// Active Users details (Parents/Guardians only)
+// Returns one row per parent customer (role === 'athlete') with athlete list + session totals.
+router.get('/active-users/details', async (req, res) => {
+  try {
+    // Single query: users -> customer -> athlete -> package_usage (left)
+    const result = await pool.query(`
+      SELECT
+        c.id AS customer_id,
+        (u.first_name || ' ' || u.last_name) AS parent_name,
+        u.email,
+        c.phone,
+        c.is_member,
+        COALESCE(
+          jsonb_agg(
+            DISTINCT jsonb_build_object(
+              'athlete_id', a.id,
+              'first_name', a.first_name,
+              'last_name', a.last_name,
+              'age_group', a.age_group,
+              'sport', a.sport
+            )
+          ) FILTER (WHERE a.id IS NOT NULL),
+          '[]'::jsonb
+        ) AS athletes,
+        COALESCE(SUM(pu.sessions_purchased), 0)::int AS total_sessions_purchased,
+        COALESCE(SUM(pu.sessions_remaining), 0)::int AS total_sessions_remaining
+      FROM users u
+      JOIN customer c ON c.user_id = u.id
+      LEFT JOIN athlete a ON a.customer_id = c.id
+      LEFT JOIN package_usage pu ON pu.athlete_id = a.id
+      WHERE u.role = 'athlete'
+      GROUP BY c.id, u.first_name, u.last_name, u.email, c.phone, c.is_member
+      ORDER BY u.first_name, u.last_name
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching active user details:', err);
+    res.status(500).json({ error: 'Failed to load active user details' });
+  }
+});
+
+// Manual package assignment (cash scenario)
+// Upserts package_usage for (customer_id, athlete_id, package_id)
+router.post('/manual-assign-package', async (req, res) => {
+  const { customerId, athleteId, packageId, paymentMethod = 'cash', note } = req.body || {};
+
+  const customerIdNum = Number(customerId);
+  const athleteIdNum = Number(athleteId);
+  const packageIdNum = Number(packageId);
+
+  if (!Number.isInteger(customerIdNum) || customerIdNum <= 0) {
+    return res.status(400).json({ error: 'Invalid customerId' });
+  }
+  if (!Number.isInteger(athleteIdNum) || athleteIdNum <= 0) {
+    return res.status(400).json({ error: 'Invalid athleteId' });
+  }
+  if (!Number.isInteger(packageIdNum) || packageIdNum <= 0) {
+    return res.status(400).json({ error: 'Invalid packageId' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Validate that the athlete belongs to the parent/customer
+    const ownership = await client.query(
+      'SELECT 1 FROM athlete WHERE id = $1 AND customer_id = $2',
+      [athleteIdNum, customerIdNum]
+    );
+    if (ownership.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Selected athlete does not belong to this customer' });
+    }
+
+    // Fetch package sessions_included
+    const pkgRes = await client.query(
+      'SELECT id, name, sessions_included, price FROM packages WHERE id = $1',
+      [packageIdNum]
+    );
+    if (pkgRes.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Package not found' });
+    }
+    const pkg = pkgRes.rows[0];
+    const sessionsIncluded = Number(pkg.sessions_included);
+    if (!Number.isInteger(sessionsIncluded) || sessionsIncluded <= 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Invalid package session count' });
+    }
+
+    // Upsert package_usage
+    const usageRes = await client.query(
+      `INSERT INTO package_usage (customer_id, athlete_id, package_id, sessions_remaining, sessions_purchased)
+       VALUES ($1, $2, $3, $4, $4)
+       ON CONFLICT (customer_id, athlete_id, package_id)
+       DO UPDATE SET
+         sessions_remaining = package_usage.sessions_remaining + EXCLUDED.sessions_remaining,
+         sessions_purchased = package_usage.sessions_purchased + EXCLUDED.sessions_purchased
+       RETURNING *`,
+      [customerIdNum, athleteIdNum, packageIdNum, sessionsIncluded]
+    );
+
+    // Best-effort: create an order + payment so it shows in Transactions.
+    // This is guarded with a savepoint so schema mismatches won't break assignment.
+    let orderCreated = false;
+    let orderId = null;
+    try {
+      await client.query('SAVEPOINT manual_cash_tx');
+
+      const receiptCode = Math.floor(100000 + Math.random() * 900000);
+      const receiptCodeStr = `ZSP-${receiptCode}`;
+
+      const orderRes = await client.query(
+        `INSERT INTO orders (customer_id, package_id, status, order_date, receipt_code)
+         VALUES ($1, $2, $3, NOW(), $4)
+         RETURNING id`,
+        [customerIdNum, packageIdNum, 'paid', receiptCode]
+      );
+      orderId = orderRes.rows[0].id;
+
+      const unitPrice = (() => {
+        if (typeof pkg.price === 'number') return pkg.price;
+        if (typeof pkg.price === 'string') {
+          const normalized = pkg.price.replace(/[^0-9.\-]/g, '');
+          return Number.parseFloat(normalized);
+        }
+        return Number.NaN;
+      })();
+      const amount = Number.isFinite(unitPrice) ? unitPrice : null;
+
+      const transactionId = `cash-${Date.now()}-${orderId}`;
+      await client.query(
+        `INSERT INTO payments (order_id, amount, payment_method, transaction_id, payment_status)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [orderId, amount, String(paymentMethod || 'cash'), transactionId, 'succeeded']
+      );
+
+      // Note is currently best-effort/no-op: schema doesn't include a clear field.
+      // We keep it in the API for future extension.
+      void receiptCodeStr;
+      void note;
+
+      orderCreated = true;
+    } catch (txErr) {
+      try {
+        await client.query('ROLLBACK TO SAVEPOINT manual_cash_tx');
+      } catch (_) {
+        // ignore
+      }
+      // Still allow assignment to succeed.
+      console.warn('Manual assignment: order/payment creation skipped:', txErr && txErr.message ? txErr.message : txErr);
+    }
+
+    // Updated totals for this parent/customer across all their athletes
+    const totalsRes = await client.query(
+      `SELECT
+         COALESCE(SUM(pu.sessions_purchased), 0)::int AS total_sessions_purchased,
+         COALESCE(SUM(pu.sessions_remaining), 0)::int AS total_sessions_remaining
+       FROM package_usage pu
+       JOIN athlete a ON pu.athlete_id = a.id
+       WHERE a.customer_id = $1`,
+      [customerIdNum]
+    );
+
+    await client.query('COMMIT');
+
+    res.json({
+      success: true,
+      package_usage: usageRes.rows[0],
+      totals: totalsRes.rows[0] || { total_sessions_purchased: 0, total_sessions_remaining: 0 },
+      order_created: orderCreated,
+      order_id: orderId
+    });
+  } catch (err) {
+    try {
+      await client.query('ROLLBACK');
+    } catch (_) {
+      // ignore
+    }
+    console.error('Error manually assigning package:', err);
+    res.status(500).json({ error: 'Failed to manually assign package' });
+  } finally {
+    client.release();
   }
 });
 
