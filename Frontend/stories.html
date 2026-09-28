@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-RD9W7NKG1C"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-RD9W7NKG1C');
+</script>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <title>Stories | Zephyrs Strength & Performance</title>
+  <meta name="description" content="Read athlete success stories from Zephyrs Strength & Performance." />
+  <link rel="canonical" href="https://www.zephyrsstrengthandperformance.com/stories" />
+  <meta property="og:title" content="Stories | Zephyrs Strength & Performance" />
+  <meta property="og:description" content="Read athlete success stories from Zephyrs Strength & Performance." />
+  <meta property="og:url" content="https://www.zephyrsstrengthandperformance.com/stories" />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="icon" type="image/png" href="img/favicon.png" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+
+    .wrapper-homepage {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background: #343a40;
+    }
+
+    .stories-stage {
+      flex: 1 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 50px 20px 80px;
+      color: white;
+    }
+
+    .stories-stage .title {
+      font-size: 36px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 10px;
+      margin-top: 40px;
+    }
+
+    .stories-counter {
+      text-align: center;
+      color: #ffa162;
+      font-weight: 600;
+      margin-bottom: 30px;
+    }
+
+    .story-deck {
+      position: relative;
+      width: 100%;
+      max-width: 380px;
+      height: 560px;
+      touch-action: pan-y;
+    }
+
+    .story-card {
+      position: absolute;
+      inset: 0;
+      background: #343a40;
+      border-radius: 20px;
+      box-shadow: 0 5px 15px black;
+      padding: 25px;
+      box-sizing: border-box;
+      display: none;
+      flex-direction: column;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+      cursor: grab;
+      user-select: none;
+      will-change: transform, opacity, filter;
+    }
+
+    .story-card.active {
+      display: flex;
+      z-index: 3;
+      opacity: 1;
+      transform: translateX(0) scale(1);
+      filter: none;
+      pointer-events: auto;
+    }
+
+    .story-card.preview-left,
+    .story-card.preview-right {
+      display: flex;
+      opacity: 0.34;
+      filter: blur(2.5px);
+      pointer-events: none;
+      z-index: 1;
+      transform: scale(0.84);
+    }
+
+    .story-card.preview-left {
+      transform: translateX(-314px) scale(0.84);
+    }
+
+    .story-card.preview-right {
+      transform: translateX(314px) scale(0.84);
+    }
+
+    .story-card img {
+      width: 100%;
+      height: 260px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      pointer-events: none;
+    }
+
+    .story-card h2 {
+      font-size: 20px;
+      margin: 0 0 10px;
+      text-align: center;
+    }
+
+    .story-card p {
+      font-size: 14px;
+      line-height: 1.5;
+      overflow-y: auto;
+      padding-right: 12px;
+      max-height: 200px;
+
+      /* Firefox */
+      scrollbar-width: thin;
+      scrollbar-color: white transparent;
+    }
+
+    /* Chrome, Edge, Safari */
+    .story-card p::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .story-card p::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .story-card p::-webkit-scrollbar-thumb {
+      background-color: #ff4800;
+      border-radius: 10px;
+    }
+
+    .story-card p::-webkit-scrollbar-thumb:hover {
+      background-color: #e03e00;
+    }
+
+    .deck-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+      margin-top: 20px;
+    }
+
+    .deck-arrow {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 48px;
+      cursor: pointer;
+      transition: transform 0.2s ease, color 0.2s ease;
+    }
+
+    .deck-arrow:hover {
+      transform: scale(1.15);
+      color: #ff4800;
+    }
+
+    .deck-arrow:disabled {
+      opacity: 0.3;
+      cursor: default;
+      transform: none;
+      color: white;
+    }
+
+    .stories-empty {
+      max-width: 500px;
+      text-align: center;
+      color: white;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper-homepage">
+    <nav class="nav">
+      <div class="nav-logo">
+          <a href="/">
+            <img src="img/ZSP-logo1.png" alt="Zephyrs Strength & Performance Logo"
+                oncontextmenu="return false;"
+                draggable="false"
+                style="user-select: none; -webkit-user-drag: none;" />
+          </a>
+      </div>
+
+      <div class="nav-menu" id="navMenu">
+        <ul>
+          <li><a href="/" class="link">Home</a></li>
+          <li><a href="/about" class="link">About</a></li>
+          <li><a href="/packages" class="link">Packages</a></li>
+          <li><a href="/contact" class="link">Contact</a></li>
+        </ul>
+      </div>
+
+      <div class="nav-button" id="authButtons">
+        <button class="btn white-btn" id="loginBtn" onclick="login()">Login</button>
+        <button class="btn" id="registerBtn" onclick="register()">Register</button>
+      </div>
+
+      <div class="nav-menu-btn">
+        <i class="bx bx-menu" onclick="toggleMenuSidebar()"></i>
+      </div>
+    </nav>
+
+    <div id="menuSidebar" class="sidebar bg-dark text-white" style="left:0; right:auto;">
+      <button class="btn btn-sm btn-outline-light ms-2 mt-2 close-btn" onclick="toggleMenuSidebar()">× Close</button>
+      <h4 style="margin-left:1.5rem; color:#fff;">Menu</h4>
+      <div class="sidebar-separator menu-separator"></div>
+      <div class="mt-4 d-flex flex-column">
+        <a href="/" class="text-white px-3 py-2 text-decoration-none">Home</a>
+        <a href="/about" class="text-white px-3 py-2 text-decoration-none">About</a>
+        <a href="/packages" class="text-white px-3 py-2 text-decoration-none">Packages</a>
+        <a href="/contact" class="text-white px-3 py-2 text-decoration-none">Contact</a>
+      </div>
+    </div>
+
+    <section class="stories-stage">
+      <div class="title">Success Stories</div>
+      <div class="stories-counter" id="storiesCounter"></div>
+
+      <div class="story-deck" id="storyDeck"></div>
+
+      <div class="deck-controls">
+        <button class="deck-arrow" id="prevStoryBtn" aria-label="Previous story">
+          <i class="bx bx-chevron-left"></i>
+        </button>
+        <button class="deck-arrow" id="nextStoryBtn" aria-label="Next story">
+          <i class="bx bx-chevron-right"></i>
+        </button>
+      </div>
+
+      <div class="stories-empty" id="storiesEmpty" style="display:none;">
+        No success stories are available right now.
+      </div>
+    </section>
+  </div>
+
+  <script src="authStatus.js"></script>
+  <script>
+    function login() {
+      window.location.href = "/login";
+    }
+
+    function register() {
+      window.location.href = "/login?register=true";
+    }
+
+    function toggleMenuSidebar() {
+      const sidebar = document.getElementById("menuSidebar");
+      sidebar.style.display = sidebar.style.display === "block" ? "none" : "block";
+    }
+
+    let stories = [];
+    let currentIndex = 0;
+
+    function renderDeck() {
+      const deck = document.getElementById('storyDeck');
+      const counter = document.getElementById('storiesCounter');
+      deck.innerHTML = '';
+
+      stories.forEach((story, index) => {
+        let imgSrc;
+        if (story.image_url) {
+          imgSrc = story.image_url.startsWith('http')
+            ? story.image_url
+            : `${API_BASE}${story.image_url}`;
+        } else {
+          imgSrc = 'img/placeholder.png';
+        }
+
+        const card = document.createElement('div');
+        const isActive = index === currentIndex;
+        const isPreviewLeft = index === currentIndex - 1;
+        const isPreviewRight = index === currentIndex + 1;
+        card.className = [
+          'story-card',
+          isActive ? 'active' : '',
+          isPreviewLeft ? 'preview-left' : '',
+          isPreviewRight ? 'preview-right' : ''
+        ].filter(Boolean).join(' ');
+        card.dataset.index = index;
+        card.innerHTML = `
+          <img src="${imgSrc}" alt="${story.name}">
+          <h2>${story.name}</h2>
+          <p>${story.story}</p>
+        `;
+        attachSwipeHandlers(card);
+        deck.appendChild(card);
+      });
+
+      counter.textContent = stories.length
+        ? `${currentIndex + 1} / ${stories.length}`
+        : '';
+
+      document.getElementById('prevStoryBtn').disabled = currentIndex <= 0;
+      document.getElementById('nextStoryBtn').disabled = currentIndex >= stories.length - 1;
+
+      // Sync the copyable URL to the story currently in view, without reloading the page.
+      const activeStory = stories[currentIndex];
+      if (activeStory && activeStory.slug) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('story', activeStory.slug);
+        window.history.replaceState({}, '', url);
+      }
+    }
+
+    function goToIndex(nextIndex) {
+      if (nextIndex < 0 || nextIndex >= stories.length) return;
+      currentIndex = nextIndex;
+      renderDeck();
+    }
+
+    function attachSwipeHandlers(card) {
+      let startX = 0;
+      let deltaX = 0;
+      let dragging = false;
+
+      function onStart(clientX) {
+        dragging = true;
+        startX = clientX;
+        card.style.transition = 'none';
+      }
+
+      function onMove(clientX) {
+        if (!dragging) return;
+        deltaX = clientX - startX;
+        card.style.transform = `translateX(${deltaX}px) rotate(${deltaX / 20}deg)`;
+      }
+
+      function onEnd() {
+        if (!dragging) return;
+        dragging = false;
+        card.style.transition = 'transform 0.25s ease';
+        card.style.transform = '';
+
+        if (deltaX < -80) {
+          goToIndex(currentIndex + 1);
+        } else if (deltaX > 80) {
+          goToIndex(currentIndex - 1);
+        }
+        deltaX = 0;
+      }
+
+      card.addEventListener('mousedown', e => onStart(e.clientX));
+      window.addEventListener('mousemove', e => onMove(e.clientX));
+      window.addEventListener('mouseup', onEnd);
+
+      card.addEventListener('touchstart', e => onStart(e.touches[0].clientX), { passive: true });
+      card.addEventListener('touchmove', e => onMove(e.touches[0].clientX), { passive: true });
+      card.addEventListener('touchend', onEnd);
+    }
+
+    document.getElementById('prevStoryBtn').addEventListener('click', () => goToIndex(currentIndex - 1));
+    document.getElementById('nextStoryBtn').addEventListener('click', () => goToIndex(currentIndex + 1));
+
+    fetch(`${API_BASE}/admin/stories`)
+      .then(res => {
+        if (!res.ok) throw new Error(`Stories request failed: ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        stories = Array.isArray(data) ? data : [];
+
+        if (stories.length === 0) {
+          document.getElementById('storiesEmpty').style.display = 'block';
+          return;
+        }
+
+        const requestedSlug = new URLSearchParams(window.location.search).get('story');
+        const requestedIndex = requestedSlug
+          ? stories.findIndex(story => story.slug === requestedSlug)
+          : -1;
+        currentIndex = requestedIndex >= 0 ? requestedIndex : 0;
+
+        renderDeck();
+      })
+      .catch(err => {
+        console.error('Failed to load success stories:', err);
+        document.getElementById('storiesEmpty').style.display = 'block';
+      });
+  </script>
+</body>
+</html>

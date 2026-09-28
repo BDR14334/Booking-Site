@@ -180,6 +180,7 @@
     }
 
     .athlete-card {
+      position: relative;
       flex: 0 0 300px;
       scroll-snap-align: start;
       margin: 0; /* Remove margin, use gap instead */
@@ -188,7 +189,22 @@
       border-radius: 10px;
       box-shadow: 0 5px 15px black;
       padding: 20px;
+      height: 560px;
+      display: flex;
+      flex-direction: column;
       text-align: center;
+    }
+
+    .athlete-card::after {
+      content: "";
+      position: absolute;
+      left: 20px;
+      right: 20px;
+      bottom: 74px;
+      height: 72px;
+      background: linear-gradient(to bottom, rgba(52, 58, 64, 0), #343a40 82%);
+      pointer-events: none;
+      z-index: 1;
     }
 
     .athlete-card img {
@@ -201,6 +217,31 @@
     .athlete-card h3 {
       margin-top: 15px;
       font-size: 1.25rem;
+    }
+
+    .athlete-card p {
+      overflow: hidden;
+      margin: 12px 0 0;
+      line-height: 1.45;
+      max-height: 155px;
+      position: relative;
+      z-index: 0;
+    }
+
+    .story-details-link {
+      margin-top: auto;
+      display: inline-block;
+      position: relative;
+      z-index: 2;
+      color: #ff4800;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .story-details-link:hover,
+    .story-details-link:focus {
+      color: #ffa162;
+      text-decoration: underline;
     }
 
     .arrow-btn {
@@ -333,6 +374,7 @@
         margin: 0 15px;
         margin-left: -15px;
         padding: 30px;
+        height: 560px;
         font-size:14px;
       }
 
@@ -577,10 +619,16 @@
 
             const card = document.createElement("div");
             card.className = "athlete-card";
+            // Single shared stories page: the ?story= param lets a copied link open directly on this card.
+            // Links to the server-rendered SEO page; the /stories?story= carousel is unchanged.
+            const storyLink = story.slug
+              ? `/stories?story=${encodeURIComponent(story.slug)}`
+              : '/stories';
             card.innerHTML = `
-              <img src="${imgSrc}" alt="${story.name}">
+              <a href="${storyLink}"><img src="${imgSrc}" alt="${story.name}"></a>
               <h3>${story.name}</h3>
               <p>${story.story}</p>
+              <a class="story-details-link" href="${storyLink}">View Story</a>
             `;
             container.appendChild(card);
           });

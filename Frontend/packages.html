@@ -19,7 +19,14 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
   <link rel="stylesheet" href="style.css" />
-  <!-- <title>Packages | Zephyrs Strength & Performance</title> -->
+  <title>Packages | Zephyrs Strength & Performance</title>
+  <meta name="description" content="Explore Zephyrs Strength & Performance athletic training packages focused on speed, acceleration, strength, power, and overall athletic development." />
+  <link rel="canonical" href="https://www.zephyrsstrengthandperformance.com/packages" />
+  <meta property="og:title" content="Packages | Zephyrs Strength & Performance" />
+  <meta property="og:description" content="Athletic performance training packages from Zephyrs Strength & Performance focused on speed, acceleration, strength, power, and overall athletic development." />
+  <meta property="og:url" content="https://www.zephyrsstrengthandperformance.com/packages" />
+  <meta property="og:image" content="https://www.zephyrsstrengthandperformance.com/img/ZSP-logo1.png" />
+  <meta property="og:type" content="website" />
   <link rel="icon" href="favicon.ico" type="image/x-icon">
   <link rel="icon" type="image/png" href="img/favicon.png" />
   <style>
@@ -98,6 +105,21 @@
         margin-bottom: 50px;
         margin-top: 50px;
      
+    }
+
+    .booking .title h1 {
+      margin: 0;
+      font: inherit;
+      color: inherit;
+    }
+
+    .package-intro {
+      max-width: 760px;
+      margin: -24px auto 48px;
+      padding: 0 20px;
+      color: white;
+      text-align: center;
+      line-height: 1.6;
     }
     .booking .boxes {
         display: flex;
@@ -495,7 +517,8 @@
       <!-- Package Booking Section -->
       <section class="booking" id="booking">
         <div class="content">
-          <div class="title"><span>Package Choices</span></div>
+          <div class="title"><h1>Athletic Performance Training Packages</h1></div>
+          <p class="package-intro">Zephyrs Strength &amp; Performance offers athletic performance training packages focused on speed, acceleration, strength, power, and overall athletic development.</p>
           <div id="membershipNotice" style="
             text-align:center;
             max-width:600px;
@@ -798,6 +821,10 @@
           const isMemberPkg = pkg.is_member_priced === true || pkg.is_member_priced === "true";
           return isMember ? isMemberPkg : !isMemberPkg;
         });
+        const requestedPackageSlug = new URLSearchParams(window.location.search).get('package');
+        const preselectedPackage = requestedPackageSlug
+          ? visiblePackages.find(pkg => pkg.slug === requestedPackageSlug)
+          : null;
 
         // Show message for visitors/non-members
         const noticeEl = document.getElementById("membershipNotice");
@@ -825,6 +852,11 @@
               .filter(Boolean)
               .concat(visiblePackages.filter(pkg => !savedOrder.includes(String(pkg.id))))
           : visiblePackages;
+        if (preselectedPackage) {
+          const selectedIndex = orderedPackages.indexOf(preselectedPackage);
+          orderedPackages.splice(selectedIndex, 1);
+          orderedPackages.unshift(preselectedPackage);
+        }
 
         // Step 5: Render only the visible packages (or show empty state)
         if (!orderedPackages || orderedPackages.length === 0) {
@@ -844,6 +876,17 @@
         orderedPackages.forEach(pkg => {
           const box = document.createElement('a');
           box.className = 'box';
+          if (pkg.slug) {
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            box.href = isLocal
+              ? `${API_BASE}/packages/${encodeURIComponent(pkg.slug)}`
+              : `https://www.zephyrsstrengthandperformance.com/packages/${encodeURIComponent(pkg.slug)}`;
+          }
+          if (pkg === preselectedPackage) {
+            box.classList.add('selected');
+            selectedPackage = pkg;
+            selectedPackageId = pkg.id;
+          }
           box.innerHTML = `
             <div class="icon">
               <img src="img/ZSP-logo2.png" alt="Package Logo" class="package-logo"                  

@@ -43,14 +43,21 @@ async function getPackages() {
   try {
     try {
       const result = await pool.query(
-        'SELECT name AS title, description, price FROM packages WHERE is_active = true ORDER BY id'
+      `SELECT name AS title, slug, description, price, sessions_included AS sessions,
+        features, is_member_priced
+         FROM packages
+         WHERE is_active = true
+         ORDER BY id`
       );
       return result.rows;
     } catch (err) {
       // Local DB may not have been migrated yet
       if (err && err.code === '42703') {
         const fallback = await pool.query(
-          'SELECT name AS title, description, price FROM packages ORDER BY id'
+          `SELECT name AS title, slug, description, price, sessions_included AS sessions,
+                  features, is_member_priced
+           FROM packages
+           ORDER BY id`
         );
         return fallback.rows;
       }
@@ -62,7 +69,73 @@ async function getPackages() {
   }
 }
 
+async function getPackageBySlug(slug) {
+  const result = await pool.query(
+    `SELECT name AS title, slug, description, price, sessions_included AS sessions,
+            features, is_member_priced
+     FROM packages
+     WHERE slug = $1
+       AND is_active = true
+     LIMIT 1`,
+    [slug]
+  );
+  return result.rows[0] || null;
+}
+
+async function getStories() {
+  try {
+    const result = await pool.query(
+      `SELECT id, name, story, image_url, slug
+       FROM success_stories
+       WHERE slug IS NOT NULL
+         AND is_active = true
+       ORDER BY created_at DESC`
+    );
+    return result.rows;
+  } catch (err) {
+    if (err && err.code === '42703') {
+      const fallback = await pool.query(
+        `SELECT id, name, story, image_url, slug
+         FROM success_stories
+         WHERE slug IS NOT NULL
+         ORDER BY created_at DESC`
+      );
+      return fallback.rows;
+    }
+    throw err;
+  }
+}
+
+async function getStoryBySlug(slug) {
+  try {
+    const result = await pool.query(
+      `SELECT id, name, story, image_url, slug
+       FROM success_stories
+       WHERE slug = $1
+         AND is_active = true
+       LIMIT 1`,
+      [slug]
+    );
+    return result.rows[0] || null;
+  } catch (err) {
+    if (err && err.code === '42703') {
+      const fallback = await pool.query(
+        `SELECT id, name, story, image_url, slug
+         FROM success_stories
+         WHERE slug = $1
+         LIMIT 1`,
+        [slug]
+      );
+      return fallback.rows[0] || null;
+    }
+    throw err;
+  }
+}
+
 // 👇 This keeps compatibility with all your existing routes
 pool.getPackages = getPackages;
+pool.getPackageBySlug = getPackageBySlug;
+pool.getStories = getStories;
+pool.getStoryBySlug = getStoryBySlug;
 
 module.exports = pool;

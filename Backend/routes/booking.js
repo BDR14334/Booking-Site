@@ -8,6 +8,8 @@ const bodyParser = require('body-parser'); // Add at the top if not already pres
 const sendEmail = require('../utils/email'); // Add this line
 const { siteBaseUrl } = require('../config');
 
+const adminEmailsDisabled = process.env.DISABLE_ADMIN_EMAILS === 'true';
+
 async function getActiveAdminRecipients() {
   // If users.is_active exists, send only to admins.
   try {
@@ -317,8 +319,9 @@ router.post('/booking', async (req, res) => {
 
     // Admin purchase notification (best-effort)
     try {
-      const adminRecipients = await getActiveAdminRecipients();
-      if (adminRecipients.length > 0) {
+      if (!adminEmailsDisabled) {
+        const adminRecipients = await getActiveAdminRecipients();
+        if (adminRecipients.length > 0) {
         const adminSubject = `New package purchase: ${pkg.name}`;
         const adminHtml = `
           <div style="font-family:Arial,sans-serif;color:#222;line-height:1.5;max-width:720px;">
@@ -339,6 +342,9 @@ router.post('/booking', async (req, res) => {
         `;
 
         await sendEmail(adminRecipients, adminSubject, adminHtml);
+        }
+      } else {
+        console.log('Admin purchase email disabled by DISABLE_ADMIN_EMAILS.');
       }
     } catch (adminEmailErr) {
       console.warn('Admin purchase notification failed:', adminEmailErr);
@@ -643,8 +649,9 @@ router.post('/webhook', rawBodyParser, async (req, res) => {
 
       // Admin purchase notification (best-effort)
       try {
-        const adminRecipients = await getActiveAdminRecipients();
-        if (adminRecipients.length > 0) {
+        if (!adminEmailsDisabled) {
+          const adminRecipients = await getActiveAdminRecipients();
+          if (adminRecipients.length > 0) {
           const adminSubject = `New package purchase: ${packageName}`;
           const adminHtml = `
             <div style="font-family:Arial,sans-serif;color:#222;line-height:1.5;max-width:720px;">
@@ -664,6 +671,9 @@ router.post('/webhook', rawBodyParser, async (req, res) => {
           `;
 
           await sendEmail(adminRecipients, adminSubject, adminHtml);
+          }
+        } else {
+          console.log('Admin purchase email disabled by DISABLE_ADMIN_EMAILS.');
         }
       } catch (adminEmailErr) {
         console.warn('Admin purchase notification failed:', adminEmailErr);
