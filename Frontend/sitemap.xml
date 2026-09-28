@@ -12,6 +12,12 @@
 </url>
 
 <url>
+  <loc>https://www.zephyrsstrengthandperformance.com/stories</loc>
+  <lastmod>2025-10-05</lastmod>
+  <priority>0.80</priority>
+</url>
+
+<url>
   <loc>https://www.zephyrsstrengthandperformance.com/about</loc>
   <lastmod>2025-10-05</lastmod>
   <priority>0.80</priority>
@@ -34,7 +40,5 @@
   <lastmod>2025-10-05</lastmod>
   <priority>0.60</priority>
 </url>
-
-
 
 </urlset>

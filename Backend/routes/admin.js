@@ -5,6 +5,7 @@ const nodemailer = require('nodemailer');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { randomUUID } = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 const { authenticateToken, requireRole } = require('./auth');
 const sendEmail = require('../utils/email');
@@ -61,18 +62,65 @@ const storage = multer.diskStorage({
     const ext = path.extname(file.originalname); // Get file extension
     const baseName = req.body.athleteName || 'athlete'; // Fallback if name missing
     const safeName = baseName.replace(/[^a-z0-9]/gi, '_').toLowerCase(); // Sanitize
-    cb(null, `${safeName}${ext}`);
+    cb(null, `${safeName}-${randomUUID()}${ext}`);
   }
 });
 const upload = multer({ storage });
 
 // Athlete Stories Section
+function createStorySlug(storyName) {
+  return storyName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+async function getAvailableStorySlug(baseSlug, excludeId = null) {
+  const params = [baseSlug, `${baseSlug}-%`];
+  let excludeClause = '';
+
+  if (excludeId !== null && excludeId !== undefined) {
+    params.push(excludeId);
+    excludeClause = ` AND id <> $${params.length}`;
+  }
+
+  const result = await pool.query(
+    `SELECT slug
+     FROM success_stories
+     WHERE (slug = $1 OR slug LIKE $2)
+     ${excludeClause}`,
+    params
+  );
+  const usedSlugs = new Set(result.rows.map(row => row.slug));
+
+  if (!usedSlugs.has(baseSlug)) return baseSlug;
+
+  let suffix = 2;
+  while (usedSlugs.has(`${baseSlug}-${suffix}`)) {
+    suffix += 1;
+  }
+  return `${baseSlug}-${suffix}`;
+}
+
 // Adds new success story to database
 router.post('/add-story', authenticateToken, requireRole('admin'), upload.single('athleteImage'), async (req, res) => {
   const { athleteName, storyText } = req.body;
   const imageFile = req.file;
   if (!athleteName || !storyText || !imageFile) {
     return res.status(400).json({ error: 'All fields are required.' });
+  }
+  const baseSlug = createStorySlug(athleteName);
+  if (!baseSlug) {
+    return res.status(400).json({ error: 'Athlete name must include letters or numbers.' });
+  }
+  let storySlug;
+  try {
+    storySlug = await getAvailableStorySlug(baseSlug);
+  } catch (err) {
+    console.error('Error checking story slug:', err);
+    res.status(500).json({ error: 'Server error saving story.' });
+    return;
   }
   let imageUrl;
   if (process.env.NODE_ENV === 'production') {
@@ -84,6 +132,7 @@ router.post('/add-story', authenticateToken, requireRole('admin'), upload.single
       );
       fs.unlinkSync(imageFile.path);
     } catch (err) {
+      console.error('Supabase upload failed:', err);
       return res.status(500).json({ error: 'Supabase upload failed.' });
     }
   } else {
@@ -91,14 +140,17 @@ router.post('/add-story', authenticateToken, requireRole('admin'), upload.single
   }
   try {
     const result = await pool.query(
-      `INSERT INTO success_stories (name, story, image_url)
-       VALUES ($1, $2, $3)
+      `INSERT INTO success_stories (name, story, image_url, slug)
+       VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [athleteName, storyText, imageUrl]
+      [athleteName, storyText, imageUrl, storySlug]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error('Error saving story:', err);
+    if (err && err.code === '23505') {
+      return res.status(409).json({ error: 'A story with this URL slug already exists.' });
+    }
     res.status(500).json({ error: 'Server error saving story.' });
   }
 });
@@ -124,15 +176,18 @@ router.put('/update-story/:id', authenticateToken, requireRole('admin'), upload.
           );
           fs.unlinkSync(imageFile.path);
         } catch (err) {
+          console.error('Supabase upload failed:', err);
           return res.status(500).json({ error: 'Supabase upload failed.' });
         }
       } else {
         imageUrl = `/img/stories/${imageFile.filename}`;
       }
     }
+
+    const storySlug = await getAvailableStorySlug(createStorySlug(athleteName), id);
     const result = await pool.query(
-      `UPDATE success_stories SET name = $1, story = $2, image_url = $3 WHERE id = $4 RETURNING *`,
-      [athleteName, storyText, imageUrl, id]
+      `UPDATE success_stories SET name = $1, story = $2, image_url = $3, slug = $4 WHERE id = $5 RETURNING *`,
+      [athleteName, storyText, imageUrl, storySlug, id]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -145,7 +200,7 @@ router.put('/update-story/:id', authenticateToken, requireRole('admin'), upload.
 router.get('/stories', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT id, name, story, image_url
+      SELECT id, name, story, image_url, slug
       FROM success_stories
       ORDER BY created_at DESC
     `);
@@ -220,6 +275,60 @@ router.delete('/delete-story/:id', authenticateToken, requireRole('admin'), asyn
 
 // --- Packages Section (with Calendly URL) ---
 
+function createPackageSlug(packageTitle) {
+  return packageTitle
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+async function getAvailablePackageSlug(baseSlug, excludeId = null) {
+  const params = [baseSlug, `${baseSlug}-%`];
+  let excludeClause = '';
+
+  if (excludeId !== null && excludeId !== undefined) {
+    params.push(excludeId);
+    excludeClause = ` AND id <> $${params.length}`;
+  }
+
+  const result = await pool.query(
+    `SELECT slug
+     FROM packages
+     WHERE (slug = $1 OR slug LIKE $2)
+     ${excludeClause}`,
+    params
+  );
+  const usedSlugs = new Set(result.rows.map(row => row.slug));
+
+  if (!usedSlugs.has(baseSlug)) return baseSlug;
+
+  let suffix = 2;
+  while (usedSlugs.has(`${baseSlug}-${suffix}`)) {
+    suffix += 1;
+  }
+  return `${baseSlug}-${suffix}`;
+}
+
+async function savePackageWithUniqueSlug(buildQuery, baseSlug, excludeId = null) {
+  let slug = await getAvailablePackageSlug(baseSlug, excludeId);
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      return await buildQuery(slug);
+    } catch (err) {
+      const isSlugConflict = err && err.code === '23505' && String(err.constraint || '').includes('slug');
+      if (!isSlugConflict || attempt === 2) {
+        throw err;
+      }
+      slug = await getAvailablePackageSlug(baseSlug, excludeId);
+    }
+  }
+
+  throw new Error('Unable to generate a unique package slug.');
+}
+
 // Create a new package
 router.post('/create-package', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
@@ -227,6 +336,10 @@ router.post('/create-package', authenticateToken, requireRole('admin'), async (r
     const cleanedTitle = typeof packageTitle === 'string' ? packageTitle.trim() : '';
     if (!cleanedTitle) {
       return res.status(400).json({ error: 'Package must include a title.' });
+    }
+    const baseSlug = createPackageSlug(cleanedTitle);
+    if (!baseSlug) {
+      return res.status(400).json({ error: 'Package title must include letters or numbers.' });
     }
 
     const rawPrice = price === undefined || price === null ? '' : String(price).trim();
@@ -251,15 +364,21 @@ router.post('/create-package', authenticateToken, requireRole('admin'), async (r
     if (cleanedFeatures.length === 0) {
       return res.status(400).json({ error: 'Package must include at least one feature.' });
     }
-    const result = await pool.query(
-      `INSERT INTO packages (name, price, description, features, sessions_included, calendly_url, is_member_priced)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING *`,
-      [cleanedTitle, parsedPrice, cleanedDescription, cleanedFeatures, parsedSessions, calendlyUrl, !!isMemberPriced]
+    const result = await savePackageWithUniqueSlug(
+      (slug) => pool.query(
+        `INSERT INTO packages (name, slug, price, description, features, sessions_included, calendly_url, is_member_priced)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         RETURNING *`,
+        [cleanedTitle, slug, parsedPrice, cleanedDescription, cleanedFeatures, parsedSessions, calendlyUrl, !!isMemberPriced]
+      ),
+      baseSlug
     );
     res.status(201).json({ message: 'Package created', package: result.rows[0] });
   } catch (err) {
     console.error('Error creating package:', err);
+    if (err && err.code === '23505') {
+      return res.status(409).json({ error: 'A package already uses this URL slug. The system could not generate a unique one.' });
+    }
     res.status(500).json({ error: 'Server error creating package' });
   }
 });
@@ -272,6 +391,9 @@ router.put('/update-package/:id', authenticateToken, requireRole('admin'), async
   if (!cleanedTitle) {
     return res.status(400).json({ error: 'Package must include a title.' });
   }
+
+  const baseSlug = createPackageSlug(cleanedTitle);
+  const slug = await getAvailablePackageSlug(baseSlug, id);
 
   const rawPrice = price === undefined || price === null ? '' : String(price).trim();
   const parsedPrice = rawPrice ? Number(rawPrice.replace(/[^0-9.\-]/g, '')) : NaN;
@@ -296,18 +418,23 @@ router.put('/update-package/:id', authenticateToken, requireRole('admin'), async
     return res.status(400).json({ error: 'Package must include at least one feature.' });
   }
   try {
-    const result = await pool.query(
-      `UPDATE packages
-       SET name = $1,
-           sessions_included = $2,
-           price = $3,
-           description = $4,
-           features = $5,
-           calendly_url = $6,
-           is_member_priced = $7
-       WHERE id = $8
-       RETURNING *`,
-      [cleanedTitle, parsedSessions, parsedPrice, cleanedDescription, cleanedFeatures, calendlyUrl, !!isMemberPriced, id]
+    const result = await savePackageWithUniqueSlug(
+      (currentSlug) => pool.query(
+        `UPDATE packages
+         SET name = $1,
+             slug = $2,
+             sessions_included = $3,
+             price = $4,
+             description = $5,
+             features = $6,
+             calendly_url = $7,
+             is_member_priced = $8
+         WHERE id = $9
+         RETURNING *`,
+        [cleanedTitle, currentSlug, parsedSessions, parsedPrice, cleanedDescription, cleanedFeatures, calendlyUrl, !!isMemberPriced, id]
+      ),
+      baseSlug,
+      id
     );
     if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Package not found.' });
@@ -520,6 +647,7 @@ router.get(
         SELECT 
           id,
           name AS package_title,
+          slug,
           sessions_included AS session_number,
           price,
           description,
@@ -537,6 +665,7 @@ router.get(
           SELECT 
             id,
             name AS package_title,
+            slug,
             sessions_included AS session_number,
             price,
             description,
@@ -552,6 +681,7 @@ router.get(
     const packages = result.rows.map(pkg => ({
       id: pkg.id,
       title: pkg.package_title,
+      slug: pkg.slug,
       sessions: pkg.session_number,
       price: pkg.price,
       description: typeof pkg.description === 'string' ? pkg.description : '',
