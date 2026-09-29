@@ -821,7 +821,11 @@
           const isMemberPkg = pkg.is_member_priced === true || pkg.is_member_priced === "true";
           return isMember ? isMemberPkg : !isMemberPkg;
         });
-        const requestedPackageSlug = new URLSearchParams(window.location.search).get('package');
+        const pathnameParts = window.location.pathname.split('/').filter(Boolean);
+        const requestedPackageSlugFromPath = pathnameParts[0] === 'packages' && pathnameParts[1]
+          ? decodeURIComponent(pathnameParts[1])
+          : null;
+        const requestedPackageSlug = new URLSearchParams(window.location.search).get('package') || requestedPackageSlugFromPath;
         const preselectedPackage = requestedPackageSlug
           ? visiblePackages.find(pkg => pkg.slug === requestedPackageSlug)
           : null;
@@ -877,10 +881,7 @@
           const box = document.createElement('a');
           box.className = 'box';
           if (pkg.slug) {
-            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            box.href = isLocal
-              ? `${API_BASE}/packages/${encodeURIComponent(pkg.slug)}`
-              : `https://www.zephyrsstrengthandperformance.com/packages/${encodeURIComponent(pkg.slug)}`;
+            box.href = `/packages?package=${encodeURIComponent(pkg.slug)}`;
           }
           if (pkg === preselectedPackage) {
             box.classList.add('selected');
