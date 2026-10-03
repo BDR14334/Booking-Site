@@ -66,7 +66,8 @@ app.get('/sitemap.xml', async (req, res) => {
       `${siteUrl}/about`,
       `${siteUrl}/contact`,
       `${siteUrl}/packages`,
-      `${siteUrl}/login`
+      `${siteUrl}/login`,
+      `${siteUrl}/stories`
     ];
     const packages = await db.getPackages();
     const packageUrls = [...new Set(
@@ -120,6 +121,41 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
+// Simple visible summary styling that matches the dark page background.
+const seoSectionStyle = '<style>.package-seo-content,.story-seo-content{box-sizing:border-box;width:100%;max-width:900px;margin:40px auto 0;padding:0 20px;color:#fff;text-align:left}.package-seo-content h2,.story-seo-content h2{font-size:24px;text-align:center;margin:0 0 16px}.package-seo-card,.story-seo-card{margin:0 0 24px;padding:16px 20px;border-radius:12px;background:rgba(255,255,255,0.06)}.package-seo-card h2,.story-seo-card h2{font-size:20px;text-align:left}.story-seo-card img{max-width:100%;height:auto;border-radius:8px}.package-seo-content a,.story-seo-content a{color:#ffa162}</style>';
+
+app.get('/stories', async (req, res) => {
+  try {
+    const stories = await db.getStories();
+    const storyCards = stories.filter(story => story.slug).map(story => {
+      const rawImage = story.image_url || '/img/placeholder.png';
+      return `
+        <article class="story-seo-card">
+          <h2>${escapeHtml(story.name)}</h2>
+          <img src="${escapeHtml(rawImage)}" alt="${escapeHtml(story.name)} success story" width="300" loading="lazy" />
+          <p>${escapeHtml(story.story)}</p>
+          <p><a href="/stories/${encodeURIComponent(story.slug)}">Read ${escapeHtml(story.name)}'s story</a></p>
+        </article>`;
+    }).join('');
+    const seoContent = `
+    ${seoSectionStyle}
+    <section class="story-seo-content" aria-label="Success story summaries">
+      <h2>Athlete Success Story Summaries</h2>${storyCards}
+    </section>
+    `;
+
+    const html = fs.readFileSync(path.join(__dirname, '../Frontend/stories.html'), 'utf8');
+    const finalHtml = html
+      .replace('<div class="title">Success Stories</div>', '<h1 class="title">Success Stories</h1>')
+      .replace('</section>', () => `${seoContent}</section>`);
+
+    res.type('html').send(finalHtml);
+  } catch (err) {
+    console.error('Error loading stories:', err);
+    res.status(500).send('Error loading stories');
+  }
+});
+
 app.get('/packages', async (req, res) => {
   try {
     // Fetch packages from your database
@@ -160,7 +196,7 @@ app.get('/packages', async (req, res) => {
         : '';
       // Real crawlable link to the individual package page, present before any JS runs.
       const detailLink = pkg.slug
-        ? `<p><a href="https://www.zephyrsstrengthandperformance.com/packages/${escapeHtml(pkg.slug)}">View ${escapeHtml(pkg.title)} Details</a></p>`
+        ? `<p><a href="/packages/${encodeURIComponent(pkg.slug)}">View ${escapeHtml(pkg.title)} Details</a></p>`
         : '';
 
       return `
@@ -174,29 +210,23 @@ app.get('/packages', async (req, res) => {
         </article>`;
     }).join('');
     const seoPackageContent = `
-      <section class="package-seo-content" aria-labelledby="packages-heading">
-        <h1 id="packages-heading">Personalized Athletic Performance Training</h1>
-        <p>Zephyrs Strength &amp; Performance offers personalized training packages focused on speed, strength, acceleration, and power for athletes training online or in person.</p>
+      ${seoSectionStyle}
+      <section class="package-seo-content" aria-label="Training package summaries">
+        <h2>Training Package Summaries</h2>
         ${seoPackageCards || '<p>Contact us to learn about current training options.</p>'}
       </section>`;
 
+    // Metadata (title, description, canonical, Open Graph) stays in the static packages.html.
     const seoHead = `
-      <title>Packages | Zephyrs Strength & Performance</title>
-      <meta name="description" content="${escapeHtml(`Training packages from Zephyrs Strength & Performance: ${packageNames}. ${packageDescriptions}`)}" />
-      <link rel="canonical" href="https://www.zephyrsstrengthandperformance.com/packages" />
-      <meta property="og:title" content="Packages | Zephyrs Strength & Performance" />
-      <meta property="og:description" content="${escapeHtml(`Personalized athletic performance training packages: ${packageNames}.`)}" />
-      <meta property="og:url" content="https://www.zephyrsstrengthandperformance.com/packages" />
       <script type="application/ld+json">${JSON.stringify(packageStructuredData).replace(/</g, '\\u003c')}</script>
     `;
 
     // Read your static packages.html file
     const html = fs.readFileSync(path.join(__dirname, '../Frontend/packages.html'), 'utf8');
 
-    // Preserve the static page's styles and scripts while adding route-specific SEO tags.
     const finalHtml = html
-      .replace('</head>', `${seoHead}</head>`)
-      .replace('<div id="bookingFlow" class="booking-slider">', `${seoPackageContent}\n\n    <div id="bookingFlow" class="booking-slider">`);
+      .replace('</head>', () => `${seoHead}</head>`)
+      .replace('<footer class="site-footer">', () => `<div style="background:#343a40;padding-bottom:20px">${seoPackageContent}</div>\n    <footer class="site-footer">`);
 
     res.send(finalHtml);
   } catch (err) {
